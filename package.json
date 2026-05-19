@@ -6,21 +6,49 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "eslint"
+    "lint": "eslint",
+    "sync": "tsx scripts/sync-canvas.ts",
+    "sync:dry": "tsx scripts/sync-canvas.ts --dry",
+    "sync:list": "tsx scripts/sync-canvas.ts --list"
   },
   "dependencies": {
+    "@milkdown/core": "^7.21.1",
+    "@milkdown/ctx": "^7.21.1",
+    "@milkdown/plugin-clipboard": "^7.21.1",
+    "@milkdown/plugin-history": "^7.21.1",
+    "@milkdown/plugin-listener": "^7.21.1",
+    "@milkdown/preset-commonmark": "^7.21.1",
+    "@milkdown/preset-gfm": "^7.21.1",
+    "@milkdown/prose": "^7.21.1",
+    "@milkdown/react": "^7.21.1",
+    "@milkdown/theme-nord": "^7.21.1",
+    "@milkdown/transformer": "^7.21.1",
+    "@milkdown/utils": "^7.21.1",
+    "class-variance-authority": "^0.7.1",
+    "clsx": "^2.1.1",
+    "date-fns": "^4.2.1",
+    "fuse.js": "^7.3.0",
+    "gray-matter": "^4.0.3",
+    "lucide-react": "^1.16.0",
+    "mammoth": "^1.12.0",
     "next": "16.2.6",
+    "next-mdx-remote-client": "^2.1.10",
     "react": "19.2.4",
-    "react-dom": "19.2.4"
+    "react-dom": "19.2.4",
+    "tailwind-merge": "^3.6.0",
+    "unpdf": "^1.6.2",
+    "zod": "^4.4.3"
   },
   "devDependencies": {
     "@tailwindcss/postcss": "^4",
     "@types/node": "^20",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "dotenv": "^17.4.2",
     "eslint": "^9",
     "eslint-config-next": "16.2.6",
     "tailwindcss": "^4",
+    "tsx": "^4.22.2",
     "typescript": "^5"
   }
 }

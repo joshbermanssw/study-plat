@@ -1,0 +1,41 @@
+---
+title: Week 8 Tutorial
+unit: COMP4347
+week: 8
+type: lecture
+status: synced
+sourceFile: Week 8 Tutorial.pdf
+module: Manual upload
+localFile: data/sources/COMP4347/Week_8_Tutorial.pdf
+fetchedAt: 2026-05-19T04:02:39.215Z
+fileSize: 347343
+fileContentType: application/pdf
+---
+
+{/* note-summary-start */}
+## Summary
+
+This Week 8 tutorial integrates Mongoose into an Express MVC app, exercising the model layer against a Wikipedia revisions dataset — direct practice for the Week 7 lecture content.
+
+- Adding Mongoose: `npm install mongoose` (or `npm install` against an existing `package.json`) and connecting via `mongodb://localhost/<dbname>`.
+- Writing Mongoose queries that mirror the Mongo shell syntax: `find`, `update`, `aggregate` on the `revisions` collection.
+- Full MVC layout: views (`titleForm.pug`, `revision.pug`), model (`revision.js` schema + `db.js` connection), controller (`revision.server.controller.js`), router (`revision.server.routes.js`).
+- Static model methods (e.g. `findTitleLatestRev`) callable from controllers, with controller-supplied callbacks handling the result.
+- Implementing the missing route file to bind controller methods to URLs and starting the app with `node ./revserver.js`, then hitting `localhost:3000/revision`.
+
+Exam focus: complete a missing piece of an MVC Express+Mongoose app (typically the route file); write a Mongoose static method for a stated query; trace the request flow from URL through router/controller/model back to the view.
+
+{/* note-summary-end */}
+
+> Manually uploaded Week 8 Tutorial.pdf. Edit this note any time.
+
+{/* canvas-extract-start */}
+<details>
+<summary>Source text (auto-extracted · 5 pages)</summary>
+
+```text
+COMP5347: Web Application Development Week 8 Tutorial: Mongoose and Model Layer Learning Objectives • Understand basic mongoose concepts and objects • Integrate mongoose with Express.js Part 1: Add mongoose module Task: Download the provided week8-src.zip from Canvas and extract the content in a directory. Start Visual Studio Code or your preferred IDE and open the project’s directory. In this case, all the necessary node modules are specified in package.json. Create a new terminal/command line window at this directory and run npm install to install all required modules. Tips: For your own project, you can install mongoose by simply running npm install mongoose. This will download the module into your node_modules directory and add the dependency record to your package.json file. Part 2: Simple mongoose query Task: Start the MongoDB server using the following command, replace the “path” with a path to the local MongoDB working directory where you create the Wikipedia database with the revisions collections. mongod --dbpath <your-db-path> Run the code with node ./app/models/mongoose.revision.js Optional: In line 3, the connection to MongoDB is configured. If you give a different name to the Wikipedia data set when you import the data, the configuration might be different. In this case, you can replace the “dbname” in the following path with the name you created before. If you are not sure about the dbname, you may open MongoDB Compass and check it there. ‘mongodb://localhost/dbname’ You need to uncomment the lines (line 22-32) representing the update statement to try the update example. You may notice that writing queries, updates and aggregation statements in mongoose follow the same syntax as MongoDB shell commands. Try to write your own code to find the user who made the most non-minor revisions on article “CNN” and run mongoose.revisions.js again to test that you have obtained the correct results. You can also compare the results you get from mongoose to the results you get from respective shell command. Part 3: Full MVC Express Application This part will build a small application with MongoDB as backend database server. It allows an end user to type in an article’s title to find its latest revision data from the revisions collection. Task: Understand the project structure The view layer contains two views: one for displaying the form for entering title. The other for displaying revision data. Both views are provided as PUG files: titleForm.pug and revision.pug. The model layer is supposed to handle data of the application. Database-related code should be put in the model layer. Our simple application only needs to handle revision data, it has a module representing revision model called revision.js. It also has a module called db.js which contains database initialisation code. Optional: Same as before, in line 3 of db.js, the connection to mongodb is configured. If you give a different name to the Wikipedia data set when you import the data, the configuration might be different. In this case, you can replace the “dbname” with the name you created before. The revision.js script provides a static method findTitleLatestRev. This method will find an article’s latest revision given a title. It does not define its own callback function. The application also contains a controller revision.server.controller.js, which calls findTitleLatestRev and provides a callback function when the result is back. The revserver.js contains code to create and start the application. Task: Implement the router The only part missing is a route file that will bind controller methods to URLs. Inspect all relevant code to determine the content of the route file and implement it in revision.server.routes.js under app/routes Task: Run the application Run the Node.js application with node ./revserver.js after you have implemented the route file. Once started, points your browser to localhost:3000/revision. It should display a form. When you type in a title “BBC”, the request will be sent, and the server will query mongodb to find the latest revision on article BBC and send it back. See below screenshots for sample output. Part 4: Introduction to Promise Library Node.js naturally does not block IO as other mainstream programming languages do. In that case, if you want to write some code based on the output of previous function, you cannot just put the statement at the following line. Alternatively, you should use callback functions to chain the following codes with the previous function. Most node core modules such as ‘fs’ module embrace this style in a nutshell. When your logic gain complex, there will be a lot of layers of callback function. The term “callback hell” is coined to describe this situation. Promise is one of various remedial solutions, supported by various npm packages such as ‘mongoose’ and ‘request.js’. Bluebird promise library is taken as an example due to its popularity among the node.js ecosystem. Bluebird can be used to turn this: fs.readFile("BBC.json", function (err, val) { if (err) { console.error("unable to read file"); } else { try { val = JSON.parse(val); console.log(val); } catch (e) { console.error("invalid json in file"); } } }); Into this: fs.readFileAsync("BBC.json") .then(JSON.parse) .then(function (val) { console.log(val); }) .catch(SyntaxError, function (e) { console.error("invalid json in file"); }) .catch(function (e) { console.error("unable to read file"); }); Task: Download Promise.zip from Canvas and extract it to some local directory. Import the promise.js and BBC.json to the project root directory. Execute promise.js file by running node promise.js in your terminal or command line. Uncomment the fs.readFileAsync function to compare the outcome of ‘callback’ style and ‘promise’ style code segments. Of course, the outcome should be the same.
+```
+
+</details>
+{/* canvas-extract-end */}

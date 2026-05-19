@@ -1,0 +1,774 @@
+{
+  "syncedAt": "2026-05-19T03:12:10.373Z",
+  "host": "canvas.sydney.edu.au",
+  "units": [
+    {
+      "code": "COMP3027",
+      "name": "COMP3027 COMP3927 Algorithm Design",
+      "canvasCourseId": 69873,
+      "modules": [
+        {
+          "name": "Introduction Module",
+          "items": [
+            {
+              "title": "Unit Introduction",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69873/modules/items/2973563"
+            },
+            {
+              "title": "Meet the teaching team",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69873/modules/items/2973564"
+            },
+            {
+              "title": "Unit Schedule",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69873/modules/items/2973565"
+            },
+            {
+              "title": "Assessment overview",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69873/modules/items/2973566"
+            },
+            {
+              "title": "Help & Support",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69873/modules/items/2973567"
+            }
+          ]
+        }
+      ],
+      "files": [],
+      "assignments": [
+        {
+          "name": "Assignment 1 (COMP3027)",
+          "dueAt": "2026-03-25T12:59:00Z",
+          "url": "https://canvas.sydney.edu.au/courses/69873/assignments/663561"
+        },
+        {
+          "name": "Assignment 2 (COMP3027)",
+          "dueAt": "2026-04-15T13:59:59Z",
+          "url": "https://canvas.sydney.edu.au/courses/69873/assignments/663563"
+        },
+        {
+          "name": "Assignment 3 (COMP3027)",
+          "dueAt": "2026-05-06T13:59:59Z",
+          "url": "https://canvas.sydney.edu.au/courses/69873/assignments/663565"
+        },
+        {
+          "name": "Assignment 4 (COMP3027)",
+          "dueAt": "2026-05-20T13:59:59Z",
+          "url": "https://canvas.sydney.edu.au/courses/69873/assignments/663567"
+        },
+        {
+          "name": "Assignment 1 (COMP3927)",
+          "dueAt": "2026-03-25T12:59:00Z",
+          "url": "https://canvas.sydney.edu.au/courses/69873/assignments/663562"
+        },
+        {
+          "name": "Assignment 2 (COMP3927)",
+          "dueAt": "2026-04-15T13:59:59Z",
+          "url": "https://canvas.sydney.edu.au/courses/69873/assignments/663564"
+        },
+        {
+          "name": "Assignment 3 (COMP3927)",
+          "dueAt": "2026-05-06T13:59:59Z",
+          "url": "https://canvas.sydney.edu.au/courses/69873/assignments/663566"
+        },
+        {
+          "name": "Assignment 4 (COMP3927)",
+          "dueAt": "2026-05-20T13:59:59Z",
+          "url": "https://canvas.sydney.edu.au/courses/69873/assignments/663568"
+        },
+        {
+          "name": "Quiz 1: Greedy",
+          "dueAt": "2026-03-11T12:59:59Z",
+          "url": "https://canvas.sydney.edu.au/courses/69873/assignments/663557"
+        },
+        {
+          "name": "Quiz 2: Divide & Conquer",
+          "dueAt": "2026-03-18T12:59:59Z",
+          "url": "https://canvas.sydney.edu.au/courses/69873/assignments/663556"
+        },
+        {
+          "name": "Quiz 3: Dynamic Programming 1",
+          "dueAt": "2026-03-25T12:59:59Z",
+          "url": "https://canvas.sydney.edu.au/courses/69873/assignments/663547"
+        },
+        {
+          "name": "Quiz 4: Dynamic Programming 2",
+          "dueAt": "2026-04-01T12:59:59Z",
+          "url": "https://canvas.sydney.edu.au/courses/69873/assignments/663546"
+        },
+        {
+          "name": "Quiz 5: Flow Networks 1",
+          "dueAt": "2026-04-15T13:59:59Z",
+          "url": "https://canvas.sydney.edu.au/courses/69873/assignments/663553"
+        },
+        {
+          "name": "Quiz 6: Flow Networks 2",
+          "dueAt": "2026-04-22T13:59:59Z",
+          "url": "https://canvas.sydney.edu.au/courses/69873/assignments/663558"
+        },
+        {
+          "name": "Quiz 7: Circulation and Reductions",
+          "dueAt": "2026-04-29T13:59:59Z",
+          "url": "https://canvas.sydney.edu.au/courses/69873/assignments/663560"
+        },
+        {
+          "name": "Quiz 8: Complexity 1",
+          "dueAt": "2026-05-06T13:59:59Z",
+          "url": "https://canvas.sydney.edu.au/courses/69873/assignments/663552"
+        },
+        {
+          "name": "Quiz 9: Complexity 2",
+          "dueAt": "2026-05-16T13:59:59Z",
+          "url": "https://canvas.sydney.edu.au/courses/69873/assignments/663559"
+        },
+        {
+          "name": "Quiz 10: Coping with Hardness",
+          "dueAt": "2026-05-20T13:59:59Z",
+          "url": "https://canvas.sydney.edu.au/courses/69873/assignments/663548"
+        },
+        {
+          "name": "Quiz 11: A Bit of Everything",
+          "dueAt": "2026-05-27T13:59:59Z",
+          "url": "https://canvas.sydney.edu.au/courses/69873/assignments/663554"
+        },
+        {
+          "name": "Quiz 12: More Bits of Everything",
+          "dueAt": "2026-06-03T13:59:59Z",
+          "url": "https://canvas.sydney.edu.au/courses/69873/assignments/663555"
+        }
+      ]
+    },
+    {
+      "code": "COMP4347",
+      "name": "COMP4347 COMP5347 Web Application Development",
+      "canvasCourseId": 69864,
+      "modules": [
+        {
+          "name": "Introduction Module",
+          "items": [
+            {
+              "title": "Unit Introduction",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69864/modules/items/2987746"
+            },
+            {
+              "title": "Meet the teaching team",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69864/modules/items/2987747"
+            },
+            {
+              "title": "Unit Schedule",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69864/modules/items/2987748"
+            },
+            {
+              "title": "Assessment overview",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69864/modules/items/2987749"
+            },
+            {
+              "title": "Related Resources",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69864/modules/items/2987750"
+            },
+            {
+              "title": "Help & Support",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69864/modules/items/2987751"
+            },
+            {
+              "title": "Related Resources ",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69864/modules/items/2987754"
+            }
+          ]
+        },
+        {
+          "name": "Useful Resources",
+          "items": [
+            {
+              "title": "Group Projects - Code Repository",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69864/modules/items/2987755"
+            }
+          ]
+        },
+        {
+          "name": "Lecture and Tutorial Materials",
+          "items": [
+            {
+              "title": "Week 1 - Unit Introduction, How the Web Works and Javascript (Intro)",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69864/modules/items/2987760",
+              "week": 1
+            },
+            {
+              "title": "Week 2 - Introduction to HTML and CSS",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69864/modules/items/2987761",
+              "week": 2
+            },
+            {
+              "title": "Week 3 - CSS Layout and DOM Manipulation",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69864/modules/items/2987762",
+              "week": 3
+            },
+            {
+              "title": "Week 4 - The Browser and the Rendering Process",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69864/modules/items/2987763",
+              "week": 4
+            },
+            {
+              "title": "Week 5 - Server-side Development with Node",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69864/modules/items/2987764",
+              "week": 5
+            },
+            {
+              "title": "Week 6 - Node.js MVC Architecture, Sessions and Introduction to MongoDB",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69864/modules/items/2987765",
+              "week": 6
+            },
+            {
+              "title": "Week 7 - Database and Connecting to MongoDB",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69864/modules/items/2987766",
+              "week": 7
+            },
+            {
+              "title": "Week 8 - Client-Side Development with jQuery and AJAX",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69864/modules/items/2987767",
+              "week": 8
+            },
+            {
+              "title": "Week 9 - Front-End Development Frameworks",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69864/modules/items/2987768",
+              "week": 9
+            },
+            {
+              "title": "Week 10 - Web Services",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69864/modules/items/2987769",
+              "week": 10
+            },
+            {
+              "title": "Week 11 - Web Security",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69864/modules/items/2987770",
+              "week": 11
+            },
+            {
+              "title": "Week 12 - Industry Speaker",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69864/modules/items/2987771",
+              "week": 12
+            }
+          ]
+        },
+        {
+          "name": "Lab Solutions",
+          "items": [
+            {
+              "title": "Current Lab Solutions",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69864/modules/items/3061892"
+            }
+          ]
+        },
+        {
+          "name": "Assignment",
+          "items": [
+            {
+              "title": "Assignment 2 - Full Stack Group Project",
+              "type": "Assignment",
+              "url": "https://canvas.sydney.edu.au/courses/69864/modules/items/2987773"
+            }
+          ]
+        }
+      ],
+      "files": [],
+      "assignments": [
+        {
+          "name": "[ed] Assignment 1",
+          "dueAt": "2026-03-20T12:59:59Z",
+          "url": "https://canvas.sydney.edu.au/courses/69864/assignments/680597"
+        },
+        {
+          "name": "Assignment 2 - Full Stack Group Project",
+          "dueAt": "2026-05-18T13:00:00Z",
+          "url": "https://canvas.sydney.edu.au/courses/69864/assignments/666442"
+        }
+      ]
+    },
+    {
+      "code": "COMP4349",
+      "name": "COMP4349 COMP5349 Cloud Computing",
+      "canvasCourseId": 69865,
+      "modules": [
+        {
+          "name": "Introduction Module",
+          "items": [
+            {
+              "title": "Unit Introduction",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69865/modules/items/2987785"
+            },
+            {
+              "title": "Meet the teaching team",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69865/modules/items/2987786"
+            },
+            {
+              "title": "Unit Schedule",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69865/modules/items/2987787"
+            },
+            {
+              "title": "Assessment overview",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69865/modules/items/2987788"
+            },
+            {
+              "title": "Help & Support",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69865/modules/items/2987789"
+            }
+          ]
+        },
+        {
+          "name": "Week 1: Course Organisation and Intro to Cloud Computing",
+          "items": [
+            {
+              "title": "Administravia",
+              "type": "File",
+              "url": "https://canvas.sydney.edu.au/courses/69865/modules/items/3054283",
+              "week": 1
+            },
+            {
+              "title": "Introduction to Cloud Computing",
+              "type": "File",
+              "url": "https://canvas.sydney.edu.au/courses/69865/modules/items/3054284",
+              "week": 1
+            },
+            {
+              "title": "Week 1 Lab",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69865/modules/items/2987792",
+              "week": 1
+            }
+          ]
+        },
+        {
+          "name": "Week 2: Cloud Storage",
+          "items": [
+            {
+              "title": "L2_cloud_storage.pdf",
+              "type": "File",
+              "url": "https://canvas.sydney.edu.au/courses/69865/modules/items/3057939",
+              "week": 2
+            },
+            {
+              "title": "Week 2 Lab",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69865/modules/items/2987794",
+              "week": 2
+            }
+          ]
+        },
+        {
+          "name": "Week 3: Cloud Compute Service",
+          "items": [
+            {
+              "title": "L3_virtualisation_EC2.pdf",
+              "type": "File",
+              "url": "https://canvas.sydney.edu.au/courses/69865/modules/items/2987795",
+              "week": 3
+            },
+            {
+              "title": "Week 3 Lab",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69865/modules/items/2987796",
+              "week": 3
+            }
+          ]
+        },
+        {
+          "name": "Week 4: Cloud Database",
+          "items": [
+            {
+              "title": "L4_Cloud_Database.pdf",
+              "type": "File",
+              "url": "https://canvas.sydney.edu.au/courses/69865/modules/items/3065101",
+              "week": 4
+            },
+            {
+              "title": "Week 4 Lab",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69865/modules/items/2987798",
+              "week": 4
+            }
+          ]
+        },
+        {
+          "name": "Week 5: Cloud Networking",
+          "items": [
+            {
+              "title": "L5_cloud_networking.pdf",
+              "type": "File",
+              "url": "https://canvas.sydney.edu.au/courses/69865/modules/items/3068794",
+              "week": 5
+            },
+            {
+              "title": "Week 5 Lab",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69865/modules/items/2987800",
+              "week": 5
+            }
+          ]
+        },
+        {
+          "name": "Week 6: Cloud Security",
+          "items": [
+            {
+              "title": "L6_cloud_security.pdf",
+              "type": "File",
+              "url": "https://canvas.sydney.edu.au/courses/69865/modules/items/3073536",
+              "week": 6
+            },
+            {
+              "title": "Week 6 Lab",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69865/modules/items/2987802",
+              "week": 6
+            }
+          ]
+        },
+        {
+          "name": "Week 7: Elasticity and High Availability",
+          "items": [
+            {
+              "title": "L7_elasticity.pdf",
+              "type": "File",
+              "url": "https://canvas.sydney.edu.au/courses/69865/modules/items/2987803",
+              "week": 7
+            },
+            {
+              "title": "Week 7 Lab",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69865/modules/items/2987804",
+              "week": 7
+            }
+          ]
+        },
+        {
+          "name": "Week 8: Cloud Automation",
+          "items": [
+            {
+              "title": "Week 8: CloudFormation",
+              "type": "File",
+              "url": "https://canvas.sydney.edu.au/courses/69865/modules/items/3083470",
+              "week": 8
+            },
+            {
+              "title": "Week 8 Lab",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69865/modules/items/2987806",
+              "week": 8
+            }
+          ]
+        },
+        {
+          "name": "Week 9: CodePipeline and Decoupled Architecture",
+          "items": [
+            {
+              "title": " Lecture 9: CodePipeline and Decoupled Architecture (updated 07/05/26 20:05)",
+              "type": "File",
+              "url": "https://canvas.sydney.edu.au/courses/69865/modules/items/3091061",
+              "week": 9
+            },
+            {
+              "title": "Week 9 Lab",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69865/modules/items/2987808",
+              "week": 9
+            }
+          ]
+        },
+        {
+          "name": "Week 10: Container and Microservice Architecture",
+          "items": [
+            {
+              "title": "Lecture 10: Container and Microservice Architecture (Updated: 07/05/26 20:05)",
+              "type": "File",
+              "url": "https://canvas.sydney.edu.au/courses/69865/modules/items/3096528",
+              "week": 10
+            },
+            {
+              "title": "Week 10 Lab",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69865/modules/items/2987810",
+              "week": 10
+            }
+          ]
+        },
+        {
+          "name": "Week 11: Serverless Computing",
+          "items": [
+            {
+              "title": "Lecture 11: Serverless Computing",
+              "type": "File",
+              "url": "https://canvas.sydney.edu.au/courses/69865/modules/items/3103292",
+              "week": 11
+            },
+            {
+              "title": "Week 11 Lab",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69865/modules/items/2987812",
+              "week": 11
+            }
+          ]
+        }
+      ],
+      "files": [],
+      "assignments": [
+        {
+          "name": "Weekly Lab Practice",
+          "dueAt": null,
+          "url": "https://canvas.sydney.edu.au/courses/69865/assignments/666454"
+        },
+        {
+          "name": "AWS Deployment Exercise",
+          "dueAt": "2026-04-22T13:59:59Z",
+          "url": "https://canvas.sydney.edu.au/courses/69865/assignments/666445"
+        },
+        {
+          "name": "AWS Deployment Project",
+          "dueAt": "2026-05-29T13:59:00Z",
+          "url": "https://canvas.sydney.edu.au/courses/69865/assignments/687803"
+        }
+      ]
+    },
+    {
+      "code": "INFO4444",
+      "name": "INFO4444 Computing 4 Innovation",
+      "canvasCourseId": 69929,
+      "modules": [
+        {
+          "name": "Unit Information",
+          "items": [
+            {
+              "title": "Staff and Contacts",
+              "type": "Page",
+              "url": "https://canvas.sydney.edu.au/courses/69929/modules/items/2973135"
+            }
+          ]
+        },
+        {
+          "name": "Module 1: Innovation Frameworks",
+          "items": [
+            {
+              "title": "INFO4444_Week 1_Introduction_IT Innovations.pdf",
+              "type": "File",
+              "url": "https://canvas.sydney.edu.au/courses/69929/modules/items/3052122",
+              "week": 1
+            },
+            {
+              "title": "INFO4444_Week 1_Adminitrivia_Introduction.pdf",
+              "type": "File",
+              "url": "https://canvas.sydney.edu.au/courses/69929/modules/items/3052126",
+              "week": 1
+            },
+            {
+              "title": "INFO4444_Week 1_Tutorial_Importance of Innovation.pdf",
+              "type": "File",
+              "url": "https://canvas.sydney.edu.au/courses/69929/modules/items/3053486",
+              "week": 1
+            },
+            {
+              "title": "Week 2 Pre-recorded Lecture",
+              "type": "ExternalUrl",
+              "url": "https://canvas.sydney.edu.au/api/v1/courses/69929/module_item_redirect/3056119",
+              "week": 2
+            },
+            {
+              "title": "INFO4444_Week 2_Innovation Frameworks I – Dynamics of IT Innovation and Dominant Design.pdf",
+              "type": "File",
+              "url": "https://canvas.sydney.edu.au/courses/69929/modules/items/3056118",
+              "week": 2
+            },
+            {
+              "title": "INFO4444_Week 2_Tutorial_Dominant Design.pdf",
+              "type": "File",
+              "url": "https://canvas.sydney.edu.au/courses/69929/modules/items/3057162",
+              "week": 2
+            },
+            {
+              "title": "INFO4444 - Assignment-1.pdf",
+              "type": "File",
+              "url": "https://canvas.sydney.edu.au/courses/69929/modules/items/3056117"
+            },
+            {
+              "title": "INFO4444_Week3_Disruptive_Innovation_UPDATED_v2.pdf",
+              "type": "File",
+              "url": "https://canvas.sydney.edu.au/courses/69929/modules/items/3060686",
+              "week": 3
+            },
+            {
+              "title": "INFO4444_Week3 Tutorial-2025-Diffusion_of_Innovation UPDATED.pdf",
+              "type": "File",
+              "url": "https://canvas.sydney.edu.au/courses/69929/modules/items/3061317",
+              "week": 3
+            }
+          ]
+        },
+        {
+          "name": "Module 2: Intellectual Property: Proprietary Technologies & Open Innovation",
+          "items": [
+            {
+              "title": "INFO4444_Week 4_Open and Closed Innovation.pdf",
+              "type": "File",
+              "url": "https://canvas.sydney.edu.au/courses/69929/modules/items/3063568",
+              "week": 4
+            },
+            {
+              "title": "INFO4444_Week4 Tutorial_Open Innovations adopted by Companies.pdf",
+              "type": "File",
+              "url": "https://canvas.sydney.edu.au/courses/69929/modules/items/3064219",
+              "week": 4
+            },
+            {
+              "title": "INFO4444_Week5_Open Data, Free and Open-Source Software.pdf",
+              "type": "File",
+              "url": "https://canvas.sydney.edu.au/courses/69929/modules/items/3066679",
+              "week": 5
+            },
+            {
+              "title": "INFO4444 Tutorial Week 5 Distributed Innovation Crowdsourcing open data and open source software.pdf",
+              "type": "File",
+              "url": "https://canvas.sydney.edu.au/courses/69929/modules/items/3067796",
+              "week": 5
+            },
+            {
+              "title": "Week 6.pdf",
+              "type": "File",
+              "url": "https://canvas.sydney.edu.au/courses/69929/modules/items/3070813",
+              "week": 6
+            },
+            {
+              "title": "INFO4444_Week 7.pdf",
+              "type": "File",
+              "url": "https://canvas.sydney.edu.au/courses/69929/modules/items/3076816",
+              "week": 7
+            },
+            {
+              "title": "INFO4444 - Assignment-2.pdf",
+              "type": "File",
+              "url": "https://canvas.sydney.edu.au/courses/69929/modules/items/3076817"
+            },
+            {
+              "title": "INFO4444 - Group Assignment.pdf",
+              "type": "File",
+              "url": "https://canvas.sydney.edu.au/courses/69929/modules/items/3076820"
+            },
+            {
+              "title": "07_INFO4444_Tutorial.pdf",
+              "type": "File",
+              "url": "https://canvas.sydney.edu.au/courses/69929/modules/items/3078392"
+            }
+          ]
+        },
+        {
+          "name": "Module 3: Commercialisation and Business Strategies for Innovation",
+          "items": [
+            {
+              "title": "Week 08_Commercialization I.pdf",
+              "type": "File",
+              "url": "https://canvas.sydney.edu.au/courses/69929/modules/items/3081465",
+              "week": 8
+            },
+            {
+              "title": "08_INFO4444_Tutorial_Commercialisation_I.pdf",
+              "type": "File",
+              "url": "https://canvas.sydney.edu.au/courses/69929/modules/items/3082228"
+            },
+            {
+              "title": "INFO4444_Week 09_Commercialization II.pdf",
+              "type": "File",
+              "url": "https://canvas.sydney.edu.au/courses/69929/modules/items/3093465",
+              "week": 9
+            },
+            {
+              "title": "INFO4444_Week10_Commercilization III.pdf",
+              "type": "File",
+              "url": "https://canvas.sydney.edu.au/courses/69929/modules/items/3093466",
+              "week": 10
+            },
+            {
+              "title": "10_INFO4444_Tutorial_Commercialization_III_2026.pdf",
+              "type": "File",
+              "url": "https://canvas.sydney.edu.au/courses/69929/modules/items/3095150"
+            }
+          ]
+        },
+        {
+          "name": "Module 4: Innovation At-Scale",
+          "items": [
+            {
+              "title": "Week 11_INFO4444_Innovation ecosystems.pdf",
+              "type": "File",
+              "url": "https://canvas.sydney.edu.au/courses/69929/modules/items/3098868",
+              "week": 11
+            },
+            {
+              "title": "Week 11 Pre-recording",
+              "type": "ExternalUrl",
+              "url": "https://canvas.sydney.edu.au/api/v1/courses/69929/module_item_redirect/3098870",
+              "week": 11
+            },
+            {
+              "title": "11_INFO4444_Tutorial_Innovation Ecosystem.docx",
+              "type": "File",
+              "url": "https://canvas.sydney.edu.au/courses/69929/modules/items/3102264"
+            },
+            {
+              "title": "12_INFO4444_Organizational Culture and Structure for Innovation and Judging IT Innovation.pdf",
+              "type": "File",
+              "url": "https://canvas.sydney.edu.au/courses/69929/modules/items/3109104"
+            }
+          ]
+        },
+        {
+          "name": "Unit Revision ",
+          "items": []
+        }
+      ],
+      "files": [],
+      "assignments": [
+        {
+          "name": "Oral/Viva - Assignment 1",
+          "dueAt": "2026-03-30T12:59:00Z",
+          "url": "https://canvas.sydney.edu.au/courses/69929/assignments/681305"
+        },
+        {
+          "name": "Assignment Oral/Viva - Assignment 2",
+          "dueAt": "2026-05-16T13:59:00Z",
+          "url": "https://canvas.sydney.edu.au/courses/69929/assignments/683609"
+        },
+        {
+          "name": "Group Report",
+          "dueAt": "2026-05-18T13:59:00Z",
+          "url": "https://canvas.sydney.edu.au/courses/69929/assignments/683610"
+        }
+      ]
+    }
+  ]
+}

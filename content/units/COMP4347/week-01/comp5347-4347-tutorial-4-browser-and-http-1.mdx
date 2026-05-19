@@ -1,0 +1,41 @@
+---
+title: COMP5347_4347 Tutorial 4 Browser and HTTP 1
+unit: COMP4347
+week: 1
+type: tutorial
+status: synced
+sourceFile: COMP5347_4347 Tutorial 4 Browser and HTTP 1.pdf
+module: Manual upload
+localFile: data/sources/COMP4347/COMP5347_4347_Tutorial_4_Browser_and_HTTP_1.pdf
+fetchedAt: 2026-05-19T04:02:35.699Z
+fileSize: 683410
+fileContentType: application/pdf
+---
+
+{/* note-summary-start */}
+## Summary
+
+This Week 4 tutorial inspects HTTP request/response messages and browser fetching behaviour, reinforcing the protocol and rendering material from the lecture on the critical rendering path.
+
+- Crafting raw HTTP/1.0 and HTTP/1.1 requests over `telnet` (note the mandatory `Host:` header in 1.1 and persistent connections vs immediate close in 1.0).
+- Reading status line (protocol version, status code, status message) and headers (`Server`, `ETag`, `Content-Type`).
+- Conditional GETs with `If-None-Match` returning `304 Not Modified` with empty body.
+- DevTools Network panel: per-request timing, status codes, identifying which server sends cache directives.
+- Rendering events: `DOMContentLoaded` vs `Load`, and why image/asset requests delay the latter.
+
+Exam focus: given a raw request/response, identify method, version, status, and caching headers; explain the gap between request completion and `DOMContentLoaded`, and why a `.webp` request takes far longer than the HTML.
+
+{/* note-summary-end */}
+
+> Manually uploaded COMP5347_4347 Tutorial 4 Browser and HTTP 1.pdf. Edit this note any time.
+
+{/* canvas-extract-start */}
+<details>
+<summary>Source text (auto-extracted · 5 pages)</summary>
+
+```text
+1 COMP5347/4347 Tutorial School of Computer Science COMP5347/4347: Web Application Development Week 4 Tutorial: HTTP and Browser Performance Learning Objectives • Understand HTTP Protocol • Understand browser behavior with respect to requesting resources and rendering process Task 1: Examine the HTTP protocol using TELNET/SSH Start PUTTY and set up a SSH session to soitpa10005.shared.sydney.edu.au using your unikey and password. a) In the SSH window type the following command: telnet awsprdapp4837.shared.sydney.edu.au 80 GET /week4.html HTTP/1.0 You need to type Enter key an extra time after the GET command to send out the request. This will send out an HTTP 1.0 request to the server soitpa10005.shared.sydney.edu.au Examine the response message and identify the following fields from the status lines: Protocol Version Status Code Status Message Also Identify the following fields from the header line: Web Server ETag Content Type TCP connection closed? 2 COMP5347/4347 Tutorial b) Now type the following command to send out an HTTP/1.1 request telnet awsprdapp4837.shared.sydney.edu.au 80 GET /week4.html HTTP/1.1 Host: awsprdapp4837.shared.sydney.edu.au Remember to type Enter key twice to send out the request. You may have noticed that in the first request, the connection is closed immediately, while in the second one, the connection is still open and you are able to type in another request, that is, if your typing speed is fast. The connection will be closed after some timeout period. c) Now type the following command to send out a conditional request GET /week4.html HTTP/1.1 Host: awsprdapp4837.shared.sydney.edu.au If-None-Match: " 171-63092f55c2dac" Read the response message and identify the status code. You should expect an “HTTP/1.1 304 Not Modified” status code and message. The response should not contain any body. Task 2: Inspect browser HTTP request/response details with DevTool a) Start Google Chrome and open the developer tool same as you did in week 3 lab. In this week, we focus on the Network tab instead. Type the following URL in the address bar: http://awsprdapp4837.shared.sydney.edu.au/week4.html and type enter to send out the request. You should get a screen similar to the Figure 1 Figure 1: Screenshot of Network tab in DevTool The network panel provides a number of views. Figure 1 does not show overview and use “small request rows” option. You may switch between different views by clicking the two option icons after the View: item. You can inspect various details of each individual request by clicking the request and selecting what you want to view. For instance, Figure 2 shows the “timing” of request 3 COMP5347/4347 Tutorial week4.html, Figure 3 shows the headers of request HTML5.webp Use the information provided by DevTool to answer the following question regarding HTTP messages: Figure 2: Timing details of request week4.html Figure 3: Headers of request HTML5.webp • How many requests are sent by the browser? • Are the requests sent to the same server? • What are the response status codes for all requests? • Which server sends cache instructions and what are the instructions? 4 COMP5347/4347 Tutorial Use the information provided by DevTool to answer the following questions regarding browser rendering process: • What are the DOMContentLoaded time and the Load time? • What happens between these two events? • In Figure 1, there is a small gap between week4.html request time (8ms) and the DOMContentLoaded event time (14ms). What happens during the gap? • In Figure 1, the request for HTML5.webp took much 411ms while the request for week4.html took 8ms. You may have slightly different numbers in your DevTool. What is the main cause for delay in getting HTML5.webp. b) Right click on Chrome page and select “Inspect”. Click the “Application” tab and expand the “Cache Storage” in the left section options. Select a cache to view its contents and search for the two objects: week4.html and HTML5.webp. You should be able to find both. Clicking the link representing each object will display the actual cache entry. You will find the data captured are similar to the respective HTTP response header. For instance, both entries contain basic data such as Last Modified time. The cache entry of HTML5.webp contain the Cache-Control header and Expires time. The cache entry of week4.html contains ETag data. Theoretically, the browser will use cache validation mechanism for week4.html and cash expiration mechanism for HTML5.webp. We will see if that is the case. c) Now reload the page and inspect the content of Network panel (which would be similar to Figure 4 to answer the following questions: Figure 4: Reloading week4.html • what are the latencies for both requests? Are there any difference between the latencies observed in the previous question (first time requesting week4.html) • What are the DOMContentLoaded and load time? Are there any difference between the 5 COMP5347/4347 Tutorial time recorded in the previous question (first time requesting week4.html) • How does the browser obtain content of week4.html and HTML5.webp? d) Open DevTool on another tab, point the browser to the following URL: http://awsprdapp4837.shared.sydney.edu.au/week4withstyle.html Your network panel may look like Figure 5: Figure 5: Loading week4 with style.html Try to interpret the rendering process of the browser based on the DevTool information. This page has two supporting resources: style.css and HTML5.webp. In which order does the browser send request for each?
+```
+
+</details>
+{/* canvas-extract-end */}
