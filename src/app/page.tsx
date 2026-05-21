@@ -1,6 +1,10 @@
 import { getAllUnits, flattenNotesForSearch } from "@/lib/content";
 import { UnitCard } from "@/components/unit-card";
 import { AppShell } from "@/components/app-shell";
+import { TodayPanel } from "@/components/today-panel";
+
+// Today's date depends on server time when this renders; rebuild on each hit.
+export const dynamic = "force-dynamic";
 
 export default function HomePage() {
   const units = getAllUnits();
@@ -15,24 +19,15 @@ export default function HomePage() {
             Four units. One month. Pick a card.
           </p>
         </header>
+
+        <div className="mb-8">
+          <TodayPanel />
+        </div>
+
         <section className="grid grid-cols-1 gap-4 sm:grid-cols-2">
           {units.map((u) => <UnitCard key={u.code} unit={u} />)}
         </section>
-        <section className="mt-12 grid grid-cols-1 gap-4 sm:grid-cols-3">
-          <Tip title="1. Sync Canvas" body="Run pnpm sync once with your Canvas token in .env.local to pull modules, files, and exam dates." />
-          <Tip title="2. Generate notes" body="Open Claude Code in this repo and ask me to flesh out stubs in /content/units/<UNIT>." />
-          <Tip title="3. Study" body="Tick notes as read, rate confidence 1–5, watch the streak grow. State persists in this browser." />
-        </section>
       </div>
     </AppShell>
-  );
-}
-
-function Tip({ title, body }: { title: string; body: string }) {
-  return (
-    <div className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-4">
-      <div className="mb-1 text-xs uppercase tracking-wider text-[var(--color-muted)]">{title}</div>
-      <p className="text-sm text-[#d4d4d8]">{body}</p>
-    </div>
   );
 }

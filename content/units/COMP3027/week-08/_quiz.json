@@ -1,0 +1,307 @@
+{
+  "unit": "COMP3027",
+  "week": 8,
+  "topic": "Circulations and reductions",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "A circulation problem differs from a standard max-flow problem because it features:",
+      "choices": [
+        "A source and sink",
+        "Node demands and edge lower bounds",
+        "Real-valued capacities only",
+        "No directed edges"
+      ],
+      "correctIndex": 1,
+      "explanation": "Circulations have demands d_v at vertices and lower bounds l(e) on edges; there is no s, t and the question is feasibility, not maximisation."
+    },
+    {
+      "id": "q2",
+      "stem": "For a feasible circulation to exist, total supply and demand must:",
+      "choices": [
+        "Sum to zero (sum of d_v = 0)",
+        "Both be zero",
+        "Be balanced edge-by-edge",
+        "Differ by less than capacity"
+      ],
+      "correctIndex": 0,
+      "explanation": "If total demand exceeded total supply, no feasible circulation is possible. Equivalent: Sum d_v over all vertices = 0."
+    },
+    {
+      "id": "q3",
+      "stem": "Edge lower bounds l(e) on an edge mean the flow must satisfy:",
+      "choices": [
+        "f(e) >= l(e) and f(e) <= c(e)",
+        "f(e) <= l(e)",
+        "f(e) is integer",
+        "f(e) is zero unless l(e) = 0"
+      ],
+      "correctIndex": 0,
+      "explanation": "Lower bounds force a minimum amount of flow on the edge; capacity still upper-bounds."
+    },
+    {
+      "id": "q4",
+      "stem": "The reduction from circulations to max-flow proceeds by:",
+      "choices": [
+        "Removing all lower bounds and adding a super-source/super-sink to encode adjusted demands",
+        "Doubling all capacities",
+        "Running BFS",
+        "Solving an LP"
+      ],
+      "correctIndex": 0,
+      "explanation": "Pre-commit each l(e), adjust demands, add s*/t* with capacity = adjusted positive/negative demands; feasibility iff s*-edges all saturate."
+    },
+    {
+      "id": "q5",
+      "stem": "Project selection with prerequisites reduces to which problem?",
+      "choices": [
+        "Max-flow",
+        "Min s-t cut with infinity-capacity prerequisite edges",
+        "Min spanning tree",
+        "Bipartite matching"
+      ],
+      "correctIndex": 1,
+      "explanation": "Infinity-cap prerequisite edges force any cut to respect dependencies; min cut decodes to the optimal selection."
+    },
+    {
+      "id": "q6",
+      "stem": "In project selection, an edge with infinity capacity represents:",
+      "choices": [
+        "A profitable project",
+        "A hard prerequisite that must be respected",
+        "A required survey",
+        "A negative profit"
+      ],
+      "correctIndex": 1,
+      "explanation": "Infinity capacity makes the edge un-cuttable, forcing prerequisite projects to land on the same side of the cut."
+    },
+    {
+      "id": "q7",
+      "stem": "After running max-flow in the auxiliary circulation network, the original problem is feasible iff:",
+      "choices": [
+        "Max-flow is 0",
+        "Max-flow saturates every edge out of the super-source",
+        "Max-flow is integer",
+        "There is an augmenting path"
+      ],
+      "correctIndex": 1,
+      "explanation": "Saturated super-source edges mean every positive adjusted demand is met. If any super-source edge is not saturated, no feasible circulation exists."
+    },
+    {
+      "id": "q8",
+      "stem": "Adjusting demands after pre-committing lower bounds works because:",
+      "choices": [
+        "It shifts the flow's bookkeeping so the residual problem has 0 lower bound and modified demands",
+        "It's an approximation",
+        "It removes capacity constraints",
+        "It is a heuristic"
+      ],
+      "correctIndex": 0,
+      "explanation": "Lower-bound flow is committed; the unused capacity c(e) - l(e) carries the additional 'free' flow, and demands record the pre-commit imbalance."
+    },
+    {
+      "id": "q9",
+      "stem": "What is the BEST reason image segmentation is a min-cut problem rather than a max-flow problem?",
+      "choices": [
+        "Min-cut is faster",
+        "The 'either foreground or background' labelling corresponds to the two sides of a cut",
+        "Flow is unbounded",
+        "It avoids residual graphs"
+      ],
+      "correctIndex": 1,
+      "explanation": "Each pixel must end up on one side of an s-t cut; the cut cost encodes unselected likelihood plus boundary penalty."
+    },
+    {
+      "id": "q10",
+      "stem": "What constant offset is added to convert min-cut to MAX likelihood in image segmentation?",
+      "choices": [
+        "The number of pixels",
+        "Sum over i of (a_i + b_i)",
+        "Total penalty",
+        "Zero"
+      ],
+      "correctIndex": 1,
+      "explanation": "Adding Sum (a_i + b_i) converts 'minimise unselected likelihood' into 'maximise selected likelihood' minus penalty."
+    },
+    {
+      "id": "q11",
+      "stem": "Survey design with quotas per product line uses which feature of the flow framework?",
+      "choices": [
+        "Edge lower bounds (must serve each line >= quota)",
+        "Multiple sources",
+        "Negative capacities",
+        "Vertex capacities"
+      ],
+      "correctIndex": 0,
+      "explanation": "Each product line's quota becomes a lower bound on the edge from that line's node to the sink (or super-sink)."
+    },
+    {
+      "id": "q12",
+      "stem": "Which of the following is NOT a valid step in the reduction recipe?",
+      "choices": [
+        "Identify entities, encode them as nodes",
+        "Encode constraints as edges with capacities",
+        "Run the algorithm and skip the correctness proof",
+        "Define a decoding rule from flow back to a solution"
+      ],
+      "correctIndex": 2,
+      "explanation": "A reduction without correctness proof is incomplete; both directions of feasibility must be shown."
+    },
+    {
+      "id": "q13",
+      "stem": "Which combination of reduction features signals you should think 'circulation' rather than plain max-flow?",
+      "choices": [
+        "Single source, single sink",
+        "Capacity constraints only",
+        "Multiple sources/sinks with required minimum flows on some edges or quotas at vertices",
+        "Unit capacities"
+      ],
+      "correctIndex": 2,
+      "explanation": "Quotas + lower bounds + demands at multiple nodes are the circulation signature."
+    },
+    {
+      "id": "q14",
+      "stem": "Why do prerequisite edges in project selection have INFINITY capacity?",
+      "choices": [
+        "For numerical stability",
+        "So a cut never separates a project from a required prerequisite — they must stay together",
+        "To make the network faster",
+        "To force selection of all projects"
+      ],
+      "correctIndex": 1,
+      "explanation": "Infinite capacity makes the prerequisite edge uncuttable; the projects on either side of such edges must lie on the same side of the min cut."
+    },
+    {
+      "id": "q15",
+      "stem": "Which problem suggests NP-hardness rather than a flow reduction?",
+      "choices": [
+        "Bipartite Matching",
+        "Project Selection",
+        "TSP",
+        "Image Segmentation"
+      ],
+      "correctIndex": 2,
+      "explanation": "TSP has no known polynomial flow reduction and is NP-hard; the other three reduce to flow / min-cut."
+    },
+    {
+      "id": "q16",
+      "stem": "How does adding lower bounds to an edge change the residual graph framework?",
+      "choices": [
+        "Each edge with l(e) > 0 must always carry at least l(e); the residual is over c(e) - l(e) of free capacity",
+        "Residual graphs are no longer used",
+        "All capacities become zero",
+        "It doesn't"
+      ],
+      "correctIndex": 0,
+      "explanation": "After pre-committing l(e) flow, the slack is c(e) - l(e); the residual graph is built on this slack."
+    },
+    {
+      "id": "q17",
+      "stem": "In project selection, the optimal profit equals:",
+      "choices": [
+        "Total positive profit minus min cut capacity",
+        "Min cut capacity",
+        "Max-flow value",
+        "Sum of profits"
+      ],
+      "correctIndex": 0,
+      "explanation": "Min cut separates 'selected' from 'unselected'. Profit = (sum positive p_i) - cut capacity, where cut captures forgone positives + chosen negatives."
+    },
+    {
+      "id": "q18",
+      "stem": "A key property of all the reductions in Week 8 is:",
+      "choices": [
+        "Approximation",
+        "Polynomial-size constructed network and polynomial decoding",
+        "Use of LP relaxation",
+        "Exponential branching"
+      ],
+      "correctIndex": 1,
+      "explanation": "Polynomial reductions = polynomial network size + polynomial decoding. This is what makes them polynomial algorithms overall."
+    },
+    {
+      "id": "q19",
+      "stem": "Why are both 'feasible solution -> feasible flow' and 'feasible flow -> feasible solution' needed?",
+      "choices": [
+        "Style",
+        "To establish OBJ(I) = MAXFLOW (or MIN CUT), bounding inequality in both directions",
+        "Only one direction is enough",
+        "Two-direction proofs are required for greedy"
+      ],
+      "correctIndex": 1,
+      "explanation": "Each direction yields one inequality; together they pin equality, which is what the reduction asserts."
+    },
+    {
+      "id": "q20",
+      "stem": "In circulations, what does d_v < 0 mean?",
+      "choices": [
+        "v is a sink",
+        "v is a source supplying -d_v units",
+        "v is forbidden",
+        "v has no edges"
+      ],
+      "correctIndex": 1,
+      "explanation": "Negative demand = supply. Total Sum d_v = 0 is mandatory."
+    },
+    {
+      "id": "q21",
+      "stem": "Which reduction adapts max-flow to compute the MINIMUM number of source-sink paths needed to cover all vertices?",
+      "choices": [
+        "Bipartite Matching",
+        "Image Segmentation",
+        "Path cover via bipartite matching",
+        "Project Selection"
+      ],
+      "correctIndex": 2,
+      "explanation": "Path cover on a DAG reduces to bipartite matching (each vertex split into in/out copies); min path cover = n - max matching."
+    },
+    {
+      "id": "q22",
+      "stem": "If a circulation auxiliary max-flow does NOT saturate all super-source edges, you conclude:",
+      "choices": [
+        "Negative cycles exist",
+        "No feasible circulation exists",
+        "Lower bounds were too small",
+        "Use Edmonds-Karp instead"
+      ],
+      "correctIndex": 1,
+      "explanation": "Failure to saturate means some demand cannot be met; equivalent to infeasibility."
+    },
+    {
+      "id": "q23",
+      "stem": "Which is a hallmark of converting a MAX objective into a MIN-CUT problem?",
+      "choices": [
+        "Negating all weights",
+        "Subtracting from a problem-specific constant so 'max benefit' becomes 'min unselected + penalty'",
+        "Sorting the input",
+        "Adding capacities"
+      ],
+      "correctIndex": 1,
+      "explanation": "Image segmentation is the canonical example. The cut captures lost likelihood + boundary penalty; subtract from constant Sum(a + b)."
+    },
+    {
+      "id": "q24",
+      "stem": "Which is NOT a recognised application of circulations?",
+      "choices": [
+        "Survey design",
+        "Airline crew scheduling with minimum staffing",
+        "Sorting an array",
+        "Project selection with quotas"
+      ],
+      "correctIndex": 2,
+      "explanation": "Sorting is not a network-flow problem. The other three encode demand/lower-bound constraints."
+    },
+    {
+      "id": "q25",
+      "stem": "The transition from Week 8 to Week 9 is motivated by:",
+      "choices": [
+        "More efficient max-flow algorithms",
+        "Problems that resist polynomial-size flow reductions, requiring complexity-theoretic tools",
+        "Linear programming",
+        "Greedy heuristics"
+      ],
+      "correctIndex": 1,
+      "explanation": "Week 9 starts NP-hardness: problems for which no polynomial reduction to flow is known, and where reductions instead show hardness."
+    }
+  ]
+}

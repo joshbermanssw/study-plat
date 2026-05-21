@@ -1,0 +1,307 @@
+{
+  "unit": "COMP3027",
+  "week": 7,
+  "topic": "Flow networks (continued)",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "Bipartite Matching reduces to max-flow on a network where edges have capacity:",
+      "choices": [
+        "Infinity",
+        "1 on every edge (s-edges, middle edges, t-edges)",
+        "Equal to the matching size",
+        "Equal to the number of neighbours"
+      ],
+      "correctIndex": 1,
+      "explanation": "Unit capacities ensure each L-vertex and R-vertex is matched at most once and let integrality produce a combinatorial matching."
+    },
+    {
+      "id": "q2",
+      "stem": "What is the running time of Edmonds-Karp?",
+      "choices": [
+        "O(m + n)",
+        "O(mF)",
+        "O(m^2 n)",
+        "O(n^3)"
+      ],
+      "correctIndex": 2,
+      "explanation": "BFS for shortest augmenting paths gives O(mn) augmentations * O(m) per augmentation = O(m^2 n)."
+    },
+    {
+      "id": "q3",
+      "stem": "Why is integrality crucial for max-flow-as-reduction?",
+      "choices": [
+        "It allows non-integer capacities",
+        "It ensures the algorithmic output corresponds to a combinatorial solution (0/1 selections)",
+        "It runs faster",
+        "It guarantees uniqueness"
+      ],
+      "correctIndex": 1,
+      "explanation": "Fractional flows in the original network would not decode to discrete combinatorial objects (matchings, paths). Integrality gives a clean decoding."
+    },
+    {
+      "id": "q4",
+      "stem": "Konig's theorem says, in bipartite graphs:",
+      "choices": [
+        "Max matching = min vertex cover",
+        "Max matching = max independent set",
+        "Min edge cover = max clique",
+        "Max flow = min spanning tree"
+      ],
+      "correctIndex": 0,
+      "explanation": "Konig's theorem is the bipartite case of LP duality; it follows from MFMC on the matching network."
+    },
+    {
+      "id": "q5",
+      "stem": "Menger's theorem (edge version) states:",
+      "choices": [
+        "Max # edge-disjoint s-t paths = min # edges whose removal disconnects s from t",
+        "Max matching = min cover",
+        "Max flow value = sum of capacities",
+        "All graphs have an Eulerian path"
+      ],
+      "correctIndex": 0,
+      "explanation": "Menger follows from MFMC with unit-capacity edges: max-flow = max edge-disjoint paths = min edge cut."
+    },
+    {
+      "id": "q6",
+      "stem": "Image segmentation is reduced to:",
+      "choices": [
+        "Max flow",
+        "Min s-t cut",
+        "Max matching",
+        "Min spanning tree"
+      ],
+      "correctIndex": 1,
+      "explanation": "The MIN s-t cut separates foreground (A side) from background (B side); a constant offset turns the MAX likelihood into a MIN cost."
+    },
+    {
+      "id": "q7",
+      "stem": "How is multi-source max-flow reduced to standard single-source/single-sink?",
+      "choices": [
+        "Add a super-source connected to each original source with capacity = supply",
+        "Run the algorithm on each source independently",
+        "Merge sources into one vertex",
+        "Use breadth-first search"
+      ],
+      "correctIndex": 0,
+      "explanation": "Standard trick: super-source / super-sink with supply / demand capacities; symmetric for multi-sink."
+    },
+    {
+      "id": "q8",
+      "stem": "What is capacity scaling's main advantage?",
+      "choices": [
+        "Works for irrational capacities (Edmonds-Karp already does)",
+        "Runtime is O(m^2 log C), better than O(m^2 n) when C is small",
+        "It is exact only in expectation",
+        "It needs no residual graph"
+      ],
+      "correctIndex": 1,
+      "explanation": "Capacity scaling phases by halving threshold Delta give O(m^2 log C); useful when max capacity C is large but path counts are small."
+    },
+    {
+      "id": "q9",
+      "stem": "After computing max bipartite matching as max-flow, the matching is read off by:",
+      "choices": [
+        "Picking edges f(u, v) = 1",
+        "Sorting edges by weight",
+        "Running BFS from s",
+        "Picking saturated cut edges"
+      ],
+      "correctIndex": 0,
+      "explanation": "Middle edges saturated by integer flow are exactly the matched pairs."
+    },
+    {
+      "id": "q10",
+      "stem": "Why do both directions of the reduction equivalence need to be proved?",
+      "choices": [
+        "Style",
+        "To show OBJECTIVE(I) = MAXFLOW(G'); inequality in one direction alone is insufficient",
+        "Required by Ford-Fulkerson",
+        "Only matchings need both"
+      ],
+      "correctIndex": 1,
+      "explanation": "Forward (solution -> flow) shows MAXFLOW >= OBJ; backward (flow -> solution) shows OBJ >= MAXFLOW. Together they give equality."
+    },
+    {
+      "id": "q11",
+      "stem": "How would you reduce 'max number of vertex-disjoint s-t paths' to max-flow?",
+      "choices": [
+        "Use edge capacities equal to 1",
+        "Split each internal vertex v into v_in -> v_out with capacity 1 internal edge; capacity 1 on original edges",
+        "Subtract 1 from every capacity",
+        "Use BFS instead of max-flow"
+      ],
+      "correctIndex": 1,
+      "explanation": "Node-splitting transforms vertex-capacity 1 into edge-capacity 1 inside the constructed network."
+    },
+    {
+      "id": "q12",
+      "stem": "Bipartite Matching reduction's max-flow runtime is bounded by:",
+      "choices": [
+        "O(n^3)",
+        "O(m * min(|L|, |R|)) which is O(mn)",
+        "O(2^n)",
+        "O(log n)"
+      ],
+      "correctIndex": 1,
+      "explanation": "Ford-Fulkerson finds at most min(|L|, |R|) augmentations (max matching size), each O(m). With unit capacities this is tight."
+    },
+    {
+      "id": "q13",
+      "stem": "In the image segmentation network, neighbouring-pixel penalties p_{ij} appear as:",
+      "choices": [
+        "s-edge capacities",
+        "t-edge capacities",
+        "Two anti-parallel edges (i, j) and (j, i), each of capacity p_{ij}",
+        "Vertex capacities"
+      ],
+      "correctIndex": 2,
+      "explanation": "Anti-parallel pair so that whichever side i and j end up on, exactly one direction contributes p_{ij} to the cut."
+    },
+    {
+      "id": "q14",
+      "stem": "Which problem CANNOT be modelled as polynomial-size max-flow?",
+      "choices": [
+        "Bipartite Matching",
+        "Edge-disjoint s-t paths",
+        "Image Segmentation",
+        "Travelling Salesman (TSP)"
+      ],
+      "correctIndex": 3,
+      "explanation": "TSP is NP-hard and has no known polynomial reduction to max-flow. The others all do."
+    },
+    {
+      "id": "q15",
+      "stem": "Baseball elimination uses max-flow to determine:",
+      "choices": [
+        "Whether team z is mathematically already eliminated",
+        "Who wins each remaining game",
+        "Random schedule",
+        "The MVP"
+      ],
+      "correctIndex": 0,
+      "explanation": "Team z is eliminated iff max-flow in the constructed network < total remaining games, meaning some game outcomes are infeasible."
+    },
+    {
+      "id": "q16",
+      "stem": "After Edmonds-Karp terminates, the min cut is:",
+      "choices": [
+        "Picked by inspection",
+        "{vertices reachable from s in G_f} vs rest",
+        "Edges with f = 0",
+        "Vertices with degree > 1"
+      ],
+      "correctIndex": 1,
+      "explanation": "Same as standard Ford-Fulkerson — A = reachable set from s in G_f decodes the min cut."
+    },
+    {
+      "id": "q17",
+      "stem": "Which is FALSE about Edmonds-Karp?",
+      "choices": [
+        "It uses BFS to find augmenting paths",
+        "Its runtime depends on capacities",
+        "It is a strongly polynomial algorithm",
+        "Each augmentation increases path length monotonically"
+      ],
+      "correctIndex": 1,
+      "explanation": "Edmonds-Karp's O(m^2 n) bound does NOT depend on capacities — it is strongly polynomial."
+    },
+    {
+      "id": "q18",
+      "stem": "In a unit-capacity network, max-flow equals:",
+      "choices": [
+        "Total number of edges",
+        "Number of edge-disjoint s-t paths",
+        "Number of vertices",
+        "Number of s-edges"
+      ],
+      "correctIndex": 1,
+      "explanation": "By Menger / integrality, unit-capacity max-flow decomposes into that many edge-disjoint paths."
+    },
+    {
+      "id": "q19",
+      "stem": "What does the cut in the image-segmentation min-cut decode into?",
+      "choices": [
+        "A spanning tree",
+        "The labelling of pixels as foreground (s-side) or background (t-side)",
+        "A list of edges to remove",
+        "A path"
+      ],
+      "correctIndex": 1,
+      "explanation": "Vertices on the s-side = foreground; t-side = background. Cut capacity = total penalty + unchosen likelihoods."
+    },
+    {
+      "id": "q20",
+      "stem": "Why use a super-source/super-sink in matching, instead of treating each L-vertex as a source?",
+      "choices": [
+        "Notational convenience",
+        "It collapses multi-source/multi-sink into single-source/single-sink, so standard Ford-Fulkerson applies",
+        "It is faster algorithmically",
+        "Otherwise the graph is disconnected"
+      ],
+      "correctIndex": 1,
+      "explanation": "Single-source / single-sink is the standard max-flow setting; the super-source / super-sink trick is the universal way to reduce."
+    },
+    {
+      "id": "q21",
+      "stem": "In a bipartite matching reduction, what does a fractional max-flow of value 2.5 imply?",
+      "choices": [
+        "Matching of size 2.5",
+        "It cannot happen with integer capacities",
+        "Increase capacities",
+        "Switch to LP"
+      ],
+      "correctIndex": 1,
+      "explanation": "Integer capacities + Ford-Fulkerson => integer flow. A fractional value is impossible in this setting."
+    },
+    {
+      "id": "q22",
+      "stem": "Which capacity choice would make the bipartite matching reduction INCORRECT?",
+      "choices": [
+        "All edges capacity 1",
+        "s-edges capacity 2, others capacity 1",
+        "All edges capacity infinity",
+        "All edges capacity 0"
+      ],
+      "correctIndex": 1,
+      "explanation": "Capacity 2 on s-edges would let one L-vertex be 'matched' to two R-vertices, breaking the matching constraint."
+    },
+    {
+      "id": "q23",
+      "stem": "Network construction time for these reductions is usually:",
+      "choices": [
+        "Exponential",
+        "Polynomial in |I|, often linear",
+        "Constant",
+        "Unknown"
+      ],
+      "correctIndex": 1,
+      "explanation": "All reductions in Week 7 build a network of size polynomial (typically linear) in input size. Required for the overall algorithm to be polynomial."
+    },
+    {
+      "id": "q24",
+      "stem": "What is the typical way to convert a MAX objective into a min-cut formulation (e.g., image segmentation)?",
+      "choices": [
+        "Negate all capacities",
+        "Subtract the MAX objective from a problem-specific constant; what was max becomes min",
+        "Reverse all edges",
+        "Add slack edges"
+      ],
+      "correctIndex": 1,
+      "explanation": "Image segmentation expresses sum of likelihoods plus a constant offset, turning MAX likelihood into MIN of the cut capacity."
+    },
+    {
+      "id": "q25",
+      "stem": "Which is the safest exam strategy when given a problem that 'feels like' it might reduce to max-flow?",
+      "choices": [
+        "Guess and try",
+        "Identify nodes (entities), edges (constraints), capacities (limits), and check whether unit / integer capacities give the desired combinatorial decoding",
+        "Skip and try greedy",
+        "Use DP"
+      ],
+      "correctIndex": 1,
+      "explanation": "Disciplined reduction design: list entities, capture constraints as edges with capacities, then check integrality and decoding."
+    }
+  ]
+}

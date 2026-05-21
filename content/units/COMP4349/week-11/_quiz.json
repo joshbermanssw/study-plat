@@ -1,0 +1,182 @@
+{
+  "unit": "COMP4349",
+  "week": 11,
+  "topic": "Kubernetes",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "What is the smallest deployable unit in Kubernetes?",
+      "choices": ["Container", "Pod", "Deployment", "Node"],
+      "correctIndex": 1,
+      "explanation": "A Pod is the smallest schedulable unit and may contain one or more co-located containers sharing network and storage."
+    },
+    {
+      "id": "q2",
+      "stem": "Which Kubernetes component stores the cluster's persistent state?",
+      "choices": ["kubelet", "etcd", "kube-proxy", "scheduler"],
+      "correctIndex": 1,
+      "explanation": "etcd is the distributed key-value store backing the API server with cluster state."
+    },
+    {
+      "id": "q3",
+      "stem": "Which controller assigns Pods to nodes?",
+      "choices": ["kubelet", "kube-proxy", "kube-scheduler", "etcd"],
+      "correctIndex": 2,
+      "explanation": "The kube-scheduler watches for unscheduled Pods and binds them to suitable nodes."
+    },
+    {
+      "id": "q4",
+      "stem": "On a worker node, which component runs containers and reports status to the API server?",
+      "choices": ["kube-proxy", "kubelet", "etcd", "scheduler"],
+      "correctIndex": 1,
+      "explanation": "kubelet is the node agent that talks to the container runtime and the API server."
+    },
+    {
+      "id": "q5",
+      "stem": "Which Kubernetes object should you use for stateless web servers with rolling updates?",
+      "choices": ["StatefulSet", "Deployment", "DaemonSet", "Job"],
+      "correctIndex": 1,
+      "explanation": "Deployments manage stateless replicas with rolling updates and rollbacks via owned ReplicaSets."
+    },
+    {
+      "id": "q6",
+      "stem": "Which controller gives Pods stable network identities and persistent storage per replica?",
+      "choices": ["Deployment", "StatefulSet", "DaemonSet", "ReplicaSet"],
+      "correctIndex": 1,
+      "explanation": "StatefulSet provides ordered, named Pods (api-0, api-1) and per-replica PVCs — used for databases/queues."
+    },
+    {
+      "id": "q7",
+      "stem": "A DaemonSet ensures:",
+      "choices": ["One Pod per cluster", "One Pod per matching node", "One Pod per namespace", "Many Pods on one node"],
+      "correctIndex": 1,
+      "explanation": "DaemonSets place one Pod on each (matching) node — used for log shippers, node exporters, CNI plugins."
+    },
+    {
+      "id": "q8",
+      "stem": "Which Service type provisions a cloud load balancer in front of the Pods?",
+      "choices": ["ClusterIP", "NodePort", "LoadBalancer", "ExternalName"],
+      "correctIndex": 2,
+      "explanation": "LoadBalancer asks the cloud-controller-manager to provision an external LB (e.g. AWS NLB)."
+    },
+    {
+      "id": "q9",
+      "stem": "Which Kubernetes resource provides Layer-7 host/path routing for HTTP services?",
+      "choices": ["Service", "Ingress", "NetworkPolicy", "ConfigMap"],
+      "correctIndex": 1,
+      "explanation": "Ingress defines L7 routing rules; an Ingress Controller (e.g. AWS Load Balancer Controller) implements them as an ALB."
+    },
+    {
+      "id": "q10",
+      "stem": "An HPA scales:",
+      "choices": ["The number of nodes", "The number of Pod replicas based on CPU/memory/custom metrics", "PersistentVolumes", "Cluster Autoscaler"],
+      "correctIndex": 1,
+      "explanation": "The HorizontalPodAutoscaler adjusts replica count of a Deployment or StatefulSet to keep a target metric within bounds."
+    },
+    {
+      "id": "q11",
+      "stem": "Which scales the cluster by adding/removing EC2 nodes when Pods are pending or underutilised?",
+      "choices": ["HPA", "VPA", "Cluster Autoscaler / Karpenter", "kube-proxy"],
+      "correctIndex": 2,
+      "explanation": "Cluster Autoscaler (or Karpenter) provisions worker nodes to match aggregate Pod demand."
+    },
+    {
+      "id": "q12",
+      "stem": "Which probe controls whether a Pod is added to a Service's endpoint list?",
+      "choices": ["livenessProbe", "readinessProbe", "startupProbe", "initContainer"],
+      "correctIndex": 1,
+      "explanation": "readinessProbe failures remove the Pod from Service endpoints; livenessProbe failures restart the container."
+    },
+    {
+      "id": "q13",
+      "stem": "Which Kubernetes object is used to mount non-secret config into Pods?",
+      "choices": ["ConfigMap", "Secret", "Volume", "PersistentVolume"],
+      "correctIndex": 0,
+      "explanation": "ConfigMap stores plain configuration; Secret stores credentials (base64-encoded, optionally KMS-encrypted at rest)."
+    },
+    {
+      "id": "q14",
+      "stem": "On EKS, the recommended way to give a Pod least-privilege AWS permissions is:",
+      "choices": ["Attach an IAM role to the worker node", "IRSA (IAM Roles for Service Accounts)", "Embed access keys in Secrets", "Use the root account"],
+      "correctIndex": 1,
+      "explanation": "IRSA binds an IAM role to a ServiceAccount via an OIDC trust; Pods get short-lived credentials specific to that role."
+    },
+    {
+      "id": "q15",
+      "stem": "On EKS the default CNI plugin assigns Pods:",
+      "choices": ["Overlay IPs from a virtual network", "Real VPC IPs from subnets via the AWS VPC CNI", "Public IPs always", "No IPs"],
+      "correctIndex": 1,
+      "explanation": "AWS VPC CNI gives each Pod a routable VPC IP, simplifying integration with VPC features like security groups."
+    },
+    {
+      "id": "q16",
+      "stem": "Which Kubernetes mechanism prevents a Pod from being scheduled on a node unless the Pod tolerates a marking on that node?",
+      "choices": ["NodeSelector", "Affinity", "Taints and Tolerations", "Resource quotas"],
+      "correctIndex": 2,
+      "explanation": "Taints repel Pods unless they have a matching toleration — used to reserve nodes for specific workloads (GPU, system)."
+    },
+    {
+      "id": "q17",
+      "stem": "Which resource isolates groups of objects, scopes RBAC, and supports quotas?",
+      "choices": ["Namespace", "Label", "Annotation", "Cluster"],
+      "correctIndex": 0,
+      "explanation": "Namespaces partition the cluster for multi-tenancy; RBAC and ResourceQuotas apply per namespace."
+    },
+    {
+      "id": "q18",
+      "stem": "A rolling update with maxSurge=1 and maxUnavailable=0 ensures:",
+      "choices": ["Capacity drops by 1 during the update", "Capacity never drops below the desired count; one extra Pod is added at a time", "All Pods are replaced instantly", "No new Pods are created"],
+      "correctIndex": 1,
+      "explanation": "maxUnavailable=0 keeps full capacity throughout; maxSurge=1 caps the over-provisioning to one extra Pod at a time."
+    },
+    {
+      "id": "q19",
+      "stem": "Which command rolls a Deployment back to its previous ReplicaSet?",
+      "choices": ["kubectl rollback", "kubectl rollout undo deployment/<name>", "kubectl revert", "kubectl delete deployment/<name>"],
+      "correctIndex": 1,
+      "explanation": "`kubectl rollout undo` returns to the previous (or specified) revision of a Deployment."
+    },
+    {
+      "id": "q20",
+      "stem": "PersistentVolumeClaims for dynamic block storage on EKS are typically backed by:",
+      "choices": ["EFS via the EFS CSI", "EBS via the EBS CSI driver", "S3 via the S3 CSI", "Instance Store"],
+      "correctIndex": 1,
+      "explanation": "The EBS CSI driver dynamically provisions EBS volumes for PVCs; EFS is for shared file workloads."
+    },
+    {
+      "id": "q21",
+      "stem": "NetworkPolicy enforcement requires:",
+      "choices": ["No additional component", "A CNI that implements NetworkPolicy (e.g. Calico)", "Service mesh", "Ingress controller"],
+      "correctIndex": 1,
+      "explanation": "NetworkPolicy is a declarative API but only enforced if the CNI supports it (the default AWS VPC CNI does so with extensions like Calico or AWS NP)."
+    },
+    {
+      "id": "q22",
+      "stem": "Which Kubernetes object would you use to run a periodic batch job at 03:00 daily?",
+      "choices": ["Deployment", "Job", "CronJob", "DaemonSet"],
+      "correctIndex": 2,
+      "explanation": "CronJob schedules Jobs on a cron expression. A plain Job runs once to completion."
+    },
+    {
+      "id": "q23",
+      "stem": "On EKS, which option runs Pods on AWS-managed serverless capacity without managing EC2 worker nodes?",
+      "choices": ["Managed Node Groups", "EC2 self-managed nodes", "EKS Fargate profile", "Bare metal"],
+      "correctIndex": 2,
+      "explanation": "Fargate profiles allow specified Pods (by namespace/labels) to run on Fargate, abstracting away node ops."
+    },
+    {
+      "id": "q24",
+      "stem": "Which is the default Kubernetes Service type when none is specified?",
+      "choices": ["NodePort", "ClusterIP", "LoadBalancer", "ExternalName"],
+      "correctIndex": 1,
+      "explanation": "ClusterIP is the default: internal virtual IP usable only within the cluster."
+    },
+    {
+      "id": "q25",
+      "stem": "If a Pod's liveness probe fails, kubelet will:",
+      "choices": ["Remove it from the Service endpoints", "Restart the container", "Delete the node", "Open a support ticket"],
+      "correctIndex": 1,
+      "explanation": "livenessProbe failure causes kubelet to restart the container. Removal from endpoints is the readinessProbe's job."
+    }
+  ]
+}

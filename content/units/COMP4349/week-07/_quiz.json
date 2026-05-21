@@ -1,0 +1,182 @@
+{
+  "unit": "COMP4349",
+  "week": 7,
+  "topic": "Cloud Monitoring",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "Which AWS service is the primary destination for metrics, logs, and alarms?",
+      "choices": ["CloudTrail", "CloudWatch", "Config", "X-Ray"],
+      "correctIndex": 1,
+      "explanation": "CloudWatch is the unified metrics+logs+alarms service. CloudTrail records API calls; X-Ray handles traces."
+    },
+    {
+      "id": "q2",
+      "stem": "Memory utilisation on an EC2 instance is NOT visible to CloudWatch by default because:",
+      "choices": ["AWS does not allow it", "The hypervisor cannot read guest OS memory; you need the CloudWatch Agent", "Only EBS volumes are visible", "Memory is on the instance store"],
+      "correctIndex": 1,
+      "explanation": "The hypervisor sees CPU and network but not in-guest metrics. The CloudWatch Agent (or third-party) reads them from the OS."
+    },
+    {
+      "id": "q3",
+      "stem": "An alarm transitions to ALARM state when:",
+      "choices": ["The metric breaches threshold for the configured number of evaluation periods", "Any single data point crosses the threshold", "The metric is missing", "Insufficient data persists for 24h"],
+      "correctIndex": 0,
+      "explanation": "An alarm fires after the threshold is breached for the configured consecutive evaluation periods, not on a single data point."
+    },
+    {
+      "id": "q4",
+      "stem": "Which is NOT one of the four Google SRE 'golden signals'?",
+      "choices": ["Latency", "Traffic", "Errors", "Bandwidth"],
+      "correctIndex": 3,
+      "explanation": "The four golden signals are Latency, Traffic, Errors, and Saturation. Bandwidth is a component of saturation."
+    },
+    {
+      "id": "q5",
+      "stem": "Which AWS service provides distributed tracing for microservices?",
+      "choices": ["CloudWatch Logs", "X-Ray", "Config", "Athena"],
+      "correctIndex": 1,
+      "explanation": "X-Ray captures end-to-end traces across services, producing a service map of latencies and errors."
+    },
+    {
+      "id": "q6",
+      "stem": "EventBridge is the rebranded successor of which legacy service?",
+      "choices": ["CloudWatch Logs", "CloudWatch Events", "SNS", "SQS"],
+      "correctIndex": 1,
+      "explanation": "EventBridge supersedes CloudWatch Events, adding custom buses, schema registry, and partner sources."
+    },
+    {
+      "id": "q7",
+      "stem": "An EventBridge rule selects events using:",
+      "choices": ["SQL queries", "JSON event patterns", "Lambda code", "CloudWatch alarms"],
+      "correctIndex": 1,
+      "explanation": "Rules match events against JSON patterns; matching events are delivered to configured targets."
+    },
+    {
+      "id": "q8",
+      "stem": "Which AWS service records every API call made in the account for audit?",
+      "choices": ["CloudWatch", "CloudTrail", "Config", "GuardDuty"],
+      "correctIndex": 1,
+      "explanation": "CloudTrail is the auditable record of management and (optionally) data events for every AWS API call."
+    },
+    {
+      "id": "q9",
+      "stem": "CloudWatch Logs Insights is best described as:",
+      "choices": ["A streaming ETL service", "An interactive query language over log groups", "A replacement for X-Ray", "A managed Elasticsearch"],
+      "correctIndex": 1,
+      "explanation": "Logs Insights provides an interactive query language for searching and aggregating CloudWatch Logs."
+    },
+    {
+      "id": "q10",
+      "stem": "A CloudWatch alarm action can trigger:",
+      "choices": ["Only SNS notifications", "SNS, Auto Scaling policy, EC2 action, Systems Manager Incident Manager", "Only Lambda", "Only emails"],
+      "correctIndex": 1,
+      "explanation": "Alarm actions can publish to SNS, invoke ASG scaling policies, perform EC2 actions (stop/terminate/reboot), or trigger Incident Manager."
+    },
+    {
+      "id": "q11",
+      "stem": "An anomaly-detection alarm:",
+      "choices": ["Requires a fixed threshold", "Builds an ML model of expected values and alarms on deviations", "Is the same as a composite alarm", "Only works on Lambda metrics"],
+      "correctIndex": 1,
+      "explanation": "Anomaly detection learns expected behaviour and alarms when actual values deviate from the model's confidence band."
+    },
+    {
+      "id": "q12",
+      "stem": "Which log format makes it easier to search and aggregate later?",
+      "choices": ["Free-form text", "Structured JSON", "Binary", "CSV with no header"],
+      "correctIndex": 1,
+      "explanation": "Structured JSON logs are parseable by Logs Insights, EMF-extractable to metrics, and consistent for downstream tools."
+    },
+    {
+      "id": "q13",
+      "stem": "EMF (Embedded Metric Format) lets you:",
+      "choices": ["Encrypt log data", "Emit metrics by logging a specific JSON shape", "Federate logs across accounts", "Bypass IAM"],
+      "correctIndex": 1,
+      "explanation": "EMF logs include metric directives; CloudWatch auto-extracts metrics without separate PutMetricData API calls."
+    },
+    {
+      "id": "q14",
+      "stem": "Which CloudWatch metric resolution incurs additional cost?",
+      "choices": ["1 minute", "5 minute", "High-resolution (1 second)", "1 hour"],
+      "correctIndex": 2,
+      "explanation": "High-resolution metrics (1-second granularity) cost more than standard 1-minute metrics."
+    },
+    {
+      "id": "q15",
+      "stem": "A composite alarm:",
+      "choices": ["Aggregates many CloudTrail events", "Combines other alarms with AND/OR to reduce noise", "Is the only alarm type for Lambda", "Replaces EventBridge"],
+      "correctIndex": 1,
+      "explanation": "Composite alarms apply boolean logic across child alarms — e.g. alarm only when CPU high AND latency high AND not in maintenance."
+    },
+    {
+      "id": "q16",
+      "stem": "Lambda function metrics include all of the following EXCEPT:",
+      "choices": ["Invocations", "Duration", "Errors", "InstanceId"],
+      "correctIndex": 3,
+      "explanation": "Lambda doesn't expose an InstanceId metric; the standard Lambda metrics are Invocations, Duration, Errors, Throttles, ConcurrentExecutions."
+    },
+    {
+      "id": "q17",
+      "stem": "X-Ray sampling default is approximately:",
+      "choices": ["100% of requests", "1 request/sec + 5% of additional", "1 in 1000 requests", "Sampling is not configurable"],
+      "correctIndex": 1,
+      "explanation": "Default sampling captures 1 request/sec per host plus 5% of additional requests; sampling rules are configurable."
+    },
+    {
+      "id": "q18",
+      "stem": "Which service replaced CloudWatch cron rules with a higher-quota dedicated service?",
+      "choices": ["Step Functions", "EventBridge Scheduler", "Systems Manager", "App Runner"],
+      "correctIndex": 1,
+      "explanation": "EventBridge Scheduler is the dedicated scheduling service with higher quotas and richer features than CloudWatch Events cron rules."
+    },
+    {
+      "id": "q19",
+      "stem": "Which is the best mechanism for forwarding CloudWatch Logs in near-real-time to an external SIEM?",
+      "choices": ["S3 export every 24 hours", "Subscription filter to Kinesis Data Firehose", "Manual download", "CloudTrail log file delivery"],
+      "correctIndex": 1,
+      "explanation": "Subscription filters stream matching logs to Firehose/Kinesis/Lambda for real-time downstream processing."
+    },
+    {
+      "id": "q20",
+      "stem": "VPC Flow Logs capture:",
+      "choices": ["Packet payloads (PCAP)", "Metadata about IP traffic going to/from ENIs (no payload)", "Application logs from EC2", "TLS handshakes only"],
+      "correctIndex": 1,
+      "explanation": "VPC Flow Logs record flow metadata (src/dst, ports, bytes, accept/reject) but not the packet contents."
+    },
+    {
+      "id": "q21",
+      "stem": "Which AWS service is the open-standard tracing/metrics SDK companion to X-Ray?",
+      "choices": ["CloudWatch RUM", "AWS Distro for OpenTelemetry (ADOT)", "AWS Toolkit", "Amplify"],
+      "correctIndex": 1,
+      "explanation": "ADOT is AWS's distribution of OpenTelemetry with exporters for CloudWatch and X-Ray."
+    },
+    {
+      "id": "q22",
+      "stem": "An alarm with TreatMissingData = 'breaching' will:",
+      "choices": ["Stay in OK regardless", "Transition to ALARM when no data points arrive", "Pause evaluation", "Auto-disable"],
+      "correctIndex": 1,
+      "explanation": "TreatMissingData controls how missing samples are treated; 'breaching' counts them as failures and will move the alarm to ALARM."
+    },
+    {
+      "id": "q23",
+      "stem": "RUM (Real User Monitoring) on CloudWatch is used for:",
+      "choices": ["Database query plans", "Capturing browser-side performance and errors from real end-user sessions", "Network packet capture", "Server-side tracing"],
+      "correctIndex": 1,
+      "explanation": "CloudWatch RUM collects browser performance and JS errors from real users to track client-side experience."
+    },
+    {
+      "id": "q24",
+      "stem": "Synthetic monitoring in CloudWatch is provided by:",
+      "choices": ["Canaries (CloudWatch Synthetics)", "RUM", "Logs", "Inspector"],
+      "correctIndex": 0,
+      "explanation": "CloudWatch Synthetics Canaries run scheduled scripts that probe endpoints, providing uptime and functional monitoring."
+    },
+    {
+      "id": "q25",
+      "stem": "If a Lambda function logs to stdout, the logs:",
+      "choices": ["Are discarded", "Are automatically sent to a CloudWatch Log Group for the function", "Require a Logs Agent", "Must be queried via SSH"],
+      "correctIndex": 1,
+      "explanation": "The Lambda execution environment ships stdout/stderr automatically to a per-function CloudWatch Log Group."
+    }
+  ]
+}

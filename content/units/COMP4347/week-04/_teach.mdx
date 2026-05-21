@@ -1,0 +1,403 @@
+---
+title: "Week 4 — Browser and rendering process"
+unit: COMP4347
+week: 4
+type: overview
+status: done
+---
+
+This is the week that decides whether you understand *why* websites feel slow. The browser is not a black box that takes HTML and shows pixels — it's a **pipeline** with named stages, each with its own cost. Knowing the pipeline lets you reason about jank, layout shift, render-blocking resources, and "why does my page lock up when I click that button?". Past papers love rendering-path questions, so prioritise this week.
+
+The W4 lecture (Critical Rendering Paths, Asynchronous JS and Client-side Optimisation) walks you through the same five stages we'll use as the spine of this overview: **HTML → DOM, CSS → CSSOM, render tree, layout, paint**. The W4 tutorial puts you in front of `telnet` and the DevTools Network panel to see how the browser actually fetches and times those resources. We'll mix both perspectives and add the modern performance vocabulary (Web Vitals, the event loop, `requestAnimationFrame`) that the unit assumes you'll pick up alongside.
+
+One reading rule before we start: when the lecture says "render tree", it means the *post-merge* tree — DOM and CSSOM combined, with `display: none` nodes dropped. When the lecture says "rendering", it usually means everything from layout onwards. Keep those two terms straight and the rest follows.
+
+## The critical rendering path, in order
+
+**The critical rendering path is the fixed sequence of stages the browser runs every time it has to put pixels on screen.** The lecture lists five; in modern browsers there are really six, because compositing is a separate stage after paint.
+
+1. **Parse HTML → DOM**. Bytes → characters → tokens → nodes → tree. Each HTML element becomes a node; attributes and text between tags are also nodes. The parser is forgiving (it recovers from a missing `</li>`), but it is **not** lazy — it builds the entire tree as bytes arrive.
+2. **Parse CSS → CSSOM**. CSS rules form a second tree, organised by the cascade. Default user-agent styles are overridden by author styles. The lecture is explicit: `<style>` tag content is *not* part of the DOM — its rules live in the CSSOM instead.
+3. **Combine into the render tree**. The browser merges DOM and CSSOM into a third tree, attaching computed styles to each visible node. Nodes with `display: none` are **excluded**. So are non-visual nodes like `<head>` and `<meta>`. (`visibility: hidden` nodes are kept — they still occupy space.)
+4. **Layout (reflow)**. The browser computes geometry: the box position, width, height, line breaks, scroll regions. This walks the render tree top-to-bottom and depends on the entire ancestor chain.
+5. **Paint**. Each render-tree node is rasterised into pixel layers — text, borders, backgrounds, shadows.
+6. **Composite**. Pixel layers are uploaded to the GPU and combined into the final image. Transforms and opacity changes can replay this step alone, which is why they're cheap to animate.
+
+A consequence the lecture stresses: **requests for supporting objects happen at the same time the DOM is being constructed**. When the parser hits `<link href="style.css" rel="stylesheet">`, it constructs that node and *immediately* fires off a request for `style.css`. Same for `<img>`. The browser doesn't wait to "finish" parsing — parsing and fetching are interleaved.
+
+```html
+<html>
+  <head>
+    <link href="style.css" rel="stylesheet">
+  </head>
+  <body>
+    <p>Hello <span>web performance</span> students!</p>
+    <div><img src="awesome-photo.jpg"></div>
+  </body>
+</html>
+```
+
+Reading the parse: the browser constructs the `<link>` node and dispatches a request for `style.css`; constructs the `<img>` node and dispatches a request for `awesome-photo.jpg`; both downloads happen in parallel with the rest of parsing. When `style.css` arrives the browser parses it into the CSSOM. Only when *both* trees are ready can the render tree, layout and paint proceed.
+
+## DOM, CSSOM, and render-tree exercises
+
+The lecture gives you several "which tree does this affect?" exercises. They're worth memorising the shape of, because they always come up.
+
+**A JS line that changes a class.** Adding a class to an element via `el.classList.add("warn")` affects the DOM (it mutates an attribute node), affects the CSSOM (the matched rules for that node change), and therefore affects the render tree (the merge of the two changes). So the answer is **all three**.
+
+**A JS line that changes a CSS rule via `document.styleSheets`.** This does *not* change the DOM (the `<link>` tag is unchanged), but it does change the CSSOM, and therefore the render tree. So: **CSSOM and render tree only**.
+
+**JS that runs during initial parsing and mutates the DOM before paint.** The render tree is built **once**, after JS finishes, because rendering is paused while scripts run. So the answer to "how many render trees are made?" is usually **1** — even if the JS edits the DOM ten times, the first render tree reflects the final state.
+
+**Animations and transitions.** A CSS transition that lasts 2s does not produce 120 render trees over those two seconds. The render tree is rebuilt only when the *style* of an element changes — that is, when the CSSOM changes. A `transform` interpolation animates the composite layer without touching the render tree at all. A `width` interpolation triggers layout each frame, but that's not "a new render tree" — it's the layout stage running again over the same tree.
+
+The mental model: **DOM and CSSOM are inputs; render tree is a derived view; layout and paint are operations on that view**. Editing the inputs reruns the merge; running the operations doesn't.
+
+> **Quick check.** If you set `display: none` on an existing element via JS, does the DOM change? Does the CSSOM change? Does the render tree change?
+>
+> *Answer.* DOM no (the element is still there, with one extra style applied). CSSOM yes (the element's matched declarations now include `display: none`). Render tree yes (the element is now **excluded** from the render tree — and so are all its descendants).
+
+## Render-blocking resources
+
+**A render-blocking resource is one the browser refuses to paint without.** The two big ones are HTML and CSS, plus parser-blocking scripts.
+
+**HTML is render-blocking** trivially — there's nothing to paint until the parser has seen something. The browser will paint *progressively* once it has any DOM, but it can't start until bytes arrive.
+
+**CSS is render-blocking by default.** The browser will not paint until the CSSOM is built, because painting unstyled DOM would cause a *flash of unstyled content* (FOUC). This is true even for stylesheets at the bottom of `<body>` — they still block the first paint of everything that comes after them, and modern browsers conservatively block paint until *all* stylesheets are in. That's why the lecture's optimisation advice is "put CSS links near the top of HTML, so the browser obtains them early".
+
+**Media queries narrow the scope.** A stylesheet with `media="print"` is not render-blocking when the page loads on screen — the browser still downloads it, but at low priority and without blocking paint. `media="orientation: portrait"` *is* render-blocking when the device is portrait, but not when it's landscape. The classifier:
+
+- `<link href="style.css" rel="stylesheet">` → **render-blocking** (default `media="all"`).
+- `<link href="style.css" rel="stylesheet" media="all">` → **render-blocking**.
+- `<link href="portrait.css" rel="stylesheet" media="(orientation: portrait)">` → **could be either** (depends on the device orientation when loaded).
+- `<link href="print.css" rel="stylesheet" media="print">` → **non-render-blocking** (only used in print mode).
+
+**Synchronous JavaScript is parser-blocking** (which is worse than render-blocking — the DOM stops growing while the script downloads and runs). This is because a script can do `document.write()` or query/mutate the DOM, and the parser can't know in advance.
+
+```html
+<script src="/app.js"></script>          <!-- blocks the parser until downloaded+executed -->
+<script src="/lib.js" defer></script>    <!-- non-blocking; runs after DOM parsed; preserves order -->
+<script src="/analytics.js" async></script><!-- non-blocking; runs as soon as downloaded; no order -->
+```
+
+Use `defer` for app code that needs the DOM. Use `async` for independent scripts (analytics, ad pixels) where order doesn't matter and the rest of the page shouldn't wait. Inline scripts with no `src` always block.
+
+## Measuring the critical path: resources, bytes, length
+
+The lecture gives you three quantities to memorise because they are the basis of exam questions.
+
+**Critical resource** — a resource that must be downloaded before the page can render. HTML, CSS, and parser-blocking JS are critical. `<img>` is *not* critical (its layout space is reserved by `width`/`height` attributes, and the image fills in once available). `async`/`defer` scripts are not critical for the first paint.
+
+**Critical bytes** — the sum of the transfer sizes of all critical resources. Compressed sizes count, not raw. This is why minification and gzip/brotli matter.
+
+**Critical path length** — the number of network round-trips on the longest chain. The initial HTML round-trip counts. If the HTML references a CSS file, that's two round-trips. If the CSS imports another CSS via `@import`, that's three. Parallel chains don't add — only the longest matters.
+
+> **Worked example from the lecture.** Initial HTML is 5KB, two stylesheets (`style.css` 4KB, `style2.css` 4KB), one image (`awesome-photo.jpg` 10KB).
+>
+> - **Critical resources:** HTML + style.css + style2.css = **3** (image is not critical).
+> - **Round-trips:** 1 for HTML, then both stylesheets fetched in parallel from the references discovered in HTML = **2**.
+> - **Critical bytes:** 5 + 4 + 4 = **13KB**.
+
+Three levers for optimisation, in the order the lecture suggests:
+
+1. **Reduce the number of critical resources.** Mark non-essential scripts `async`/`defer`. Move non-critical CSS behind a media query. Inline the small handful of styles needed for the first paint.
+2. **Reduce critical bytes.** Minify JS and CSS; gzip/brotli everything; tree-shake unused code. The lecture's example: jQuery is 250KB un-minified, 77KB minified — three-fold reduction without changing behaviour.
+3. **Optimise the order.** Don't make round-trips serial when they could be parallel. The classic anti-pattern is `@import` inside a stylesheet — the browser can't discover the imported file until the outer stylesheet arrives, forcing a serial chain.
+
+## DOMContentLoaded vs load, and the network waterfall
+
+Two events fire during the page lifecycle, and the lecture and tutorial both make you tell them apart.
+
+**`DOMContentLoaded`** fires when the HTML has been **parsed** and the DOM is complete. Deferred scripts have run by this point. Stylesheets, images, and async scripts may still be in flight.
+
+**`load`** fires when **everything** has finished loading: stylesheets, images, async scripts, iframes. This is later, sometimes much later, especially on image-heavy pages.
+
+A gap between the HTML request finishing and `DOMContentLoaded` is normal — that's the time spent *parsing* the bytes into a DOM, plus running any inline/parser-blocking scripts. A gap between `DOMContentLoaded` and `load` is dominated by images and async scripts.
+
+> **From the tutorial.** "There is a small gap between the `week4.html` request time (8ms) and the `DOMContentLoaded` event time (14ms). What happens during the gap?" — the browser is parsing the HTML and running any inline scripts. The HTML *arrived* at 8ms; the DOM *finished building* at 14ms.
+
+The **Network waterfall** in DevTools is your X-ray of all this. Each request is a row; columns show queueing, DNS, connection, request sent, waiting (TTFB), and content download.
+
+```
+| Queueing |
+  | Stalled |
+    | DNS Lookup |
+      | Initial connection (TCP) |
+        | SSL |
+          | Request sent |
+            | Waiting (TTFB) ----------------------- |
+                                                       | Content Download |
+```
+
+Common waterfall diagnoses:
+
+- **Long Stalled**: too many requests already in flight to that origin (HTTP/1.1 caps at ~6 per origin).
+- **Long DNS / Connect / SSL**: cold connection. Add `<link rel="preconnect">` if you'll hit this origin again.
+- **Long TTFB**: server is slow. Profile server-side.
+- **Long Content Download**: payload too big or bandwidth-limited. Compress, paginate, code-split.
+- **Favicon.ico after `load`**: harmless — the tutorial points out this comes through *after* the load event has fired.
+
+The tutorial also wants you to recognise that `HTML5.webp` took 411ms while `week4.html` took 8ms — the difference is purely the **file size** (the image is much larger), not server performance.
+
+## Asynchronous JavaScript and the event loop
+
+JavaScript is single-threaded, so any long synchronous task blocks everything: parsing, layout, paint, input. The asynchronous toolkit exists to avoid that.
+
+**Callbacks** are the oldest pattern: pass a function, it's called when the work finishes (`setTimeout`, `addEventListener`). **Promises** represent a value that's not ready yet — chain `.then(onSuccess, onFailure)` to react. `async`/`await` is sugar: `await p` pauses an `async` function until `p` settles, without blocking the thread.
+
+**The event loop.** The browser's main thread runs a loop, repeating roughly:
+
+```
+while (true) {
+  task = taskQueue.pop();          // run ONE macrotask
+  run(task);
+  while ((mt = microtaskQueue.pop()) != null) {
+    run(mt);                       // drain ALL microtasks
+  }
+  if (timeForFrame()) {
+    runAnimationFrameCallbacks();
+    style(); layout(); paint();    // render if a frame is due
+  }
+}
+```
+
+**Macrotasks** include: `setTimeout`/`setInterval` callbacks, I/O events, `MessageChannel` messages, parsed `<script>` execution, UI events. **Microtasks** include: `Promise.then`/`catch`/`finally` callbacks, `queueMicrotask`, `MutationObserver` callbacks.
+
+The crucial rule: **microtasks drain to empty before the next macrotask runs**. That means a `Promise.then` callback queued during the current frame will run *before* a `setTimeout(_, 0)` queued in the same frame.
+
+```js
+console.log("A");
+setTimeout(() => console.log("B"), 0);
+Promise.resolve()
+  .then(() => console.log("C"))
+  .then(() => console.log("D"));
+console.log("E");
+// Output: A, E, C, D, B
+```
+
+A and E are synchronous. C and D drain as microtasks before B (a macrotask) runs.
+
+A microtask that schedules another microtask can **starve** the loop:
+
+```js
+function loop() { Promise.resolve().then(loop); }
+loop();   // freezes the tab — macrotasks (and rendering) never get a turn
+```
+
+The lecture also includes an `async`/`await` trap: `setTimeout` is not a `Promise`. `await setTimeout(...)` awaits `undefined` and resolves immediately. To `await` a delay, wrap it: `await new Promise(r => setTimeout(r, 1000))`.
+
+### Worked example: predicting console output
+
+```js
+console.log("1");
+setTimeout(() => console.log("2"), 0);
+Promise.resolve()
+  .then(() => console.log("3"))
+  .then(() => {
+    console.log("4");
+    setTimeout(() => console.log("5"), 0);
+    return Promise.resolve();
+  })
+  .then(() => console.log("6"));
+queueMicrotask(() => console.log("7"));
+console.log("8");
+```
+
+Trace. Sync logs `1`, `8`. Microtasks at end of frame: `.then`→`3`, `queueMicrotask`→`7`. Macrotask: `setTimeout`→`2`. Drain microtasks: `3`, `7`, then chained `.then` logs `4` and schedules `setTimeout`→`5`; `Promise.resolve()` takes two ticks to unwrap before `.then` logs `6`. Then macrotasks: `2`, `5`. Final: **1, 8, 3, 7, 4, 6, 2, 5**.
+
+Memorise the rule, not the trace: **synchronous first; microtasks drain to empty between every macrotask; `setTimeout(_, 0)` runs after all currently-queued microtasks.**
+
+### requestAnimationFrame and frame budgets
+
+`requestAnimationFrame(cb)` schedules `cb` to run **just before the next paint**. Use it for any work that updates the visuals.
+
+```js
+function animate() {
+  el.style.transform = `translateX(${x++}px)`;
+  if (x < 200) requestAnimationFrame(animate);
+}
+requestAnimationFrame(animate);
+```
+
+Two wins. **First**, the browser pauses RAF callbacks when the tab is hidden, saving battery. **Second**, your work is aligned to the frame boundary — no wasted frames where you mutate styles between paints and the browser re-lays-out for nothing.
+
+At 60Hz a frame is **16.7ms**. Lighthouse flags any task longer than **50ms** as a "long task". On every frame the browser has to: run JS that's due, run RAF callbacks, recompute styles, do layout, paint, composite. Eat too much of the 16.7ms in JS and you drop a frame — that's jank.
+
+For *non-visual* deferred work, use `requestIdleCallback(cb)` — it runs when the main thread is idle and is good for analytics flushing, prefetching, telemetry.
+
+## Layout thrashing and forced synchronous layout
+
+The most common JS performance bug. **Reading a layout-dependent property forces the browser to flush pending style/layout work *immediately*** so it can return a current value. Examples: `offsetTop`, `offsetWidth`, `getBoundingClientRect`, `scrollTop`, `getComputedStyle(el).width`.
+
+Interleaving reads and writes in a loop is catastrophic — each iteration writes (invalidating layout), then reads (forcing a re-layout to satisfy the read).
+
+```js
+// Bad — N forced layouts
+for (const el of items) {
+  el.style.width = el.offsetWidth + 10 + "px";  // read-after-write each iteration
+}
+```
+
+The fix: **separate reads from writes**. Read everything first, then write everything.
+
+```js
+// Good — one batch read, one batch write
+const widths = items.map(el => el.offsetWidth);              // batch reads
+items.forEach((el, i) => el.style.width = widths[i] + 10 + "px"); // batch writes
+```
+
+DevTools Performance will show the "before" code as a wall of purple "Layout" bars and may even put a yellow warning triangle on the worst offenders. The "after" code shows one layout pass.
+
+Other patterns that cause layout thrashing:
+
+- A `scroll` event listener that reads `offsetTop` (one forced layout per scroll tick — and `scroll` fires many times per second).
+- A `ResizeObserver` callback that writes styles the observer is watching (infinite loop until throttled by the browser).
+- jQuery's `.width()`/`.height()` accessors in a loop — each call reads a layout-dependent value.
+- A "fit to content" sizing pass that reads `scrollHeight` after every text mutation.
+
+Rule: **R-W-R-W is bad; RR-WW is good.**
+
+**Why this happens at the engine level.** When you mutate a style, the browser doesn't lay out immediately — it marks the layout *dirty* and would normally batch the work until just before the next paint. But a layout-dependent *read* can't be answered with a dirty layout, so the engine is forced to compute it synchronously, *right now*. That's what "forced synchronous layout" means in DevTools warnings.
+
+**`requestAnimationFrame` to batch.** If you absolutely must interleave reads and writes (e.g. a virtualised list), schedule the writes inside a single RAF callback so they all flush in one frame. Libraries like FastDOM expose this pattern: `fastdom.measure(...)` queues a read; `fastdom.mutate(...)` queues a write; both run in a single RAF tick with reads first.
+
+## Reflow vs repaint vs composite
+
+Each stage of the pipeline has a different cost. **Reflow** (layout) is the most expensive — touching one element can cascade through siblings and ancestors. **Repaint** is cheaper but still touches the CPU. **Composite** is cheapest, because the GPU just re-arranges already-painted layers.
+
+Which CSS property changes trigger which stage:
+
+- **Layout (reflow)**: `width`, `height`, `padding`, `margin`, `border`, `display`, `top`/`left`/`right`/`bottom`, `position`, `font-size`, `line-height`, `flex-basis`. Anything that affects box dimensions or position-in-flow.
+- **Paint**: `color`, `background-color`, `background-image`, `box-shadow`, `outline`, `border-radius`, `visibility`.
+- **Composite only**: `transform`, `opacity`, `filter` (typically), `will-change: transform`.
+
+Animate `transform: translateX(100px)` instead of `left: 100px`. The first is composite-only — runs at 60fps on the GPU thread without touching the main thread. The second triggers reflow every frame and will jank under load.
+
+```css
+/* Bad — reflows every frame */
+.menu { left: 0; transition: left 200ms; }
+.menu.open { left: 240px; }
+
+/* Good — composite only */
+.menu { transform: translateX(0); transition: transform 200ms; will-change: transform; }
+.menu.open { transform: translateX(240px); }
+```
+
+`will-change: transform` hints the browser to promote `.menu` to its own compositor layer up-front. Don't blanket-apply it — every promoted layer costs GPU memory, and excessive layers can themselves cause perf regressions. Add it for the duration of a long animation and remove it after.
+
+**A useful intuition.** Layout asks *where does every box go?*. Paint asks *what colour is every pixel?*. Composite asks *how do the layers stack?*. The deeper the question, the more work. Changing a layout property like `width` invalidates the answer to all three. Changing `background-color` invalidates only paint and composite. Changing `transform` invalidates only composite. Pick the cheapest invalidation that achieves the visual you want.
+
+## Web Vitals
+
+Web Vitals are Google's user-experience metrics. Three are designated "Core" and have published thresholds.
+
+| Metric | What it measures | Good | Needs work | Poor |
+|---|---|---|---|---|
+| **LCP** (Largest Contentful Paint) | Time to paint the largest visible element | ≤ 2.5s | 2.5–4s | &gt; 4s |
+| **INP** (Interaction to Next Paint) | Worst input → paint latency observed | ≤ 200ms | 200–500ms | &gt; 500ms |
+| **CLS** (Cumulative Layout Shift) | Sum of unexpected shift scores | ≤ 0.1 | 0.1–0.25 | &gt; 0.25 |
+
+INP replaced FID in March 2024 — it captures the *worst* interaction on the page, not just the first, so a single slow click can disqualify you.
+
+**Common LCP fixes.** Serve the LCP image with `fetchpriority="high"`. Preload critical fonts and the hero image. Eliminate render-blocking JS in `<head>`. Use a CDN. Inline critical CSS.
+
+**Common CLS causes.** Images without explicit `width`/`height` — the browser doesn't know how much space to reserve, so it shifts content when the image arrives. Web fonts that swap and reflow on load. Ads or embeds that inject content above existing content.
+
+```html
+<img src="hero.jpg" width="1200" height="630" alt="…" />
+```
+
+Width and height set the aspect ratio and reserve the space — zero CLS contribution from that image.
+
+**Common INP causes.** Synchronous click handler work, big component re-renders, third-party scripts running on input. Profile in DevTools Performance and look for long tasks during the interaction window.
+
+**Two metrics you'll see but aren't Core Vitals.** **TTFB** (Time to First Byte) is the server-response part of the load; under 800ms is "good". **FCP** (First Contentful Paint) is when the first pixel of content lands; under 1.8s is "good". Both feed into LCP but are diagnosed separately.
+
+**How vitals are measured.** Field data (real users) comes from Chrome's `web-vitals` JS library reporting back to your analytics — or from Google's CrUX dataset on pagespeed.web.dev. Lab data (synthetic) comes from Lighthouse running your page in a controlled environment. Field data is the source of truth (it's what affects SEO ranking), but lab data is what you debug against.
+
+## Client-side optimisations from the lecture
+
+Beyond `async`/`defer` and minification, the lecture surveys two UX patterns and a small set of caching/preloading techniques.
+
+**Skeleton screens.** A skeleton screen renders an outline of the page — boxes where text will be, grey rectangles where images will be — *before* the data arrives. Used heavily by LinkedIn, Slack, YouTube. This is purely a perceived-performance fix: the page still takes the same wall-clock time, but the user sees structure immediately and feels the load is faster.
+
+**Progressive rendering.** Identify which part of the page matters most (often the hero area, not necessarily top-to-bottom), and load it first. Defer the rest. Combined with skeletons, the user gets the critical content within the LCP budget while the rest fills in.
+
+**JS/CSS minification.** Strip whitespace, comments, shorten variable names. Makes debugging impossible, so reserve for production. Pair with **tree-shaking** to remove unreferenced exports.
+
+**Preloading and resource hints.**
+
+```html
+<link rel="dns-prefetch" href="//api.example.com" />
+<link rel="preconnect"   href="https://api.example.com" crossorigin />
+<link rel="preload"      href="/fonts/inter.woff2" as="font" type="font/woff2" crossorigin />
+<link rel="prefetch"     href="/next-page.js" />
+<link rel="modulepreload" href="/app.js" />
+```
+
+- **dns-prefetch**: resolve DNS only. Cheapest hint.
+- **preconnect**: full DNS+TCP+TLS warmup. Use for origins you'll hit imminently.
+- **preload**: high-priority "you'll need this soon". Use sparingly — overuse defeats the priority.
+- **prefetch**: low-priority hint for the next navigation.
+- **modulepreload**: preload an ES module and its imports.
+
+**HTTP caching headers.** `Cache-Control: public, max-age=31536000, immutable` for content-hashed static assets — the browser reuses them for a year without even asking. `ETag`/`Last-Modified` enable conditional GETs that return `304 Not Modified` with an empty body, saving the payload at the cost of one round trip (as seen in the W4 tutorial with `If-None-Match`).
+
+### DevTools tour
+
+A short field guide to the panels the lecture and tutorial use:
+
+- **Network** — Throttle to "Slow 4G" + "CPU 4× slowdown" to see what real users see; the waterfall shows per-request stages.
+- **Performance** — Record a session: red triangles are long tasks; purple = layout, green = paint, yellow = scripting.
+- **Lighthouse** — automated audit; read *Opportunities* and *Diagnostics*, not just the score.
+- **Coverage** (Cmd-Shift-P → "coverage") — Shows unused CSS/JS bytes for code-splitting decisions.
+- **Layers** — Visualises compositing layers; too many wastes GPU memory.
+- **Application → Cache Storage** — Inspect cached entries (W4 tutorial part b).
+- **`performance.mark` / `performance.measure`** — Instrument your own app.
+
+```js
+performance.mark("render-start");
+expensive();
+performance.mark("render-end");
+performance.measure("render", "render-start", "render-end");
+console.table(performance.getEntriesByType("measure"));
+```
+
+## HTTP at the wire level (from the tutorial)
+
+The W4 tutorial puts you in front of `telnet` to send raw HTTP. Two reasons matter for the exam.
+
+**HTTP/1.0 vs HTTP/1.1.** A 1.0 request closes the connection immediately after the response. A 1.1 request **keeps the connection open** for follow-up requests (persistent connection) until a timeout. 1.1 also **requires** a `Host:` header, because one IP can serve many virtual hosts.
+
+```
+GET /week4.html HTTP/1.1
+Host: awsprdapp4837.shared.sydney.edu.au
+```
+
+**Conditional GETs.** With an `ETag` from a previous response, the client can send `If-None-Match: "etag-value"`. If the resource hasn't changed, the server replies `304 Not Modified` with **no body** — saving the payload but not the round trip. This is the validation arm of browser caching.
+
+```
+GET /week4.html HTTP/1.1
+Host: awsprdapp4837.shared.sydney.edu.au
+If-None-Match: "171-63092f55c2dac"
+
+→ HTTP/1.1 304 Not Modified
+  (no body)
+```
+
+For an exam: given a raw request/response, you should be able to point to the **method, version, status code, status message** on the status line, and the **Server, ETag, Content-Type, Cache-Control** in the headers.
+
+**The two cache mechanisms.** *Cache validation* uses `ETag` / `Last-Modified` headers plus `If-None-Match` / `If-Modified-Since` request headers, and returns `304 Not Modified` when nothing changed. *Cache expiration* uses `Cache-Control: max-age=N` or `Expires:` headers — the browser reuses the cached copy without asking the server at all until the deadline passes. The tutorial points out the practical split: `week4.html` typically uses validation (every request goes to the server, but most return 304 with no body), while `HTML5.webp` uses expiration (no server round-trip until the image's max-age elapses). Static, versioned assets should always use expiration with a long max-age, paired with content-hashed filenames so new versions get fresh URLs.
+
+## Common exam patterns
+
+- **Predict the order of DOM/CSSOM/render-tree events for a given markup.** Walk the parser. Every `<link>` and `<img>` kicks off a parallel fetch; every synchronous `<script>` pauses the parser. The render tree is built when both the DOM and CSSOM are ready.
+- **"Which trees does this change affect?"** A class change affects all three (DOM, CSSOM, render tree). A rule-set change affects CSSOM and render tree but not DOM. A `display: none` change affects all three and removes the subtree from the render tree.
+- **Identify render-blocking resources and choose `async` vs `defer`.** CSS is always blocking unless a non-matching `media` query says otherwise. JS is blocking by default, `defer` for app code (waits for DOM, preserves order), `async` for independent scripts.
+- **Compute critical resources, round-trips, critical bytes for a snippet.** Image is never critical. Stylesheets and parser-blocking JS are. Add the HTML round-trip; chain only depth, not parallel siblings.
+- **Recommend an optimisation given a waterfall.** Long Stalled → preconnect/HTTP-2. Long Content Download → minify/compress/code-split. Image after `load` → fine, but reserve space (`width`/`height`) to avoid CLS. Serial chain → eliminate `@import`.
+- **Console-output prediction with `setTimeout` and `Promise.then`.** Synchronous first, microtasks drain to empty between macrotasks, `setTimeout(_, 0)` is a macrotask.
+- **State the Web Vital thresholds.** LCP ≤ 2.5s, INP ≤ 200ms, CLS ≤ 0.1.
+- **Classify a CSS property change as layout / paint / composite-only.** `transform` and `opacity` are composite-only; `color`/`background` are paint; everything geometric is layout.
+- **Fix a layout-thrashing snippet.** Batch all reads, then all writes. Mention `requestAnimationFrame` if the work is visual.
+- **Read a raw HTTP request/response.** Method + path + version on the request line; status code + message on the status line; `Host:` is mandatory in 1.1; `If-None-Match` + `304` is conditional GET.

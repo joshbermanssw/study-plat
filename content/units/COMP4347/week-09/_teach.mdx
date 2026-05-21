@@ -1,0 +1,542 @@
+---
+title: "Week 9 — Client-side frameworks: React"
+unit: COMP4347
+week: 9
+type: overview
+status: done
+---
+
+## Why a framework at all
+
+**A frontend framework exists because the browser's native DOM API is the wrong abstraction for building applications.** You can absolutely build a todo list with `document.createElement` and `addEventListener`, but the moment you have ten interacting widgets that share data, every line of your code is asking the same question: *which DOM nodes do I need to mutate, and in what order, to reflect this new piece of state?* That question is incidental complexity. It has nothing to do with what your app is *for*.
+
+React's pitch, in one sentence, is: **describe the UI as a function of state, and let the framework figure out the DOM mutations.** You write `render(state) -> UI`, the framework diffs the old UI tree against the new one, and only the differences get pushed to the real DOM.
+
+This is called **declarative UI**. Compare:
+
+- **Imperative.** "When the user clicks the button, find the `<span>` with id `count`, read its text, parse to int, add one, write it back." You wrote the *steps*.
+- **Declarative.** "The count is `n`. Render `<span>{n}</span>`." You wrote the *destination*. The framework computes the steps.
+
+You should expect exam questions that ask you to contrast these two styles, and to explain why declarative scales better as the UI grows. The killer argument: imperative code's complexity is roughly the *square* of the number of interacting widgets (every widget potentially reads from and writes to every other), while declarative code is linear because each component only knows about its own state and props.
+
+The other thing a framework gives you is **conventions** — file structure, build tooling (Webpack/Vite), syntax extensions (JSX via Babel), package management (npm), testing harnesses. None of that is technically required, but together they're a productivity multiplier worth knowing about. The W9 lecture frames this as the **three cornerstones**: template, virtual DOM, and state management — and notes that you should learn the *ideas* (state management, data exchange flow, async programming) rather than any one library's API.
+
+## Components: the unit of reuse
+
+**A React component is a JavaScript function that returns UI.** That's the whole definition. There are two flavours you'll see in exam code, and you need to be able to read both:
+
+```jsx
+// Function component (modern, preferred)
+function Greeting({ name }) {
+  return <h1>Hello, {name}</h1>;
+}
+
+// Class component (older, still legal)
+class Greeting extends React.Component {
+  render() {
+    return <h1>Hello, {this.props.name}</h1>;
+  }
+}
+```
+
+From React's point of view these are **equivalent** — same inputs, same output. The function form is what almost all modern code uses, because hooks (introduced React 16.8, 2019) gave function components access to state and lifecycle, removing the only reason class components used to exist.
+
+**Components compose.** A page is a tree of components. The classic dashboard example:
+
+```jsx
+function Dashboard() {
+  return (
+    <>
+      <Header />
+      <Navbar />
+      <main>
+        <Project />
+        <ClientMessage />
+      </main>
+    </>
+  );
+}
+```
+
+Each child can itself be a tree of further components. The leaves of the tree are eventually plain HTML elements like `<div>`, `<button>`, `<input>`. **Capitalisation matters in JSX:** `<button>` means the HTML button, `<Button>` means your React component called `Button`. Lowercase tags are treated as strings; uppercase tags are looked up as identifiers in scope.
+
+**Single-responsibility rule of thumb.** A component should do one thing. If a function is rendering a navbar, a search box, *and* a results list, that's three components fighting for one body. Split them. The cost of splitting is one line (the new function declaration); the benefit is reuse, isolation, and a smaller mental footprint per file.
+
+**Composition over inheritance.** React deliberately does not have a deep inheritance model. If you want to share behaviour, you pass it as a prop (often a child component or a render function). This is a constant exam contrast versus traditional OOP frameworks built around class hierarchies.
+
+## JSX: HTML in JavaScript (sort of)
+
+**JSX is a syntax extension that lets you write tag-like expressions in JS.** It is not HTML — it's transformed at build time by Babel into `React.createElement(...)` calls.
+
+```jsx
+const el = <h1 className="title">Hello, {name}</h1>;
+// becomes:
+const el = React.createElement("h1", { className: "title" }, "Hello, ", name);
+```
+
+A few JSX rules worth memorising:
+
+1. **You can only return one root element** per component. Wrap siblings in a fragment: `<>...</>`.
+2. **Use `className`, not `class`** — because `class` is a reserved word in JS. Same for `htmlFor` instead of `for`.
+3. **Embed expressions with braces.** Anything between `{` and `}` is evaluated as a JS expression. Statements (loops, `if`) are not allowed — use ternaries, `&&`, or `.map()` instead.
+4. **All tags must close.** `<br />`, `<img />`, even self-closing custom components.
+5. **camelCase event props.** `onClick`, not `onclick`. `onChange`, not `onchange`.
+6. **Lists need keys.** Every element produced from a `.map()` needs a stable, unique `key` prop. (More on this when we hit reconciliation.)
+
+Conditional rendering uses normal JS expressions:
+
+```jsx
+function Status({ isLoggedIn, user }) {
+  return (
+    <div>
+      {isLoggedIn ? <p>Hi, {user.name}</p> : <p>Please sign in</p>}
+      {user.isAdmin && <AdminPanel />}
+    </div>
+  );
+}
+```
+
+**A subtle trap with `&&`.** If the left side is `0` (a falsy *number*), React will render the literal `0` in the DOM. Use `count > 0 && <Badge />` rather than `count && <Badge />`. Expect this exact gotcha to appear on a quiz.
+
+**Why JSX exists.** You could write `React.createElement` calls by hand; JSX is purely sugar. But the visual mapping between JSX source and rendered HTML is so direct that bugs become obvious. You read JSX the way you read the page.
+
+## Props vs state: the two kinds of data
+
+**Props are inputs from the parent. State is memory owned by the component.** Get this distinction wrong and your component tree will be a tangle. Get it right and most React bugs disappear.
+
+- **Props** flow downward (parent to child). They're **read-only** from the child's perspective. A child must never mutate its own props.
+- **State** is local to one component. Only that component (via its setter) can change it. When state changes, the component re-renders.
+
+```jsx
+function Counter({ label }) {            // `label` is a prop
+  const [count, setCount] = useState(0); // `count` is state
+  return (
+    <button onClick={() => setCount(count + 1)}>
+      {label}: {count}
+    </button>
+  );
+}
+
+// Used by parent:
+<Counter label="Clicks" />
+```
+
+Decision rule: **if a value can change over the component's life and the change should trigger a re-render, it's state. If it's given by the parent, it's a prop. If it's derived from props/state, it's just a local variable — don't put it in state.**
+
+**Common mistake: duplicating props into state.**
+
+```jsx
+// Wrong — `name` will go stale if parent re-renders with a new value
+function Profile({ name }) {
+  const [displayName, setDisplayName] = useState(name);
+  return <h1>{displayName}</h1>;
+}
+```
+
+If you genuinely want to *edit* the name locally without telling the parent, that's a legitimate use case (uncontrolled editing). But if you just want to *display* the prop, render it directly: `<h1>{name}</h1>`. No state needed.
+
+**Data down, actions up.** When a child needs to *change* something owned by the parent, the parent passes down a callback prop. The child calls it; the parent updates its own state; the new value flows back down as a prop.
+
+```jsx
+function Parent() {
+  const [count, setCount] = useState(0);
+  return <IncrementButton onIncrement={() => setCount(c => c + 1)} />;
+}
+
+function IncrementButton({ onIncrement }) {
+  return <button onClick={onIncrement}>+1</button>;
+}
+```
+
+This pattern is called **lifting state up** — covered in its own section below.
+
+## useState in detail
+
+**`useState` gives a function component a slot of mutable memory that persists across renders.**
+
+```jsx
+const [value, setValue] = useState(initialValue);
+```
+
+What's happening under the hood: each call to `useState` corresponds to a slot in an internal list React keeps per component instance. The first render initialises the slot to `initialValue`. Every subsequent render *ignores* `initialValue` and reads the current slot value. This is why **`useState` must be called in the same order every render** — otherwise React can't match slots to variables. That's the deepest reason behind the rules of hooks (covered later).
+
+**Setters are asynchronous and batched.** When you call `setValue(x)`, your local `value` variable does *not* immediately update — it's still pointing at the old value for the rest of this render. The new value shows up on the *next* render.
+
+```jsx
+function Buggy() {
+  const [n, setN] = useState(0);
+  return (
+    <button onClick={() => {
+      setN(n + 1);
+      setN(n + 1);   // both reads see the *same* stale n
+      setN(n + 1);   // result: n becomes 1, not 3
+    }}>
+      Triple
+    </button>
+  );
+}
+```
+
+Fix it with the **updater form**, which passes the latest value as an argument:
+
+```jsx
+setN(prev => prev + 1);
+setN(prev => prev + 1);
+setN(prev => prev + 1);   // now n becomes 3
+```
+
+**Lazy initialisation.** If computing `initialValue` is expensive, pass a function instead — React calls it only on the first render:
+
+```jsx
+const [tree, setTree] = useState(() => buildExpensiveTree());
+```
+
+**State is per-component-instance.** Two `<Counter />` siblings have independent `count` values. The slots live on React's internal fiber for that instance, not on the function definition.
+
+## useEffect: side effects and the dependency array
+
+**`useEffect` runs code *after* render — for things that need to talk to the world outside React.** Network calls, subscriptions, manual DOM tweaks, timers. Anything that isn't "compute the next JSX from props and state".
+
+```jsx
+useEffect(() => {
+  // setup: runs after the render commits
+  const id = setInterval(() => console.log("tick"), 1000);
+  return () => clearInterval(id);   // cleanup: runs before next effect or on unmount
+}, [/* deps */]);
+```
+
+Three shapes of the dependency array, and they mean three different things:
+
+1. **No array given.** Effect runs after *every* render. Almost always a bug.
+2. **Empty array `[]`.** Effect runs once, after the first render. Cleanup runs on unmount. Use this for one-time setup (subscribing to a global event, loading a script).
+3. **`[a, b]`.** Effect runs after the first render, and re-runs whenever any listed dependency *changes by `Object.is`*. Cleanup from the previous run executes before the new one starts.
+
+**The classic bug: missing deps.**
+
+```jsx
+function Search({ query }) {
+  const [results, setResults] = useState([]);
+  useEffect(() => {
+    fetch(`/api?q=${query}`).then(r => r.json()).then(setResults);
+  }, []);   // wrong — query isn't in deps, so the fetch is frozen on the first value
+  return <List items={results} />;
+}
+```
+
+The fix: include `query`. The `eslint-plugin-react-hooks` rule **`exhaustive-deps`** will scream at you for this exact mistake, and you should let it.
+
+**Cleanup matters.** If the effect subscribes to anything (a timer, a websocket, a DOM event), the returned cleanup function must unsubscribe. Otherwise you leak listeners across re-renders.
+
+**Race conditions.** Async effects can resolve out of order:
+
+```jsx
+useEffect(() => {
+  let cancelled = false;
+  fetch(`/api?q=${query}`)
+    .then(r => r.json())
+    .then(data => { if (!cancelled) setResults(data); });
+  return () => { cancelled = true; };
+}, [query]);
+```
+
+If `query` changes from `"a"` to `"b"` before `"a"` resolves, the cleanup flips `cancelled` so the late `"a"` response is dropped. Exam-favourite pattern.
+
+**Mapping to class lifecycles.** The lecture frames `useEffect` as the function-component replacement for `componentDidMount`, `componentDidUpdate`, and `componentWillUnmount`. The empty-array form is roughly mount; the dependency form is mount + update on dep change; the returned cleanup is unmount (plus the run-before-next-effect step).
+
+## useMemo, useCallback, useRef
+
+These three are the "performance/escape-hatch" hooks. You don't need them most of the time, but you'll be asked when to reach for which.
+
+**`useMemo(fn, deps)` memoises a value.** It calls `fn()` on the first render, caches the result, and reuses the cache on subsequent renders unless any dep changes.
+
+```jsx
+const sorted = useMemo(() => bigArray.slice().sort(cmp), [bigArray]);
+```
+
+Use it when computing the value is expensive, or when you need referential stability (the same `===` object across renders) so that a child component's `React.memo` or `useEffect` dep array doesn't see false changes.
+
+**`useCallback(fn, deps)` memoises a function.** It's literally `useMemo(() => fn, deps)`. Useful when you pass a callback to a `React.memo`-wrapped child, or list it in another hook's deps — without it, the function identity changes every render and defeats memoisation.
+
+```jsx
+const onSelect = useCallback(id => setSelected(id), []);
+```
+
+**`useRef(initial)` gives you a mutable container that does *not* trigger re-renders when you write to it.** Two uses:
+
+1. **Holding a DOM node.** Pass `ref={myRef}` to a JSX tag; `myRef.current` becomes the DOM node after commit.
+2. **Holding any mutable value across renders** — like a timer ID, a previous value, a "did I already do this?" flag — without paying the cost of state.
+
+```jsx
+const inputRef = useRef(null);
+useEffect(() => { inputRef.current.focus(); }, []);
+return <input ref={inputRef} />;
+```
+
+**Critical: writing to `ref.current` never re-renders.** That's the whole point — it's an escape hatch out of React's reactivity. If a value changing should redraw the UI, it's state, not a ref.
+
+**When in doubt, do nothing.** Premature memoisation is a real cost: `useMemo`/`useCallback` themselves allocate and compare deps each render. Reach for them when a profiler shows real time being spent, not just because a value looks "expensive".
+
+## useReducer and lifting state up
+
+**Use `useReducer` when state transitions get complicated.** It's a structural pattern, not a different feature: anywhere you could use `useState`, you could in theory use `useReducer`. The win is when you have many actions modifying the same state in interlinked ways.
+
+```jsx
+function reducer(state, action) {
+  switch (action.type) {
+    case "add":    return { ...state, items: [...state.items, action.item] };
+    case "remove": return { ...state, items: state.items.filter(i => i.id !== action.id) };
+    case "clear":  return { ...state, items: [] };
+    default: throw new Error("unknown action: " + action.type);
+  }
+}
+
+function Cart() {
+  const [state, dispatch] = useReducer(reducer, { items: [] });
+  return <button onClick={() => dispatch({ type: "clear" })}>Empty cart</button>;
+}
+```
+
+The advantages: **state transitions are pure functions** (easy to unit-test), **all the logic lives in one place** (easy to read), and **`dispatch` is stable across renders** (good for prop drilling, no `useCallback` needed). The lecture's framing is that the reducer is "a command dispatch centre where all state transformations are centralised based on received actions" — which is also the mental model behind Redux.
+
+**Lifting state up.** When two siblings need to share a piece of state, move it to their nearest common ancestor and pass it down as props:
+
+```jsx
+function TempConverter() {
+  const [celsius, setCelsius] = useState(0);
+  return (
+    <>
+      <CelsiusInput value={celsius} onChange={setCelsius} />
+      <FahrenheitInput value={celsius * 9/5 + 32}
+                       onChange={f => setCelsius((f - 32) * 5/9)} />
+    </>
+  );
+}
+```
+
+Both inputs *appear* to be independently editable, but the **single source of truth** is `celsius` in the parent. Each child is a fully **controlled component** — its displayed value comes from props, its changes are reported via a callback.
+
+This is the most common refactor on exams: "you have a `<Filter>` and a `<List>` that need to share a search term, where should it live?" Answer: the common parent.
+
+## Controlled vs uncontrolled inputs
+
+**A controlled input has its value driven by React state. An uncontrolled input owns its value inside the DOM and React reads it on demand.**
+
+```jsx
+// Controlled — every keystroke goes through React
+function ControlledInput() {
+  const [value, setValue] = useState("");
+  return <input value={value} onChange={e => setValue(e.target.value)} />;
+}
+
+// Uncontrolled — input keeps its own value; we read it via a ref
+function UncontrolledInput() {
+  const ref = useRef(null);
+  return (
+    <form onSubmit={e => { e.preventDefault(); alert(ref.current.value); }}>
+      <input defaultValue="" ref={ref} />
+      <button type="submit">Send</button>
+    </form>
+  );
+}
+```
+
+**When to use which.**
+
+- **Controlled** if you need to validate as the user types, conditionally enable a submit button, format on the fly, or share the value with other components.
+- **Uncontrolled** for simple forms where you only care about the final value at submit time, or for integrating with non-React widgets.
+
+**Mixing the two is forbidden.** If you pass `value` (controlled) and don't pass `onChange`, React will warn that the field is read-only. If you swap from `defaultValue` to `value` mid-life, React will warn about flipping modes. Pick one per input and stick with it.
+
+**`e.preventDefault()`.** HTML forms default to a full-page reload on submit. In a single-page React app this destroys all state. Always call `e.preventDefault()` at the top of an `onSubmit` handler. The same applies to `<a>` navigation inside an SPA, which is why routers ship their own `<Link>` (see the routing section).
+
+## Rendering, virtual DOM, reconciliation, keys
+
+**React's render is a pure function of props and state. It produces a tree of virtual DOM nodes — plain JS objects describing what the UI should look like — and the renderer diffs that tree against the previous tree to produce the minimum set of real DOM mutations.**
+
+The virtual DOM is *not* magic. It's literally objects like `{ type: "h1", props: { children: ["Hello, ", name] } }`. Building and walking JS objects is one or two orders of magnitude cheaper than building and walking actual DOM nodes (which trigger style recalculation, layout, paint).
+
+**The reconciliation algorithm**, roughly:
+
+1. If the root element types differ (`<div>` vs `<span>`), throw the whole subtree away and rebuild.
+2. If the types match, keep the DOM node and update only the props that changed.
+3. For lists of children, compare element-by-element *by key*.
+
+**Keys are how React identifies "this is the same item as before".** Without a stable key, when you reorder a list, React assumes the items at positions 0, 1, 2 are the same items and just updates their props — leading to focus loss, animation jumps, and component state attached to the wrong row.
+
+```jsx
+// Bad — index as key
+items.map((item, i) => <Row key={i} data={item} />)
+
+// Good — stable id from the data
+items.map(item => <Row key={item.id} data={item} />)
+```
+
+**Index keys are only safe** if the list is never reordered, filtered, or have items inserted in the middle. For most real lists, that's not true, so use a stable id.
+
+**Re-renders cascade.** When a component re-renders, React re-evaluates its children (and theirs) by default. That's *fine* — the work is virtual-DOM diffing, not real DOM thrashing. You only need `React.memo`, `useMemo`, `useCallback` when profiling shows actual cost.
+
+The lecture's punchline: **the framework wins because the DOM is slow and JS is fast.** Compute the desired UI in JS, diff in JS, and emit the smallest possible patch to the DOM — that's the entire performance story.
+
+## The rules of hooks (and why they exist)
+
+**Two ironclad rules:**
+
+1. **Only call hooks at the top level.** Never inside loops, conditions, or nested functions.
+2. **Only call hooks from React function components or from custom hooks.** Not from plain functions, event handlers, or class methods.
+
+**Why.** As mentioned earlier, hooks rely on **call order** to associate each call with its slot in React's internal state list. If you wrap `useState` in an `if`, the order changes between renders, slots shift, and your `count` ends up reading some other component's `name`.
+
+```jsx
+// Broken — useState moves slots depending on the prop
+function Broken({ showCount }) {
+  if (showCount) {
+    const [count, setCount] = useState(0);
+  }
+  const [name, setName] = useState("");
+  // ...
+}
+
+// Fix: hoist the hook out, conditionally *use* the value
+function Fixed({ showCount }) {
+  const [count, setCount] = useState(0);
+  const [name, setName] = useState("");
+  return showCount ? <p>{count}</p> : <p>{name}</p>;
+}
+```
+
+The `eslint-plugin-react-hooks` `rules-of-hooks` rule catches these statically. Trust it.
+
+**Custom hooks** are how you share stateful logic. Any function whose name starts with `use` and that calls other hooks is a custom hook. They follow the same rules:
+
+```jsx
+function useLocalStorage(key, initial) {
+  const [value, setValue] = useState(() => {
+    const stored = localStorage.getItem(key);
+    return stored ? JSON.parse(stored) : initial;
+  });
+  useEffect(() => {
+    localStorage.setItem(key, JSON.stringify(value));
+  }, [key, value]);
+  return [value, setValue];
+}
+```
+
+The naming convention is enforced — the lint rule keys off the `use` prefix to know what counts as a hook.
+
+## Stale closures and other common mistakes
+
+**A stale closure is a function that captured a variable from an earlier render and is still referring to it.** This is the single most common React bug, and the exam will absolutely test it.
+
+```jsx
+function Timer() {
+  const [count, setCount] = useState(0);
+  useEffect(() => {
+    const id = setInterval(() => {
+      setCount(count + 1);   // `count` is captured from the first render — always 0
+    }, 1000);
+    return () => clearInterval(id);
+  }, []);   // empty deps means we never re-create the interval
+  return <p>{count}</p>;   // displays 1 forever
+}
+```
+
+The interval fires every second, but `count` inside the callback is the *first render's* `count` — it's `0` forever. So `setCount(0 + 1)` runs every tick, and React sees the same value `1` and stops re-rendering.
+
+**Two fixes:**
+
+- Use the updater form: `setCount(prev => prev + 1)`. No closure over `count`.
+- Or add `count` to the deps so the interval gets recreated. (Wastes timers — usually worse than the updater form.)
+
+**Other top-shelf mistakes:**
+
+- **Mutating state directly.** `state.items.push(x); setState(state);` — React compares the reference, sees it's the same object, and skips the render. Always create a new object/array: `setState({ ...state, items: [...state.items, x] })`.
+- **Setting state during render.** Causes infinite loops. Setters belong in effects or event handlers.
+- **Forgetting `await` on async effects.** `useEffect(async () => { ... })` is a footgun — the function returns a promise, not a cleanup. Wrap an inner async IIFE instead.
+- **Using indexes as keys for reorderable lists.** Discussed above.
+- **Conditionally calling hooks.** Discussed above.
+
+## Context API: state without prop drilling
+
+**Context lets a component publish a value to all of its descendants, without passing it through every intermediate prop.**
+
+```jsx
+const ThemeContext = React.createContext("light");
+
+function App() {
+  const [theme, setTheme] = useState("dark");
+  return (
+    <ThemeContext.Provider value={theme}>
+      <Page />
+    </ThemeContext.Provider>
+  );
+}
+
+function DeepChild() {
+  const theme = useContext(ThemeContext);   // skips every intermediate prop
+  return <div className={`card ${theme}`}>...</div>;
+}
+```
+
+**When to reach for it.** When a piece of data is read by many components at many depths — current user, theme, language, feature flags. Things that are conceptually app-wide.
+
+**When *not* to.** Don't replace local state. If only two siblings share a value, lift it up — don't reach for Context. Context's downside: **every consumer re-renders whenever the provider's value changes**, regardless of whether the consumer cares about the specific field that changed. For large trees that share a frequently-changing object, this gets expensive. Split into multiple narrower Contexts, or reach for a dedicated state library (Redux, Zustand) when needed.
+
+**Redux comparison, in one sentence:** Redux is a centralised store with reducer-based updates and a subscription model that re-renders only the components reading the changed slice; Context is a lightweight pub-sub that re-renders everything. Both can model the same shape of "global state"; Redux scales further at the cost of boilerplate. The lecture explicitly lists Redux (React), Vuex (Vue), and NgRx (Angular) as the three flagship state libraries — and reminds you that what you're really learning is **state management**, the idea, not any particular API.
+
+## Routing intro
+
+**A single-page application has one HTML file. "Navigating" between pages means swapping which component is mounted, while updating the URL bar so back/forward and bookmarks still work.** That's what a router does.
+
+The standard library is **React Router**. The core idea:
+
+```jsx
+import { BrowserRouter, Routes, Route, Link, useParams } from "react-router-dom";
+
+function App() {
+  return (
+    <BrowserRouter>
+      <nav>
+        <Link to="/">Home</Link>
+        <Link to="/about">About</Link>
+        <Link to="/users/42">Profile</Link>
+      </nav>
+      <Routes>
+        <Route path="/" element={<Home />} />
+        <Route path="/about" element={<About />} />
+        <Route path="/users/:id" element={<UserProfile />} />
+        <Route path="*" element={<NotFound />} />
+      </Routes>
+    </BrowserRouter>
+  );
+}
+
+function UserProfile() {
+  const { id } = useParams();   // reads `:id` from the URL
+  return <h1>User {id}</h1>;
+}
+```
+
+A few non-obvious points:
+
+- **Use `<Link>`, not `<a>`.** Plain anchors trigger a full page reload, which destroys app state and re-downloads everything. `<Link>` calls the History API instead.
+- **URL parameters become props (via hooks).** `:id` in the path is read out with `useParams()`.
+- **Query strings** are read with `useSearchParams()` and behave like state — updating them triggers navigation.
+- **404s** are handled with `<Route path="*" element={<NotFound />} />`.
+
+The exam-level point: **URLs are state too**. A well-designed SPA puts navigable state (selected tab, search query, filters) in the URL so that refresh, share, and back-button all do the natural thing. Don't store "which page am I on" only in `useState` — store it in the URL and read it back.
+
+This also closes the architectural loop the lecture opens with. With a frontend framework, the server stops being a view-template engine and becomes a **JSON API**; the client owns routing, rendering, and most of the user-perceived application surface.
+
+## Common exam patterns
+
+- **"Identify props vs state."** Given a component, label each variable. Props come from the parent's call site; state comes from `useState`/`useReducer`; locals derived from those are just locals.
+- **"Why does this `useEffect` not re-fire?"** Missing dep in the array, or empty `[]` when a value should be there. Watch for closures capturing stale values.
+- **"Why does this counter only increment by 1?"** Three `setState` calls with the same captured stale value. Fix with the updater form.
+- **"What's wrong with using array index as key?"** Reorder/insert breaks identity, causing focus loss, wrong DOM state, and animation glitches.
+- **"Controlled vs uncontrolled — which is this, and why?"** Look for `value=` (controlled, needs `onChange`) versus `defaultValue=` plus ref.
+- **"Sketch the component tree for this UI."** Pick the smallest reusable units, name the parents, decide where state lives. Justify "this state lives here because both X and Y need to read it".
+- **"Explain the virtual DOM in three sentences."** It's a plain-JS description of the desired UI; React diffs the new tree against the old; only the differences are flushed to the real DOM, avoiding expensive layout thrash.
+- **"Why are there rules of hooks?"** Hooks identify their slot by call order. Conditional calls would shift slots between renders and corrupt state. The lint rule catches it.
+- **"Lift state up, or use context?"** Two siblings → lift. Whole subtree of unrelated descendants → context. Performance-sensitive global state → Redux or a dedicated store.
+- **"Why declarative over imperative?"** Declarative complexity is linear in components; imperative is quadratic in interactions. State as single source of truth eliminates the "the DOM and my JS variable disagree" class of bug entirely.
+- **"Function vs class component — are they the same?"** From React's perspective, yes — both produce JSX from props/state. Function + hooks is the modern default; classes are legacy but still legal.

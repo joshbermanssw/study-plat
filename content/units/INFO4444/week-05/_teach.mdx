@@ -1,0 +1,149 @@
+---
+title: "Week 5 — Distributed Innovation: Crowdsourcing, Open Data, and Open-Source Software"
+unit: INFO4444
+week: 5
+type: overview
+status: done
+---
+
+## What this week is really about
+
+Week 4 looked at open innovation between *firms*. Week 5 takes the openness logic to its extreme: innovation by *crowds* — users, communities, volunteers, hobbyists, and unpaid contributors who collectively out-produce many traditional R&D organisations. The headline cases are familiar: Wikipedia (about 60 million articles across all languages, written by volunteers, free to read), Linux (running the world's servers, smartphones, supercomputers, and embedded devices), Apache (powering a significant share of the web), and the broader open-source ecosystem (npm, PyPI, Maven, crates.io — millions of packages, mostly free). The intellectual contributions you must master this week: **Jeff Howe's crowdsourcing typology** (*Wired*, 2006), **Eric von Hippel's lead-user / user-innovation framework** (*Sources of Innovation*, 1988; *Democratizing Innovation*, 2005), the **free/open-source software licence family** (GPL, MIT, Apache, BSD), and the **governance models** that make community projects work (BDFL, foundation, corporate-led). By the end of the overview you should be able to (a) recite the four Howe categories with examples, (b) define a lead user and explain why von Hippel's empirical work undercut the manufacturer-as-innovator orthodoxy, (c) distinguish at least three open-source licences with their practical implications, (d) compare three governance models, and (e) state at least one serious critique of crowdsourcing (quality, exploitation, free riding).
+
+## Howe's crowdsourcing typology
+
+Jeff Howe coined the term *crowdsourcing* in *Wired* (June 2006) — combining "crowd" and "outsourcing" to describe the practice of taking work traditionally done by employees and outsourcing it to a distributed network of unspecified people, usually via the internet. In the follow-up book *Crowdsourcing: Why the Power of the Crowd is Driving the Future of Business* (2008), Howe gave a four-category typology that has become the standard reference.
+
+**1. Crowd wisdom (aggregation of distributed judgement).** The crowd provides answers, votes, or predictions; the aggregate is more accurate than any single member. Roots in James Surowiecki's *The Wisdom of Crowds* (2004). Examples: prediction markets (Iowa Electronic Markets, Polymarket), Wikipedia's revert-and-edit consensus mechanism, Reddit's vote-based ranking, peer reviewer pools, Stack Overflow's reputation system. Surowiecki's four conditions for wisdom-of-crowds: *diversity*, *independence*, *decentralisation*, *aggregation*. If any one fails (e.g. everyone copying each other's votes — independence fails), the crowd is foolish rather than wise.
+
+**2. Crowd creation (production of content or design).** The crowd creates the artefact. Examples: Wikipedia (encyclopedia articles), YouTube (videos), Threadless (T-shirt designs voted by users and then printed), OpenStreetMap (a free map of the world rivaling commercial maps), Foldit (volunteers solving protein-folding puzzles, producing publishable science), Stack Overflow (Q&A content).
+
+**3. Crowd voting (judging or rating).** The crowd evaluates existing material. Examples: Netflix's user ratings, Yelp reviews, Amazon stars, X/Twitter community notes, Reddit upvotes (overlaps with creation), American Idol-style talent contests. Crowd voting is the *least* deep but the most widespread form — almost every consumer platform now embeds it.
+
+**4. Crowd funding.** The crowd pools small contributions to fund a project. Examples: Kickstarter, Indiegogo (reward-based), GoFundMe (donation), Republic / Crowdcube / Birchal (equity), Mosaic / LendingClub (lending). Pebble Watch's Kickstarter campaign (2012) raised $10M from 69,000 backers; the Coolest Cooler raised $13M in 2014 (and then largely failed to deliver — illustrating that funding crowds bear founder execution risk).
+
+A fifth category, sometimes added: **micro-task crowdsourcing** (also called crowdwork): Amazon Mechanical Turk (founded 2005), Appen, Clickworker, Scale AI's data-labelling workforce. Hundreds of thousands of workers complete short tasks for small payments. This is the labour-economic engine behind almost all modern machine-learning training datasets — the "AI" that ships in 2024 is largely trained on data labelled by gig workers in Kenya, the Philippines, Venezuela, and India.
+
+## von Hippel and the user as innovator
+
+Howe's typology is descriptive. The deeper theoretical foundation comes from **Eric von Hippel** at MIT. His foundational work *The Sources of Innovation* (Oxford University Press, 1988) used historical evidence to overturn the standard "manufacturer originates, user consumes" model. Von Hippel showed that in many industries the *user* originates the innovation:
+
+- *Scientific instruments* (gas chromatographs, electron microscopes): users (working scientists) invented most of the major improvements; instrument makers commercialised them.
+- *Surgical equipment*: surgeons designed and prototyped the instruments; medical-device companies produced and sold them.
+- *Process machinery* in semiconductors and printing: lead users in those industries developed the new equipment.
+- *Sports equipment* (mountain bikes, snowboards, kite-surfing): the founding innovations came from users, not manufacturers.
+- *Software*: the entire open-source ecosystem is *user innovation* — programmers writing tools they need.
+
+Von Hippel's argument is *not* that all innovation is user-driven (that would be silly) but that the *standard* model under-represents the user's role. The reason is structural: lead users have *sticky information* about their needs that is expensive for manufacturers to transfer, and lead users often face the cost-benefit at a personal scale that makes self-development rational.
+
+In *Democratizing Innovation* (2005), von Hippel extended this with two key concepts:
+
+**Lead users.** Lead users are users who (a) face needs that the rest of the market will face later, and (b) benefit substantially from solving those needs themselves. They are the leading edge of the demand distribution and often act *years* before the mainstream. Identifying lead users is a marketable skill — firms like 3M run lead-user research programmes that have produced measurably more innovative product portfolios than traditional marketing-research-led portfolios.
+
+**Innovation toolkits.** Manufacturers provide users with toolkits — design environments, customisation kits, configurators — that let users do their own design within constraints. LEGO Ideas (formerly LEGO CUUSOO), Adobe Photoshop's plug-in architecture, the iOS App Store SDK, Roblox Studio, and Unity's asset store are all toolkit examples. The user does the innovation; the manufacturer provides the platform and captures a share of the value.
+
+Von Hippel's work is the *intellectual foundation* of distributed innovation more generally. Howe is the *journalist* who named the phenomenon for a popular audience; von Hippel is the academic who explained the mechanism.
+
+## Free vs open-source software
+
+Free software (the older term, Richard Stallman, GNU Project, 1983) and open-source software (the more marketable rebrand, Bruce Perens / Eric Raymond, 1998) are different *movements* with overlapping *artefacts*. Stallman's *Free Software Definition* requires four freedoms:
+
+0. The freedom to run the program for any purpose.
+1. The freedom to study how it works and adapt it.
+2. The freedom to redistribute copies.
+3. The freedom to improve and release improvements.
+
+Open-source software, defined by the Open Source Initiative's Open Source Definition (1998), is operationally similar but more business-friendly in framing. The two movements diverge on philosophy (Stallman: free as in *freedom*, a moral imperative) vs (OSI: open as in *engineering pragmatism*, a development methodology) — but the *licences* mostly satisfy both definitions.
+
+**Eric Raymond's *The Cathedral and the Bazaar*** (1997, book 1999) is the canonical articulation of why distributed open-source development *works* as a production model. Raymond's central claim: "Given enough eyeballs, all bugs are shallow" — a sufficiently large pool of independent contributors will find and fix bugs faster than a closed development team can. The "bazaar" model is decentralised, parallel, redundant, and *resilient* in ways the closed "cathedral" model is not. Linus Torvalds's Linux development (started 1991) was Raymond's empirical case.
+
+## The open-source licence family
+
+There are dozens of OSI-approved licences, but the practical landscape is dominated by a handful. You should be able to distinguish them.
+
+**MIT licence** (also BSD-2-clause, BSD-3-clause: minor variants). **Permissive**. Anyone can take MIT-licensed code, modify it, redistribute it, sell it commercially, and *not* release their modifications. The only obligation is to keep the copyright notice. *Practical effect:* maximum corporate adoption; minimum requirement to give back. React, Rails, jQuery, Node.js's core, almost all popular JavaScript libraries. Apple's macOS uses BSD-licensed Darwin code.
+
+**Apache 2.0**. **Permissive with patent grant**. Similar to MIT but with an *express patent grant* (contributors grant patent licences for their contributions) and a *patent retaliation clause* (you lose your patent grant if you sue another user for patent infringement). Practical effect: similar permissiveness to MIT but cleaner for corporate adoption because patent risks are explicitly handled. Kubernetes, TensorFlow, Apache Hadoop, Android. Apache 2.0 is the modern *enterprise default* for new open-source projects.
+
+**GNU General Public Licence v2 / v3 (GPL)**. **Copyleft**. If you distribute modified GPL code, your modifications must also be released under GPL. This is the "viral" property. *Practical effect:* GPL-licensed code cannot easily be embedded in proprietary products because the proprietary product would then have to be released as GPL. Linux kernel (GPLv2), GCC, Git itself (GPLv2 with linking exception), MySQL, WordPress. GPL is the licence that *guarantees* derivative works remain open.
+
+**GNU Lesser GPL (LGPL)**. **Weak copyleft**. Libraries under LGPL can be *linked* into proprietary applications without those applications becoming LGPL, but modifications to the LGPL library itself must be released under LGPL. Practical effect: a middle ground. Glibc, parts of Qt.
+
+**GNU Affero GPL (AGPL)**. **Network copyleft**. Like GPL, but the "distribution" trigger that requires source release also fires when the software is offered over a network. Practical effect: prevents the SaaS-loophole in classic GPL — you cannot run AGPL code as a hosted service and avoid contributing changes back. MongoDB used AGPL initially; later moved to its own SSPL (Server-Side Public Licence) which is not OSI-approved. Grafana, Mastodon, MinIO.
+
+**Mozilla Public Licence (MPL 2.0)**. **File-level copyleft**. Modifications to MPL files must remain MPL, but you can combine MPL files with proprietary files in the same project. Firefox, Thunderbird, Eclipse SDK adjacent works.
+
+**The "source-available" tail.** A growing number of projects use *non-OSI* licences that look open but restrict commercial use: Business Source Licence (BSL) used by HashiCorp Terraform (post-2023), Elastic Licence 2.0 (Elasticsearch post-2021), MongoDB SSPL. These respond to the *commercial open-source problem*: cloud providers (AWS in particular) running proprietary managed services on top of open-source projects without contributing back. The licences attempt to capture revenue from cloud hosts while keeping the source code visible. The cost: these projects are *no longer open-source* by OSI definition, which has practical consequences (Linux distributions cannot include them, some enterprises have policies against them).
+
+## Governance models
+
+A licence is only half the story. The other half is *who decides what gets merged, who can release, and who speaks for the project*. Three canonical governance models:
+
+**Benevolent Dictator for Life (BDFL).** A single individual makes final decisions, with delegation to lieutenants for specific areas. Trust is personal. Examples: **Linux** (Linus Torvalds — though he stepped back temporarily in 2018), **Python** (Guido van Rossum, until his retirement in 2018 and the move to a Steering Council), **Vim** (Bram Moolenaar). Strengths: decisive, fast, coherent technical vision. Weaknesses: succession risk (Python had a difficult transition out of BDFL), single point of social failure, hard to scale beyond a certain project size.
+
+**Foundation-led.** A non-profit foundation owns the trademark and assets; a board (often elected by contributors and member organisations) sets governance; technical committees make day-to-day decisions. Examples: **Apache Software Foundation** (HTTP server, Hadoop, Kafka, Spark, etc.), **Linux Foundation** (Linux kernel, Kubernetes, Node.js, many others under the umbrella), **Mozilla Foundation** (Firefox), **Python Software Foundation** (post-BDFL). Strengths: scalable, neutral, multi-corporate participation. Weaknesses: slower, more political, dependent on foundation health.
+
+**Corporate-led / commercial open core.** A company controls the core project and contributes most of the code; community contributions are accepted but governance is corporate. Examples: **MongoDB** (MongoDB Inc.), **Elastic** (Elastic NV), **Confluent / Kafka** (Confluent Inc.), **HashiCorp** (Terraform, Vault), **GitLab**. Strengths: clear funding model, professional engineering team, easy enterprise adoption. Weaknesses: ongoing tension over licence changes (see SSPL/BSL above), risk of forks (OpenSearch fork of Elasticsearch by AWS, 2021; OpenTofu fork of Terraform by Linux Foundation, 2023).
+
+A useful pattern: **dual licensing**. A project is offered under two licences — GPL (or similar copyleft) for community use, and a proprietary licence for commercial use that avoids the copyleft requirements. Sells well to enterprises that want commercial support and proprietary linking. MySQL was the textbook case (until Oracle acquired Sun in 2010 and the dynamics changed); Qt is another.
+
+## Wikipedia and Linux as case studies
+
+**Linux (1991–present).** Linus Torvalds, a Finnish CS student, wrote a Unix-like kernel as a hobby project and posted it to the comp.os.minix newsgroup in August 1991. By 1994 (v1.0) it had several hundred contributors. As of 2024 the kernel has had contributions from ~30,000 developers across thousands of companies; about 75% of the contributions come from paid corporate developers (Intel, Red Hat, IBM, Google, Samsung) and 25% from hobbyists. Linux now runs roughly 100% of the top 500 supercomputers, ~90% of the public cloud, almost all Android devices, embedded systems from routers to cars to spacecraft. Governance: BDFL → soft transition to Linux Foundation-stewarded but Torvalds-led; tightly disciplined merge process via the `git` tool (which Torvalds wrote because no existing VCS was suitable for kernel development — a textbook case of innovation begetting innovation).
+
+**Wikipedia (2001–present).** Founded by Jimmy Wales and Larry Sanger as a more open companion to the failing Nupedia. Editing is open to anyone; quality is maintained by a layered system of editors, administrators, bots, and tools (anti-vandal bots, citation requirements, talk pages, edit-war resolution). About 60 million articles across 300+ languages; ~125,000 active editors. Governance: Wikimedia Foundation (501(c)(3) non-profit) provides infrastructure and trademark; community policies set by editors via well-documented consensus processes (RFCs, the Arbitration Committee). Funding: donations from readers, about $180M annually. Wikipedia is a *crowd creation* (Howe) plus *crowd voting* (in the consensus mechanism) plus *crowd wisdom* (in the aggregation of multiple editors' judgement).
+
+A critique worth knowing: Wikipedia's editor base is heavily *non-representative* — predominantly male, white, English-speaking, technically employed, in the global North. This skews coverage (more articles about minor 1990s software products than about major living African political figures), citation choices, and editorial tone. Crowd-based production has a politics that the "wisdom" framing tends to hide.
+
+## Open hardware and the maker movement
+
+Less prominent than open-source software, but growing: **open hardware** is hardware whose designs (schematics, PCB layouts, mechanical drawings, firmware) are released under permissive or copyleft licences so anyone can manufacture and modify them. **Arduino** (Italian-origin open-hardware microcontroller boards, ~2005) and **RepRap** (self-replicating 3D printers, 2005, source of the consumer 3D-printer industry) are the canonical cases. **OpenROV** (underwater drones), **OpenSPARC** (Sun's processor, open-sourced 2007), **RISC-V** (open instruction-set architecture, gaining serious adoption in 2020s as a non-proprietary alternative to ARM and x86).
+
+The economics of open hardware are harder than open software: hardware has manufacturing cost, distribution friction, and certification overhead that pure-bits software does not. The most successful open-hardware models combine open designs with a commercial entity selling assembled boards (Arduino's commercial arm), kits, or services.
+
+## Open data
+
+A parallel movement to open source: **open data** is government or research data published under licences that permit reuse. Examples: the US data.gov (since 2009), UK data.gov.uk, the Australian Bureau of Statistics' open data programme, OpenStreetMap's data, OpenAlex (scholarly metadata), Common Crawl (web corpus used by virtually every major language-model training pipeline). Standard licences: Creative Commons CC0 (public domain dedication), CC-BY (attribution), CC-BY-SA (share-alike), the Open Database Licence (ODbL — copyleft for databases).
+
+Why does open data matter for IT innovation? It is *input* to AI/ML, *substrate* for civic tech, *raw material* for journalism and research. The economic theory (Stiglitz et al. 2000): data is non-rival (your use does not reduce my use), often non-excludable when published, and has high social returns. Public investment in data infrastructure has GPT-like spillover properties (Week 1's General Purpose Technology argument).
+
+## Commercial open-core models
+
+How do you make money from software you give away? The dominant patterns in 2024:
+
+**Open core.** Core product free and open; advanced features (auth, audit, scale, support) proprietary. GitLab, MongoDB, Elastic (pre-2021), Confluent, HashiCorp.
+
+**Support and services.** Software free; you sell support contracts, training, professional services. Red Hat (acquired by IBM 2019 for $34B), Canonical (Ubuntu), Cloudera (pre-merger).
+
+**SaaS hosting.** Software open; you sell a managed hosted version. WordPress (Automattic), Ghost, Nextcloud, Mastodon.
+
+**Dual licensing.** Same code under two licences — copyleft for community, proprietary for commercial. MySQL (pre-Oracle), Qt.
+
+**Foundation + member dues.** Industry consortia fund a foundation that maintains the project. Linux Foundation member dues fund Linux kernel work; CNCF dues fund Kubernetes.
+
+The **cloud-vendor problem**: AWS, Azure, GCP can take an open-source project, offer it as a managed service, and outcompete the original developer on hosting (because they own the underlying compute economics). This squeezes open-core firms whose business model depends on being the canonical commercial vendor. Hence the licence-change wave 2018–2023 (Redis, MongoDB, Elastic, Confluent, HashiCorp, Akka — all moved off OSI-approved licences in part or in whole to limit cloud-vendor competition).
+
+## Critique of crowdsourcing
+
+A robust critique of distributed innovation should appear in any high-grade essay. Four arguments to know.
+
+1. **Quality and reliability.** Crowd-produced artefacts vary widely in quality. Wikipedia's accuracy has been *measured* (Nature 2005 study) as comparable to traditional encyclopaedias on science topics, but the *distribution* is wider — some articles are excellent, some are terrible, and identifying which is which requires effort. Open-source security vulnerabilities (Heartbleed in OpenSSL 2014, Log4Shell in Log4j 2021) made vivid the fact that many *critical* open-source projects are maintained by tiny under-resourced teams.
+
+2. **Exploitation and unpaid labour.** Crowdsourcing platforms (Mechanical Turk, gig data-labelling) often pay below minimum wage in real terms. Open-source maintainers are frequently unpaid and burned out. The xkcd cartoon ("All modern digital infrastructure is built on a project some random person in Nebraska has been thanklessly maintaining since 2003") names a real political-economic structure. Tarleton Gillespie, Mary Gray, and Siddharth Suri's work on crowdwork is the academic reference.
+
+3. **Free-rider problem.** Why contribute when you can use freely? In practice contributors are a small fraction of users (the "1% rule" — about 1% of users contribute, 9% comment, 90% just consume). Open-source projects often depend on a tiny number of *very* committed individuals; if those people leave, the project collapses. The economic answer (Olson, *Logic of Collective Action*, 1965): selective incentives — reputation, learning, employer support, embedded careers — sustain contribution despite the apparent free-rider problem. But the equilibrium is fragile.
+
+4. **Power and the platform.** *Howe-style* crowdsourcing tends to concentrate power in the platform owner. Threadless owns the platform, designers compete for prizes; Mechanical Turk owns the labour market, workers compete for tasks; Apple owns the App Store, developers contribute innovation Apple captures the rent on. The "democratisation" framing often obscures a redistribution of power upward.
+
+A balanced position for essays: distributed innovation is *real*, *measurable*, and has produced artefacts of immense civic value (Wikipedia, Linux, OpenStreetMap) and economic value (the open-source software ecosystem underpins every cloud provider, every smartphone, every modern application). But it is not free, it is not painless, and it sits in tension with structures of compensation, power, and quality assurance that traditional production handled differently.
+
+## What you should be able to do by next week
+
+- Recite Howe's four (or five with crowdwork) crowdsourcing categories with examples.
+- Define a lead user, give a non-software example, and explain why von Hippel's empirical work matters.
+- Distinguish MIT/BSD, Apache 2.0, GPL, LGPL, AGPL, and one source-available licence (BSL or SSPL) by their practical implications.
+- Compare BDFL, foundation, and corporate-led governance with named examples.
+- Narrate Linux and Wikipedia as cases.
+- State at least two of the four critiques (quality, exploitation, free-rider, platform power) with evidence.
+
+Week 6 turns to the *protective* side of distributed innovation: if anyone can copy your invention, how do you capture value? That is the IP-protection conversation — patents, trademarks, copyright, trade secrets — and it is where the open-vs-closed tension takes its sharpest legal form.

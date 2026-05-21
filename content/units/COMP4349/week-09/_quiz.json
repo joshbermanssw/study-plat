@@ -1,0 +1,182 @@
+{
+  "unit": "COMP4349",
+  "week": 9,
+  "topic": "Decoupled Architectures",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "Which AWS service is a managed message queue for decoupling producers from consumers?",
+      "choices": ["SNS", "SQS", "EventBridge", "Kinesis"],
+      "correctIndex": 1,
+      "explanation": "SQS is the managed point-to-point queue; SNS is pub/sub; EventBridge is the event bus; Kinesis is streaming."
+    },
+    {
+      "id": "q2",
+      "stem": "SQS Standard queues guarantee:",
+      "choices": ["Exactly-once, strict ordering", "At-least-once delivery, best-effort ordering", "At-most-once, strict ordering", "FIFO ordering"],
+      "correctIndex": 1,
+      "explanation": "Standard queues offer unlimited throughput with at-least-once delivery and best-effort ordering. Duplicates are possible."
+    },
+    {
+      "id": "q3",
+      "stem": "An SQS FIFO queue's ordering scope is:",
+      "choices": ["Global across the whole queue", "Per MessageGroupId", "Per consumer", "Per Region"],
+      "correctIndex": 1,
+      "explanation": "FIFO ordering is per MessageGroupId — messages in the same group are strictly ordered; groups can be processed in parallel."
+    },
+    {
+      "id": "q4",
+      "stem": "An SQS visibility timeout is the period during which:",
+      "choices": ["The message is invisible to other consumers after being received", "The queue is paused", "The DLQ is locked", "Long polling is active"],
+      "correctIndex": 0,
+      "explanation": "After a consumer receives a message, it is hidden for the visibility timeout. The consumer must DeleteMessage within that window, or the message reappears."
+    },
+    {
+      "id": "q5",
+      "stem": "A dead-letter queue (DLQ) receives messages when:",
+      "choices": ["A consumer explicitly forwards them", "The visibility timeout expires once", "ReceiveCount exceeds maxReceiveCount", "The queue is older than 7 days"],
+      "correctIndex": 2,
+      "explanation": "Messages that exceed the configured maxReceiveCount (i.e. repeatedly fail to delete) move to the DLQ for offline inspection."
+    },
+    {
+      "id": "q6",
+      "stem": "SNS provides which messaging pattern?",
+      "choices": ["Point-to-point queue", "Pub/sub (topic-based broadcast)", "Streaming logs", "Sync RPC"],
+      "correctIndex": 1,
+      "explanation": "SNS topics broadcast a published message to all subscribers (Lambda, SQS, HTTP, email, SMS, mobile push)."
+    },
+    {
+      "id": "q7",
+      "stem": "The fan-out pattern typically combines:",
+      "choices": ["SQS + SQS", "SNS + multiple SQS subscribers", "Lambda + EventBridge only", "Kinesis + Firehose"],
+      "correctIndex": 1,
+      "explanation": "Publish once to SNS; each SQS subscriber buffers for its consumer, which scales and retries independently."
+    },
+    {
+      "id": "q8",
+      "stem": "Which is the BEST option for choreographed event-driven integration with rich JSON filtering and multiple targets?",
+      "choices": ["SQS", "SNS", "EventBridge", "Direct Connect"],
+      "correctIndex": 2,
+      "explanation": "EventBridge provides rule-based event-pattern routing, schema registry, partner events, and many target types."
+    },
+    {
+      "id": "q9",
+      "stem": "Step Functions express workflows using:",
+      "choices": ["BPMN diagrams", "Amazon States Language (JSON state machine)", "Cron expressions", "GraphQL"],
+      "correctIndex": 1,
+      "explanation": "Step Functions definitions are state machines in Amazon States Language — a JSON DSL."
+    },
+    {
+      "id": "q10",
+      "stem": "Which Step Functions flavour is intended for high-volume short workflows at lower cost?",
+      "choices": ["Standard", "Express", "Activity-based", "Hybrid"],
+      "correctIndex": 1,
+      "explanation": "Express workflows scale to 100K+/s, run up to 5 minutes, and cost per state transition rather than per-event metadata."
+    },
+    {
+      "id": "q11",
+      "stem": "An idempotent consumer:",
+      "choices": ["Always rejects duplicates", "Handles the same message twice with the same observable effect", "Requires FIFO queues", "Cannot use a DLQ"],
+      "correctIndex": 1,
+      "explanation": "Because most cloud queues are at-least-once, consumers must be idempotent — processing a duplicate must not double-charge, double-ship, etc."
+    },
+    {
+      "id": "q12",
+      "stem": "SQS FIFO deduplication uses MessageDeduplicationId within a:",
+      "choices": ["1-second window", "5-minute window", "24-hour window", "It deduplicates forever"],
+      "correctIndex": 1,
+      "explanation": "FIFO dedup is over a 5-minute window; downstream side-effects still need additional idempotency."
+    },
+    {
+      "id": "q13",
+      "stem": "Long polling on SQS is enabled by setting WaitTimeSeconds. Its purpose is to:",
+      "choices": ["Improve message ordering", "Reduce empty receives and lower request cost", "Raise visibility timeout", "Skip the DLQ"],
+      "correctIndex": 1,
+      "explanation": "Long polling waits up to 20 seconds for messages, avoiding tight polling loops and reducing API calls."
+    },
+    {
+      "id": "q14",
+      "stem": "An SNS topic with a filter policy on a subscription:",
+      "choices": ["Routes all messages", "Routes only messages with matching attributes", "Drops all messages", "Triggers WAF rules"],
+      "correctIndex": 1,
+      "explanation": "Filter policies attached to subscriptions deliver only messages whose attributes match the JSON criteria."
+    },
+    {
+      "id": "q15",
+      "stem": "Which AWS service is best for ingesting and replaying ordered streams at scale (e.g. clickstream)?",
+      "choices": ["SQS Standard", "Kinesis Data Streams", "SNS", "Step Functions"],
+      "correctIndex": 1,
+      "explanation": "Kinesis Data Streams retain ordered records by shard and allow multiple consumers to replay from any offset."
+    },
+    {
+      "id": "q16",
+      "stem": "Orchestration vs choreography:",
+      "choices": ["Both centralised", "Orchestration uses a central conductor (Step Functions); choreography is decentralised event reactions", "Choreography requires Kinesis", "They are identical"],
+      "correctIndex": 1,
+      "explanation": "Orchestration centralises control flow; choreography distributes it through event reactions across services."
+    },
+    {
+      "id": "q17",
+      "stem": "A message in SQS Standard becomes invisible after receipt. If the consumer crashes before deleting it:",
+      "choices": ["The message is lost", "After visibility timeout it reappears, allowing retry by another consumer", "It goes straight to DLQ", "It is sent to SNS"],
+      "correctIndex": 1,
+      "explanation": "Visibility timeout ensures unprocessed messages return to the queue, supporting at-least-once retry."
+    },
+    {
+      "id": "q18",
+      "stem": "Which is NOT a valid SNS subscriber type?",
+      "choices": ["SQS queue", "Lambda function", "HTTPS endpoint", "EBS volume"],
+      "correctIndex": 3,
+      "explanation": "SNS subscribers are SQS, Lambda, HTTP/S, email, SMS, mobile push, Firehose — not block volumes."
+    },
+    {
+      "id": "q19",
+      "stem": "Max SQS message size by default is:",
+      "choices": ["64 KB", "256 KB", "1 MB", "10 MB"],
+      "correctIndex": 1,
+      "explanation": "SQS max message size is 256 KB; use the Extended Client to offload payloads to S3 for larger messages."
+    },
+    {
+      "id": "q20",
+      "stem": "Which AWS service is the BEST choice for source→filter→enrichment→target chains without writing glue Lambda?",
+      "choices": ["Step Functions", "EventBridge Pipes", "Kinesis Firehose", "Direct Connect"],
+      "correctIndex": 1,
+      "explanation": "EventBridge Pipes natively express the source→filter→enrichment→target pattern between services."
+    },
+    {
+      "id": "q21",
+      "stem": "An at-least-once messaging system implies the consumer must:",
+      "choices": ["Reject all duplicates", "Be idempotent or use deduplication storage", "Use only FIFO queues", "Use TLS"],
+      "correctIndex": 1,
+      "explanation": "At-least-once guarantees no loss but allows duplicates; idempotent processing or dedup storage protects correctness."
+    },
+    {
+      "id": "q22",
+      "stem": "An SQS queue's max retention period is:",
+      "choices": ["4 hours", "1 day", "14 days", "1 year"],
+      "correctIndex": 2,
+      "explanation": "SQS retention is configurable from 60 seconds to 14 days; default is 4 days."
+    },
+    {
+      "id": "q23",
+      "stem": "Which is the BEST pattern when one event must trigger four downstream consumers, each with their own retry semantics?",
+      "choices": ["A single SQS queue all four read from", "SNS topic with four SQS subscribers (fan-out)", "Four separate APIs called synchronously", "EventBridge with no target"],
+      "correctIndex": 1,
+      "explanation": "Fan-out via SNS to four SQS queues gives each consumer its own retry/backoff, isolation, and replay characteristics."
+    },
+    {
+      "id": "q24",
+      "stem": "Which is true of EventBridge vs SNS?",
+      "choices": ["EventBridge is cheaper at all scales", "EventBridge offers richer JSON pattern routing, schema registry, partner sources; SNS is simpler/cheaper for high-throughput broadcast", "SNS supports schema registry; EventBridge does not", "They are identical"],
+      "correctIndex": 1,
+      "explanation": "Pick EventBridge for rich routing/integration; SNS for high-throughput simple broadcast at lower per-message cost."
+    },
+    {
+      "id": "q25",
+      "stem": "If a Lambda invoked by EventBridge fails repeatedly, you should configure:",
+      "choices": ["A higher memory setting", "An on-failure destination (SQS/SNS) or DLQ on the target", "Retry forever", "Concurrency limit of 0"],
+      "correctIndex": 1,
+      "explanation": "Async invokes should have an on-failure destination or DLQ so failed events are captured for debugging rather than lost."
+    }
+  ]
+}

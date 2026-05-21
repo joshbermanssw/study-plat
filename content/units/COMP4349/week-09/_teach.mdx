@@ -1,0 +1,459 @@
+---
+title: "Week 9 — Decoupled Architectures"
+unit: COMP4349
+week: 9
+type: overview
+status: done
+---
+
+Week 9 is two complementary topics: DevOps/CI/CD with AWS CodePipeline, and architectural decoupling with SQS, SNS, EventBridge, and Step Functions. They go together because shipping code frequently (CI/CD) and shipping change safely (loose coupling) reinforce each other. The exam expects you to design an end-to-end decoupled image-processing pipeline (S3 → SNS → SQS → workers) including the IAM/resource policies, and to compare SQS vs SNS vs EventBridge delivery semantics.
+
+## DevOps — culture, practice, tools
+
+DevOps integrates software development (Dev) and IT operations (Ops). The problems it tries to solve:
+
+- Developers throw code "over the wall" to Ops, who lack context.
+- Manual deploy steps are slow and error-prone.
+- Bugs are caught late after many changes have piled up.
+- Environment drift causes "works on my machine."
+- Infrastructure is changed by hand, irreproducibly.
+
+The practice has three layers:
+
+- **Culture** — shared responsibility, autonomous teams, fast feedback, blameless post-mortems, "you build it you run it."
+- **Practice** — agile project management, shift-left testing, CI/CD, infrastructure as code, observability (logs, traces, metrics).
+- **Tools** — version control (Git), CI servers (CodeBuild, Jenkins, GitHub Actions), CD orchestrators (CodePipeline, ArgoCD), monitoring (CloudWatch, Datadog).
+
+AWS frames DevOps around five pillars: microservices, CI/CD, monitoring, automation, infrastructure as code.
+
+## Continuous integration vs delivery vs deployment
+
+Three terms, three different gates:
+
+- **Continuous Integration (CI)** — every commit triggers automated build + tests on a shared mainline. Catches integration errors quickly.
+- **Continuous Delivery (CD)** — every passing build is automatically released to a deployable artefact repository, ready for one-click deploy. Production still requires human approval.
+- **Continuous Deployment** — every passing build is automatically deployed to production. No manual gate. Requires deep automated testing and feature flags for safety.
+
+```text
+   Commit ──► Build ──► Test ──► Stage ──► (Manual) ──► Prod
+   └─────── CI ──────┘ └─── CD ─────┘ └── Continuous Deploy ──┘
+```
+
+Most enterprises run CI + CD-to-staging + manual approval for prod. Pure continuous deployment is common at SaaS startups and at Google/Meta scale.
+
+## AWS CI/CD components
+
+- **Source** — AWS CodeCommit (managed Git), GitHub, GitLab, BitBucket, S3 zip.
+- **Build & test** — AWS CodeBuild (managed build container; runs your `buildspec.yml`).
+- **Orchestration** — AWS CodePipeline (defines stages, actions, transitions).
+- **Deploy** —
+    - AWS CodeDeploy for EC2/on-prem/ECS/Lambda with rollback hooks.
+    - CloudFormation for infrastructure deploys.
+    - ECS for container service updates.
+- **Artefact storage** — S3 (CodePipeline default), ECR (container images).
+
+```yaml
+# Minimal buildspec.yml for CodeBuild
+version: 0.2
+phases:
+  install:
+    runtime-versions: { nodejs: 20 }
+    commands: [ npm ci ]
+  build:
+    commands:
+      - npm run build
+      - npm test
+artifacts:
+  files: [ '**/*' ]
+  base-directory: dist
+```
+
+## CodePipeline — pipelines, stages, actions
+
+A **pipeline** is the workflow. A **stage** is a major step (Source / Build / Test / Approval / Deploy). Each stage contains one or more **actions** (the actual work). A failed action stops execution at that stage.
+
+Trigger options: webhook on source change, scheduled, manual.
+
+```text
+Pipeline: prod-api
+  Stage: Source
+    Action: GitHub-Pull-main → output: SourceArtifact
+  Stage: Build
+    Action: CodeBuild-Compile → input SourceArtifact, output BuildArtifact
+    Action: cfn-lint           (parallel)
+  Stage: Approval
+    Action: Manual approval (SNS notification)
+  Stage: Deploy
+    Action: CloudFormation execute-change-set → cfn template
+```
+
+## Safer infrastructure pipelines — change sets + manual approval
+
+For infrastructure pipelines specifically, the safer pattern uses **CloudFormation change sets**:
+
+1. Source — pull the template from Git.
+2. Validate — run `cfn-lint`, `aws cloudformation validate-template`.
+3. Prepare change set — `CloudFormation: Create or replace change set` action. Computes what would change.
+4. Approval — manual approval action; a human reviews the change set output.
+5. Deploy — `CloudFormation: Execute change set` action applies it.
+
+This prevents the worst CloudFormation accidents (replacing the production RDS instance because someone changed a property that requires replacement).
+
+## Debugging pipeline failures
+
+When a pipeline fails, check multiple places:
+
+- Pipeline execution details — which stage and action failed?
+- CodeBuild logs (in CloudWatch Logs) — compile/test failures.
+- CloudFormation stack events — what resource failed and why?
+- IAM permissions — the pipeline service role must allow every action the pipeline performs.
+- Resource naming conflicts — CloudFormation will fail if a global-namespace name (S3 bucket, IAM role) is taken.
+
+## Decoupling — why and how
+
+The Week 9 lecture spends significant time on architectural decoupling. The motivation: tight coupling makes systems brittle.
+
+```text
+[ Web ] ───sync RPC───► [ App ] ───sync RPC───► [ DB ]
+                            │
+                            ▼ sync RPC
+                       [ Image Resizer ]
+```
+
+Problems with tight synchronous coupling:
+
+- Each new app server requires connection updates in the web tier code.
+- If the image-resize service is down, the whole order flow is down.
+- Scaling the resize service means coordinating with the app.
+- Failures cascade.
+
+The decoupling toolkit:
+
+- **Load balancers** between tiers (web → app, app → backend) so adding/removing instances is transparent.
+- **Microservices** so one component's failure doesn't kill the others.
+- **Message queues** (SQS) for asynchronous point-to-point.
+- **Pub/sub topics** (SNS) for asynchronous fan-out.
+- **Event buses** (EventBridge) for routing across many sources/targets.
+- **Workflow orchestration** (Step Functions) for explicit state machines.
+
+## Amazon SQS — managed point-to-point queues
+
+**Amazon Simple Queue Service (SQS)** is a fully-managed queue. A **producer** puts messages; a **consumer** pulls them. The queue durably stores messages until consumed (or until they expire).
+
+Properties:
+
+- Messages up to **256 KB** (extended via S3 reference for up to 2 GB).
+- Default retention 4 days; configurable 1 minute → 14 days.
+- Highly available (multi-AZ by design).
+- No per-instance limits — scale producers and consumers independently.
+
+### Standard vs FIFO queues
+
+- **Standard queue** — at-least-once delivery, best-effort ordering, near-unlimited throughput. The default.
+- **FIFO queue** — exactly-once processing, strict ordering by `MessageGroupId`, up to 3,000 messages/sec with batching (or 300/sec without). Used where order or dedup matter — payments, command sequences.
+
+Pitfall: "at-least-once" means consumers may see duplicates. Build idempotent consumers (operation succeeds the same way whether run once or twice). Use a **dedup key** in the message (e.g. order ID) so the consumer can detect "I've already processed this one."
+
+### Visibility timeout
+
+When a consumer receives a message, SQS marks it invisible for a configurable **visibility timeout** (default 30 seconds, up to 12 hours). Other consumers won't see it during this window. After processing succeeds, the consumer calls `DeleteMessage` to remove it. If the consumer fails to delete in time, the message becomes visible again and another consumer can retry.
+
+```text
+t=0    C1 receives M1 (vis-timeout 30s starts)
+t=2    C2 polls — M1 invisible, gets M2 instead
+t=10   C1 still processing M1
+t=30   C1 hasn't deleted M1 — M1 becomes visible
+t=32   C2 polls again — receives M1 (duplicate!) 
+t=35   C1 finishes, tries to delete M1 — but receipt handle is stale, delete may fail
+```
+
+Pick a visibility timeout slightly longer than your worst-case processing time. Consumers can extend the timeout mid-processing via `ChangeMessageVisibility` if they need more time.
+
+### Short polling vs long polling
+
+- **Short polling** — `ReceiveMessage` returns immediately, possibly empty. Polls a random subset of servers; can miss messages on first try.
+- **Long polling** — `ReceiveMessage` waits up to `WaitTimeSeconds` (max 20) for messages to arrive. Cheaper (fewer API calls) and more reliable.
+
+Always use long polling. Set `ReceiveMessageWaitTimeSeconds: 20` at queue creation.
+
+### Dead-letter queues (DLQ)
+
+Messages that fail processing N times get sent to a **dead-letter queue** for investigation. Stops a poison-pill message from looping forever and exhausting your workers. Configure `RedrivePolicy` with `maxReceiveCount: 5` and a `deadLetterTargetArn`.
+
+### SQS lifecycle, three steps
+
+1. Producer sends a message → SQS replicates across servers.
+2. Consumer receives → visibility timeout begins.
+3. Consumer processes successfully → calls DeleteMessage → SQS removes it.
+
+```bash
+aws sqs send-message --queue-url https://sqs.../orders \
+  --message-body '{"orderId":"ORD-123","total":42.50}'
+
+aws sqs receive-message --queue-url https://sqs.../orders --wait-time-seconds 20
+aws sqs delete-message --queue-url https://sqs.../orders --receipt-handle AQEB...
+```
+
+## Amazon SNS — managed pub/sub topics
+
+**Amazon Simple Notification Service (SNS)** is fully-managed pub/sub. Publishers send to a **topic**; SNS pushes to every **subscriber**.
+
+Subscriber types:
+
+- HTTP/HTTPS endpoints
+- Email / SMS
+- Mobile push (APNs, FCM)
+- Lambda functions
+- SQS queues
+- Amazon Kinesis Data Firehose
+
+Properties:
+
+- Push-based — subscribers don't poll.
+- **No persistence** — if a subscriber is down at publish time, the message is lost (HTTP retries help but SNS doesn't store for long).
+- Standard topics: best-effort ordering, at-least-once.
+- FIFO topics: ordered, exactly-once delivery, only SQS FIFO subscribers.
+- Message filtering — subscribers can attach a filter policy that drops messages not matching.
+
+### Fan-out pattern — SNS + SQS
+
+The canonical decoupling pattern:
+
+```text
+Publisher ──► SNS topic ──► SQS queue A ──► consumer group A
+                       └──► SQS queue B ──► consumer group B
+                       └──► SQS queue C ──► Lambda
+```
+
+Each subscriber gets its own queue. If consumer A is slow or offline, its queue buffers. Adding a new consumer is a new queue subscription, no code changes upstream.
+
+### Image-processing example (lecture canonical)
+
+A mobile client uploads an image to S3. We want to (a) make a thumbnail for the web view, (b) resize for mobile, (c) convert format. Three independent worker groups.
+
+```text
+Mobile ──► S3 (upload bucket)
+              │ event: ObjectCreated
+              ▼
+         SNS topic: image-uploaded
+           │       │       │
+           ▼       ▼       ▼
+       SQS-thumb SQS-mob SQS-fmt
+           │       │       │
+           ▼       ▼       ▼
+       ASG-thumb ASG-mob ASG-fmt
+           │       │       │
+           └───►───┴───►───┘
+                  ▼
+             S3 (processed bucket)
+```
+
+Permissions you must wire up:
+
+1. **Client → S3**: `s3:PutObject` on upload bucket (IAM policy on user/role, or bucket policy).
+2. **S3 → SNS**: `sns:Publish`. Set in the **SNS topic resource policy** with Principal `s3.amazonaws.com` and a condition on `aws:SourceArn` matching the bucket.
+3. **SNS → SQS**: `sqs:SendMessage`. Set in the **SQS queue resource policy** with Principal `sns.amazonaws.com` and condition on `aws:SourceArn` matching the topic.
+4. **EC2 → SQS**: `sqs:ReceiveMessage`, `sqs:DeleteMessage`, `sqs:GetQueueAttributes`. Set in the EC2 instance profile's IAM role.
+5. **EC2 → S3**: `s3:GetObject` (original), `s3:PutObject` (processed). Same IAM role.
+
+```json
+// SNS topic policy snippet
+{
+  "Effect": "Allow",
+  "Principal": { "Service": "s3.amazonaws.com" },
+  "Action": "sns:Publish",
+  "Resource": "arn:aws:sns:ap-southeast-2:123:image-uploaded",
+  "Condition": { "ArnLike": { "aws:SourceArn": "arn:aws:s3:::upload-bucket" } }
+}
+```
+
+## SNS vs SQS — when to use which
+
+| Dimension | SNS | SQS |
+|---|---|---|
+| Model | Pub/sub | Point-to-point |
+| Distribution | One-to-many | One-to-one |
+| Delivery | Push | Pull |
+| Persistence | None (push best-effort) | Yes — until consumed or expires |
+| Ordering | Standard: best effort; FIFO: yes | Standard: best effort; FIFO: yes |
+| Use case | Notify many subscribers | Buffer work for workers |
+
+Most real systems combine them: SNS for fan-out + multiple SQS queues for buffered consumption.
+
+## Amazon EventBridge — the event router
+
+**Amazon EventBridge** (the modernised CloudWatch Events) is a service bus with rich routing. Events come from:
+
+- **AWS services** — almost every AWS service emits events (EC2 state change, S3 put, CodePipeline transition, GuardDuty finding).
+- **Partner sources** — SaaS apps (Zendesk, Datadog, Auth0).
+- **Custom event buses** — your application can publish events.
+
+**Rules** match an event pattern (JSON filter) and forward to one or more **targets** (Lambda, SQS, SNS, Step Functions, API destination, etc.). Multiple buses isolate workloads.
+
+```json
+{
+  "source": ["aws.s3"],
+  "detail-type": ["Object Created"],
+  "detail": { "bucket": { "name": ["sales-data"] } }
+}
+```
+
+EventBridge vs SNS: SNS is simpler pub/sub with fewer routing primitives; EventBridge has content-based filtering on rich JSON, schema registry, scheduled rules, and multi-account event sharing. For modern serverless architectures, EventBridge is increasingly the right default.
+
+## AWS Step Functions — explicit workflow orchestration
+
+When a sequence of steps must execute deterministically (with retries, branches, error handling), an explicit state machine beats ad-hoc Lambda-calls-Lambda. **AWS Step Functions** runs state machines defined in **Amazon States Language** (JSON).
+
+State types:
+
+- **Task** — do work (invoke Lambda, run ECS task, query DynamoDB).
+- **Choice** — branch based on a condition.
+- **Wait** — pause for a duration or until a timestamp.
+- **Parallel** — fan-out concurrent branches.
+- **Map** — iterate over an array, processing each item.
+- **Pass** — transform data.
+- **Succeed / Fail** — terminate.
+
+Two flavours:
+
+- **Standard** workflows — durable, up to 1 year, audit-friendly. Pay per state transition.
+- **Express** workflows — high-volume, up to 5 minutes, near-real-time. Pay per request + duration.
+
+```json
+{
+  "StartAt": "FetchOrder",
+  "States": {
+    "FetchOrder": { "Type": "Task", "Resource": "arn:aws:lambda:...:FetchOrder", "Next": "Validate" },
+    "Validate":   { "Type": "Choice", "Choices": [
+      { "Variable": "$.valid", "BooleanEquals": true, "Next": "Charge" }
+    ], "Default": "Reject" },
+    "Charge":     { "Type": "Task", "Resource": "arn:aws:lambda:...:Charge", "End": true },
+    "Reject":     { "Type": "Fail" }
+  }
+}
+```
+
+Step Functions handle retries (`Retry: { ErrorEquals, IntervalSeconds, BackoffRate, MaxAttempts }`), catch (`Catch:`), and timeouts declaratively.
+
+## Idempotency — the cure for at-least-once
+
+In distributed systems, exactly-once delivery is essentially impossible. Embrace at-least-once and make your operations **idempotent**: running them twice has the same effect as running them once.
+
+Strategies:
+
+- **Idempotency key** — client generates a unique ID per logical operation; server stores it. Subsequent attempts with the same key return the original result. Stripe popularised this pattern.
+- **Conditional writes** — DynamoDB `ConditionExpression`, S3 `If-Match`/`If-None-Match`. Reject duplicate writes.
+- **Natural idempotence** — `SET balance = 100` is idempotent; `ADD 50 TO balance` is not.
+- **Dedup tables** — record processed message IDs with a TTL.
+
+Pitfall: a Lambda invoked from SQS that increments a counter and then deletes the message — but crashes before the delete — will run again and double-count. Idempotency keys would catch this.
+
+## Event-driven vs message-driven
+
+Subtle distinction the exam sometimes asks:
+
+- **Message-driven** — directed communication; sender knows the recipient (or queue), recipient pulls messages. SQS is the canonical example.
+- **Event-driven** — sender announces "X happened" without knowing who cares; subscribers self-select. SNS, EventBridge, Kinesis are event-driven.
+
+Both are async; the difference is how tightly the sender is coupled to the receiver. Event-driven is more loosely coupled and tends to scale better in evolving architectures.
+
+## The saga pattern — distributed transactions without 2PC
+
+Classic distributed transactions (two-phase commit) don't work well at cloud scale. The **saga pattern** decomposes a multi-step business transaction into a sequence of local transactions, each emitting an event. If a step fails, compensating actions undo prior steps.
+
+Example: book a trip = book flight + book hotel + book car. If car booking fails, cancel hotel, cancel flight. Implement as a Step Functions state machine with `Catch:` clauses calling compensating tasks.
+
+## Common exam traps
+
+- "SQS message gets stuck" — visibility timeout shorter than processing time; messages reappear and another consumer picks up.
+- "SQS exactly-once" — not on standard queues; use FIFO or idempotency keys.
+- "SNS doesn't persist" — if no subscriber subscribed at publish time, message is gone. Pre-subscribe SQS to buffer.
+- "Fan-out pattern" — SNS topic + multiple SQS queue subscribers.
+- "Permission for S3 to invoke SNS" — set in the SNS topic policy with Principal s3.amazonaws.com.
+- "Permission for SNS to publish to SQS" — set in the SQS queue policy with Principal sns.amazonaws.com.
+- "EventBridge vs SNS" — EventBridge filters on rich JSON content and has schedule rules; SNS is simpler pub/sub.
+- "Step Functions Standard vs Express" — Standard up to 1 year, durable, audit; Express up to 5 min, high-volume.
+- "DLQ purpose" — capture poison-pill messages after N failed attempts so the queue keeps moving.
+- "Pipeline change set" — preview infra changes before applying; mandatory for production.
+- "CI vs CD vs continuous deployment" — CI is build+test; CD is to-release; continuous deployment is to-production.
+
+## Amazon Kinesis Data Streams — the streaming alternative
+
+When the workload is many small high-velocity events (clickstream, IoT telemetry, log shipping) and you need ordered processing per partition, **Kinesis Data Streams** is a better fit than SQS:
+
+- **Shards** — the unit of throughput; each provides 1 MB/s in, 2 MB/s out.
+- **Records** — up to 1 MB each, partitioned by a `PartitionKey` (which deterministically maps to a shard).
+- **Consumers** — read via the SDK or KCL (Kinesis Client Library); each consumer keeps a per-shard checkpoint in DynamoDB.
+- **Enhanced fan-out** — dedicated 2 MB/s per consumer instead of shared.
+- **Retention** — 24 hours default, configurable up to 365 days.
+
+Use Streams when ordering within a partition matters, when you have many consumer groups reading the same data, or when you need to replay history.
+
+## Kinesis Data Firehose — the no-code stream sink
+
+**Kinesis Data Firehose** is the easier sibling: buffer streaming data and dump to S3 / Redshift / OpenSearch / Splunk on a size or time threshold. No code, no shards to manage. Trade ordering and replay for simplicity. The default choice for "I just want to land events in S3 for later analysis."
+
+## SAM (Serverless Application Model)
+
+AWS SAM is a CloudFormation extension specifically for serverless. It adds shortcut resource types:
+
+- `AWS::Serverless::Function` — a Lambda with Event mappings inline.
+- `AWS::Serverless::Api` — an API Gateway.
+- `AWS::Serverless::StateMachine` — a Step Functions state machine.
+
+`sam build` packages the function code; `sam deploy --guided` deploys. SAM CLI also runs the function locally via Docker for development.
+
+## CodeDeploy traffic-shifting strategies
+
+When deploying a new version, CodeDeploy supports several traffic shifts (esp. for Lambda and ECS):
+
+- **All-at-once** — flip 100% immediately. Fast, scary, no rollback safety.
+- **Linear** — 10% every N minutes for 10 windows.
+- **Canary** — 10% to the new version, hold for N minutes, then 90%.
+
+Pair with CloudWatch alarm hooks (`BeforeAllowTraffic`, `AfterAllowTraffic`) that auto-rollback if error rate spikes.
+
+## Step Functions deeper — error handling and retry
+
+Each Task state can specify Retry and Catch clauses:
+
+```json
+"GetOrder": {
+  "Type": "Task",
+  "Resource": "arn:aws:lambda:...:GetOrder",
+  "Retry": [{
+    "ErrorEquals": ["Lambda.ServiceException", "Lambda.AWSLambdaException", "Lambda.TooManyRequestsException"],
+    "IntervalSeconds": 2,
+    "MaxAttempts": 6,
+    "BackoffRate": 2.0
+  }],
+  "Catch": [{
+    "ErrorEquals": ["States.TaskFailed"],
+    "Next": "HandleFailure"
+  }],
+  "Next": "ProcessOrder"
+}
+```
+
+Retry with exponential backoff handles transient errors automatically; Catch routes permanent errors to a compensating workflow. This is what makes Step Functions far more robust than ad-hoc Lambda chains.
+
+## The saga pattern — compensating transactions
+
+In long-running distributed transactions you can't use 2-phase commit (locks too long, no global commit coordinator at cloud scale). The **saga pattern** splits a business transaction into local steps that each emit an event; if a later step fails, earlier steps are *compensated* with explicit undo actions.
+
+Example: book a holiday = book flight + book hotel + book car. If car fails, cancel hotel, cancel flight. In Step Functions, each step is a Task; Catch routes to a sequence of compensating Task states.
+
+## Idempotency keys in detail
+
+Implementation: every client-initiated mutating request carries a unique `Idempotency-Key` header (usually a UUID per logical operation). The server stores the key + the response in a fast store (DynamoDB) with a TTL of, say, 24 hours. Subsequent requests with the same key return the original response instead of executing again. This is what Stripe, AWS Lambda Powertools, and most modern payment APIs use.
+
+```python
+# AWS Lambda Powertools idempotency
+from aws_lambda_powertools.utilities.idempotency import idempotent, DynamoDBPersistenceLayer
+persistence = DynamoDBPersistenceLayer(table_name="idempotency")
+
+@idempotent(persistence_store=persistence)
+def lambda_handler(event, context):
+    # any side effects here are guaranteed once per event ID
+    ...
+```

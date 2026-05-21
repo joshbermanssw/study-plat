@@ -1,0 +1,240 @@
+---
+title: "Week 7 — Commercialisation I: Lean Startup and Agile Development"
+unit: INFO4444
+week: 7
+type: overview
+status: done
+---
+
+## What this week is really about
+
+Week 7 begins the second half of INFO4444. We pivot from "how do innovations *arise*?" (Weeks 1–6) to "how do you turn an innovation into a profitable business?" The opening framework is the **lean startup**, formulated by Steve Blank (*The Four Steps to the Epiphany*, 2005; *The Startup Owner's Manual*, 2012) and popularised by Eric Ries (*The Lean Startup*, 2011). The core claim is striking and counter-intuitive: a startup is fundamentally a *different kind of organisation* from a mature company, and the standard business-school playbook (write a 5-year business plan, raise capital, execute) is exactly the wrong approach. A startup is *not* a small version of a large company — it is a temporary organisation searching for a *repeatable, scalable* business model. Lean startup is the methodology for conducting that search efficiently. This week pairs lean with **agile software development** (Beck et al., *Manifesto for Agile Software Development*, 2001; Scrum as the dominant implementation), because in a software startup the two are usually fused — the product *is* the experiment. By the end of the overview you should be able to (a) state the search-vs-execute distinction, (b) walk through Blank's four steps of customer development, (c) draw the build-measure-learn loop and define MVP, validated learning, pivot vs persevere, (d) name and explain at least five Ries pivot types, (e) compare agile (Scrum specifically) to waterfall, and (f) state a serious critique of lean.
+
+## A startup is not a small company
+
+Steve Blank's foundational insight, repeated obsessively: **a startup is a temporary organisation in search of a repeatable, scalable, profitable business model**. A mature company is an organisation *executing* a known business model. The two require completely different management styles, metrics, and structures.
+
+A *mature company* has known customers, known channels, a known value proposition, known cost structure, and known unit economics. Its goal is *execution* — operate the existing model better, faster, cheaper, at scale. Tools: budgets, KPIs, OKRs, performance reviews, milestones, predictable quarterly forecasts. Failure to hit forecast is bad — it signals execution problems.
+
+A *startup* has unknowns at every layer: it does not yet know who its real customers are, what they will pay, through what channel they will buy, what value proposition will resonate, what the cost to serve will be. Its goal is *search* — discover, by experiment, what the right business model is. Tools: customer interviews, MVPs, hypothesis tests, pivots. *Failing to hit forecast is normal* — that is what an experiment looks like. Imposing mature-company tools on a startup (5-year plans, quarterly budgets, "make the numbers" pressure) destroys the search by forcing premature commitment.
+
+The implication: founders, investors, employees, and educators must all *know which mode they are in*. A founder running a startup like a mature company will over-build, under-learn, and run out of money before finding product-market fit. A manager running a mature division like a startup will burn cash through unfocused experimentation. The transition between modes — when a startup *finds* product-market fit and starts to *execute* its now-validated model — is the hardest organisational pivot in a company's life.
+
+## Blank's customer development model
+
+Steve Blank's *customer development* model is the structural backbone of lean startup. Four steps, *parallel* to product development (which is the conventional engineering sequence) but separate from it. The four steps:
+
+```
+   CUSTOMER         CUSTOMER         CUSTOMER         COMPANY
+   DISCOVERY  ───►  VALIDATION ───►  CREATION   ───►  BUILDING
+       │                │                │                │
+   ───SEARCH─────────────────────►       ───EXECUTE────────►
+       │                │                │                │
+   Hypothesis     Validated       Demand-gen        Scale operations
+   testing:       business        + channel         + functional teams
+   problem        model + first   investment        + execution
+   interviews,    paying          + sales process   focus
+   solution       customers       repeatable
+   tests
+```
+
+**1. Customer discovery.** Get out of the building. The founder has *hypotheses* — about who the customer is, what problem they have, what solution would resonate, what they would pay. *Hypotheses are guesses*. Customer discovery turns guesses into facts by talking to customers, watching their workflows, testing solution concepts. Outcome: a clear *problem-solution fit* — you have identified a real, painful, well-defined customer problem and a candidate solution that addresses it.
+
+**2. Customer validation.** Sell. Find customers who will *pay* (or at least commit) for the proposed product. Build a small pilot funnel: prospect, demo, propose, close. The metric is *traction*, not interest. If you cannot find a single customer willing to write a small check or sign a letter of intent, the problem isn't real or the solution doesn't fit. Outcome: validated *product-market fit* — a repeatable sales process to a definable customer segment.
+
+**3. Customer creation.** Now that you know who buys and why, *invest in demand generation*. Marketing, sales hiring, channel partnerships, PR. The pre-validation prohibition against scaling up marketing is intentional: spending on marketing before you know who to market to wastes capital and obscures learning signal. (This is the most-violated rule in failed startups.)
+
+**4. Company building.** Transition from search to execute. Build the functional organisation — engineering, sales, marketing, finance, ops — that runs the validated model at scale. The founder's role often changes; many startups bring in operationally focused CEOs at this point.
+
+The four steps are *not strictly sequential* — you may loop back from validation to discovery if the validation fails — but they are *gated*. You do not invest in customer creation until customer validation has succeeded. This discipline is what distinguishes lean from "fail fast" hyperactivity.
+
+## Ries's build-measure-learn loop
+
+Eric Ries (*The Lean Startup*, 2011) operationalised Blank's framework for software startups specifically and gave us the now-ubiquitous **build-measure-learn** diagram.
+
+```
+                 ┌─────────────────┐
+                 │      IDEAS      │
+                 │   (hypotheses)  │
+                 └────────┬────────┘
+                          │
+                          ▼ BUILD
+                 ┌─────────────────┐
+                 │       MVP       │
+                 │ (minimum viable │
+                 │     product)    │
+                 └────────┬────────┘
+                          │
+                          ▼ MEASURE
+                 ┌─────────────────┐
+                 │      DATA       │
+                 │  (real-world    │
+                 │  user behaviour)│
+                 └────────┬────────┘
+                          │
+                          ▼ LEARN
+                 ┌─────────────────┐
+                 │  VALIDATED      │
+                 │   LEARNING      │
+                 │  (or pivot)     │
+                 └────────┬────────┘
+                          │
+                          └───► back to IDEAS
+```
+
+The loop's *purpose* is to minimise the total time through it — the faster you can complete a full ideas → MVP → data → learning cycle, the more experiments you can run per unit of capital, and the higher your odds of finding product-market fit before running out of money. Three key concepts:
+
+**Minimum Viable Product (MVP).** The smallest, cheapest version of the product that can deliver a *learning signal* — a product that lets you test the central hypothesis. The MVP is not "version 1 of the product"; it is an *instrument of measurement*. A good MVP is sometimes embarrassingly small.
+
+- **Dropbox's MVP** (2008) was a 3-minute video demonstrating the product before any of the file-sync engine existed. The video collected 75,000 sign-ups in 24 hours, validating that demand for cross-device file sync was real.
+- **Zappos's MVP** (1999) was a website that photographed shoes from local shoe stores; when a customer ordered, founder Nick Swinmurn walked to the store, bought the shoes, and mailed them. This tested *whether people would buy shoes online* — without building any inventory or logistics.
+- **Airbnb's MVP** (2007) was three air mattresses in Brian Chesky and Joe Gebbia's San Francisco apartment during a design conference. Three guests paid $80 each. This tested *whether people would pay to sleep in a stranger's home*.
+- **Buffer's MVP** (2010) was a two-page website: a landing page with the value proposition, and a pricing page with no actual product. When users clicked "Subscribe" they saw "we're not quite ready, leave your email". This tested both demand and willingness-to-pay at zero engineering cost.
+
+The pattern: an MVP tests one *high-risk hypothesis*, not many. It can be a video, a landing page, a manual back-end, a wizard-of-oz UI (humans behind the curtain pretending to be software), or a smoke test. The engineering matters far less than the learning.
+
+**Validated learning.** Knowledge gained from running an experiment, supported by data. The word *validated* is doing work — un-validated learning is just opinion, and opinions are cheap. Ries argues startups should measure their progress not in features shipped or customers acquired, but in *validated learnings* per unit time. A startup that ships 20 features without learning whether any of them resonate is making negative progress.
+
+**Innovation accounting.** The metrics framework lean prescribes. Three levels:
+
+1. *Establish a baseline*: measure current state via an MVP.
+2. *Tune the engine*: iterate on the product to improve the metric.
+3. *Pivot or persevere*: if the metric is not improving despite multiple iterations, the hypothesis is probably wrong and you should pivot.
+
+Innovation accounting is meant to replace *vanity metrics* (total users, total downloads, gross revenue — numbers that always go up regardless of whether the model is working) with *actionable metrics* (cohort retention, conversion at each funnel step, unit economics per customer segment).
+
+## Pivot vs persevere
+
+If the build-measure-learn loop reveals that the central hypothesis is wrong, the startup faces a binary choice: *persevere* (run the loop again with the same hypothesis, hoping execution improves the result) or *pivot* (change the hypothesis). Pivoting is *not* failure; it is *learning*. Ries names ten pivot types — the most-cited list in the book.
+
+1. **Zoom-in pivot.** A single feature of the product becomes the whole product. Twitter started as Odeo (a podcasting platform); the internal status-update feature became the entire company.
+
+2. **Zoom-out pivot.** The whole product becomes a feature of a larger product. Single-product startups sometimes broaden into platforms.
+
+3. **Customer-segment pivot.** Same product, different customers. The product solves a real problem, but for a different segment than originally targeted. Slack started as an internal communication tool inside Tiny Speck (a gaming company); the gaming product failed; the internal tool turned out to be the actual business — a customer-segment pivot from gamers to enterprise teams.
+
+4. **Customer-need pivot.** A different need of the same customer. The startup discovers via customer development that customers care more about a different problem than the one being solved. The pivot is to address the deeper need.
+
+5. **Platform pivot.** A single-app pivot to a platform (or vice versa). YouTube pivoted from a dating site (the original idea: post a video about yourself looking for a match) to a generic video-hosting platform.
+
+6. **Business-architecture pivot.** Switch between high-margin/low-volume and low-margin/high-volume models. Some companies discover that B2B sales is the right model for what they thought was a consumer product, or vice versa.
+
+7. **Value-capture pivot.** Change the monetisation model. Free → freemium → paid; subscription vs transactional; advertising vs SaaS. Buffer's model (subscription) versus a competitor's freemium tier.
+
+8. **Engine-of-growth pivot.** Ries names three engines of growth: viral (users invite users — Facebook, Hotmail), sticky (high retention — Slack, Notion), and paid (paid acquisition repaid by lifetime value — most e-commerce). Pivoting between engines is a deep strategic shift.
+
+9. **Channel pivot.** Change the distribution path. Direct-to-consumer instead of retail; sales-led instead of marketing-led; PLG (product-led growth — the product sells itself, like Dropbox) instead of sales-led.
+
+10. **Technology pivot.** Same problem, same customers, different technology. Less common because the others usually dominate, but real: a switch from on-prem to cloud, from native app to web, from rules-based to machine-learning.
+
+The pivot is a *first-class strategic move*, not an admission of failure. Successful startups *typically pivot once or twice* before finding product-market fit. PayPal pivoted from beaming money between Palm Pilots to web payments. Instagram pivoted from Burbn (a check-in app with photo features) to Instagram (just the photo features). YouTube pivoted from dating to video. Slack pivoted from Glitch (a video game) to a communications tool. The pattern is so common that VCs explicitly discount pre-pivot business plans.
+
+## Agile and Scrum
+
+Lean is a *business strategy* framework — search, hypothesis testing, customer development. **Agile** is the *development methodology* that pairs with it. The Agile Manifesto (2001, signed by 17 software developers including Kent Beck, Martin Fowler, Ron Jeffries, Ward Cunningham) states four value preferences:
+
+> Individuals and interactions over processes and tools.
+> Working software over comprehensive documentation.
+> Customer collaboration over contract negotiation.
+> Responding to change over following a plan.
+
+Plus twelve principles emphasising frequent delivery, welcoming changing requirements, working closely with customers, and self-organising teams.
+
+Agile is *not* a single methodology — it is an umbrella for several. Scrum (Schwaber and Sutherland, 1995 — codified in *The Scrum Guide*) is the dominant implementation in industry.
+
+**Scrum roles.**
+- *Product Owner* — maintains the backlog, prioritises work, represents the customer.
+- *Scrum Master* — coaches the team on Scrum, removes blockers, enforces the process.
+- *Development team* — cross-functional, self-organising, 3–9 members typically.
+
+**Scrum ceremonies.**
+- *Sprint planning* — at the start of each sprint, the team selects work from the backlog. Sprints are typically 1–4 weeks; 2 weeks is the median.
+- *Daily stand-up* — 15-minute synchronisation, usually standing, each member answers what they did, what they will do, what is blocking them.
+- *Sprint review* — at the end of the sprint, demo the completed work to stakeholders and get feedback.
+- *Sprint retrospective* — the team reviews its own process and identifies improvements.
+
+**Scrum artifacts.**
+- *Product backlog* — prioritised list of all features, bugs, and tasks the product might need.
+- *Sprint backlog* — the subset the team has committed to in the current sprint.
+- *Increment* — the working software produced by the sprint.
+
+Comparison with **waterfall** (the pre-agile dominant model — Royce 1970 actually argued *against* the pure waterfall sequence he is sometimes blamed for):
+
+```
+   WATERFALL                          AGILE / SCRUM
+   ──────────                         ─────────────
+   Requirements                       Sprint 1: small slice of requirements
+        ↓                                      ↓
+   Design                             Design + Build + Test (in sprint)
+        ↓                                      ↓
+   Implementation                     Working software
+        ↓                                      ↓
+   Test                               Review with customer
+        ↓                                      ↓
+   Deploy                             Sprint 2: next slice
+                                              ↓
+   (One pass, months/years)           (Many passes, weeks each)
+```
+
+Waterfall *works* when requirements are stable, known, and predictable (regulated environments, mission-critical infrastructure with formal specifications). Agile works when requirements are evolving, the problem is poorly understood, and feedback can shape direction. *In startups* — where the requirements are explicitly *unknown until customer development reveals them* — agile is structurally required. Building a 12-month waterfall plan around hypotheses that will be falsified in week 6 is exactly the failure mode lean was created to prevent.
+
+## How lean and agile fit together
+
+The clean way to see lean + agile in a startup:
+
+```
+  LEAN (business strategy)
+  ─ Identify hypothesis (about customer, problem, solution, channel, price)
+  ─ Design experiment to test it
+  ─ Build measurement plan
+        │
+        ▼
+  AGILE (development practice)
+  ─ Sprint planning: build the smallest thing that tests the hypothesis
+  ─ Develop in 2-week sprints
+  ─ Review with real users
+  ─ Retrospect on process
+        │
+        ▼
+  LEAN feedback loop
+  ─ Did the experiment validate the hypothesis?
+  ─ Yes: increment / persevere
+  ─ No: pivot
+```
+
+The two methodologies are complementary because they operate at different levels. Lean tells you *what experiment to run*; agile tells you *how to build the experiment*. A startup that does agile without lean ships a lot of features that nobody wants. A startup that does lean without agile generates a lot of hypotheses it cannot test quickly.
+
+## Worked example: Airbnb 2007–2010
+
+A short illustrative narrative.
+
+- **2007**. Brian Chesky and Joe Gebbia rent out three air mattresses in their San Francisco apartment during a design conference (MVP). Three guests pay; the hypothesis "people will pay to sleep in a stranger's home" is validated.
+- **2008**. They build a website (airbedandbreakfast.com) and target conference attendees. Customer discovery reveals that conference timing is a niche — the broader hypothesis is "people will pay to stay in a stranger's home *for any reason*". They pivot the messaging (customer-segment pivot from conference attendees to general travellers).
+- **2009**. Y Combinator's Paul Graham asks where their users are. The answer: New York. He sends them to New York to *meet their users in person* — to take professional photographs of listings (because hosts didn't know how to photograph well, listings looked bad, conversion suffered). This is customer-development orthodoxy: get out of the building. Conversion improves dramatically; the *photo concierge* programme becomes a permanent service.
+- **2010**. The platform now has tens of thousands of listings, a verified payments system, and a host community. They begin customer-creation: paid acquisition, brand campaigns, expansion to international markets. The mode has shifted from search to execute.
+
+Airbnb did almost every Ries pivot type at some point: customer-segment pivot (from conference attendees to general travellers, then to business travellers, then to "experiences" — multiple zoom-outs), value-capture pivot (commission rate adjustments), channel pivot (Craigslist cross-posting hack — the famous growth tactic — was a channel experiment). The compounded effect of a dozen well-executed small pivots is a $90B+ company.
+
+## Critique of lean startup
+
+Three serious critiques you should be able to articulate.
+
+**1. Over-iteration kills vision.** Some products would never have existed if their founders had asked customers what they wanted. Henry Ford's *"if I had asked customers what they wanted they would have said faster horses"* is the canonical anti-lean quote (probably apocryphal but rhetorically useful). Steve Jobs was an explicit anti-lean founder: Apple did almost no customer development for the iPad, the iPhone, or AirPods — Jobs trusted his own taste. The counter-argument: lean is for incremental and adjacent innovations where the customer can in fact tell you what works; for *radical* innovations that change the customer's frame, vision-led product development may outperform.
+
+**2. MVPs can damage brand and miss network effects.** An MVP that ships an embarrassingly minimal product may permanently brand the product as inadequate. For categories with network effects (social products, marketplaces), an MVP without enough density may produce no signal at all — the product is broken not because of its features but because of insufficient users. Spotify's launch in the US (2011) was deliberately *not* lean — Spotify took years to negotiate music-label deals and launched with the full catalogue and product fidelity, because launching partial would have validated nothing.
+
+**3. Lean has a survivorship-bias problem.** The cases lean writers cite (Dropbox, Airbnb, Zappos, Buffer) are spectacular successes. We don't see the thousands of startups that did everything Ries told them to do and still failed. Empirical work on startup outcomes (Kerr-Nanda-Rhodes-Kropf 2014; Eisenmann-Ries-Dillard 2013 case studies) suggests that even the best methodology has high failure rates, and structural factors (market timing, capital access, founder experience) may matter more than method.
+
+A balanced reading: lean is the best available *default* methodology for early-stage software startups in well-defined markets, especially before the company has any traction. It is not a guarantee, and not appropriate for every category. Honours-level answers cite the framework *with* its limits.
+
+## What you should be able to do by next week
+
+- State the search-vs-execute distinction with one named example of each.
+- Walk through Blank's four customer-development steps.
+- Draw the build-measure-learn loop and define MVP, validated learning, pivot vs persevere.
+- Name five Ries pivot types with named examples.
+- Compare Scrum to waterfall on at least three dimensions.
+- Narrate Dropbox, Airbnb, or Zappos as MVP cases in three sentences.
+- State at least one of the three lean critiques and engage with it.
+
+Week 8 expands the commercialisation frame from *startup* to *innovation management inside larger organisations*: stage-gate processes, ambidextrous organisations, blue ocean strategy, and the corporate-innovation challenge.

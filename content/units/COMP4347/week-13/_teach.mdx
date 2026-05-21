@@ -1,0 +1,156 @@
+---
+title: "Week 13 — Review and exam structure"
+unit: COMP4347
+week: 13
+type: overview
+status: done
+---
+
+This is the integration week. **Treat this page as a map, not a textbook.** Spend your remaining time on the topics the exam tests heavily, and skim the rest. The marks are not spread evenly across weeks — depth on the high-priority topics beats breadth.
+
+## Past-paper format walkthrough
+
+The COMP5347/4347 paper has settled into three sections over the last few years. Verify against the current year's official rubric before exam day, but plan around this shape.
+
+- **Section A — short answer and multiple choice.** Predict-the-output, classify-this-status-code, name-the-attack, identify-the-anti-pattern. Roughly 25-35% of the paper. **Fast tempo: never spend more than 90 seconds on one item.** If you stall, mark it and move on.
+- **Section B — structured questions.** A code snippet plus 3-5 sub-parts: spot the bug, fix it, justify the fix, extend it. Roughly 40-50%. **The marker wants the bug *named* (e.g. "stored XSS"), not just paraphrased.**
+- **Section C — design or essay.** "Design a small REST API for X" or "Compare A and B for problem P". Roughly 20-30%. Marked on **structure and trade-off reasoning**, not on producing perfect code.
+
+A workable time budget for a 2-hour paper:
+
+| Section | Marks | Minutes | Pace |
+|---|---|---|---|
+| A | 30 | 35 | ~70s per mark |
+| B | 50 | 55 | ~65s per mark |
+| C | 20 | 25 | structured outline first, then prose |
+| Review | — | 5 | re-check status codes, idempotency, cookies |
+
+## Topic priority ranking
+
+Most past papers concentrate marks in the same four areas. Allocate revision time roughly proportional to weight.
+
+**#1 — Web security (Week 11).** The single highest-yield topic. Expect a vulnerable snippet to fix (XSS, SQLi, CSRF, IDOR), a short-answer on cookie attributes, and a Section C essay comparing two defences. **Memorise cold:** parameterised query syntax (&#36;1 in pg, ? in mysql2); the three XSS variants and one fix each; `HttpOnly` / `Secure` / `SameSite` and what each blocks; OWASP top 10 with one mitigation each.
+
+**#2 — Database layer and Mongoose (Week 7).** The most code-heavy of the high-priority topics. Expect a SQL-injection snippet to fix, an N+1 to identify, an index-design question, and a Mongo aggregation pipeline or `$set` / `$inc` predict-the-output. **Memorise cold:** parameterised queries in at least one driver; the N+1 pattern and the `include` / `populate` fix; that a composite index `(a, b)` serves `WHERE a = ? AND b = ?` and `WHERE a = ?` but **not** `WHERE b = ?`.
+
+**#3 — Browser rendering and performance (Week 4).** Heavily tested because it integrates HTML, CSS, JS, and HTTP into one pipeline. Expect: order the critical rendering path stages; classify a CSS change as layout / paint / composite; predict the console output for a script mixing `setTimeout`, `Promise.then`, and `queueMicrotask`; name Web Vitals thresholds. **Memorise cold:** CRP stages in order (DOM → CSSOM → Render Tree → Layout → Paint → Composite); the macrotask vs microtask ordering; LCP &lt; 2.5s, INP &lt; 200ms, CLS &lt; 0.1.
+
+**#4 — React and client-side frameworks (Week 9, with Week 8 foundations).** Smaller weighting but easy marks if you know the gotchas. Expect: hooks rules, `useEffect` dep arrays, key prop, controlled vs uncontrolled inputs, state immutability. **Memorise cold:** `useEffect(fn, [])` runs **once on mount**; deps compared with `Object.is`; never use array index as `key` when items reorder; state must be a new reference, not a mutation.
+
+After that, lower priority but still on the table: JS core (Week 1), Express middleware and MVC (Weeks 5 and 6), REST status codes and idempotency (Week 10), HTML/CSS specificity (Week 2), CORS preflight (Week 3).
+
+## 30-minute revision-block plan per major topic
+
+Templates you can run as standalone study sessions. Each is a 30-minute block; rotate through the four priority topics over four sessions.
+
+### Security (30 min)
+
+1. **5 min** — write the parameterised query pattern from memory in `pg` and `mysql2`. Check against the docs.
+2. **10 min** — write one example of each XSS variant (reflected via query string, stored via user bio with `<img onerror>`, DOM via `location.hash` into `innerHTML`) and the fix for each.
+3. **5 min** — list cookie attributes (`HttpOnly`, `Secure`, `SameSite`, `Max-Age`, `Path`, `Domain`) and what each defends against.
+4. **5 min** — recite OWASP top 10 with one mitigation each.
+5. **5 min** — explain CSP: what `script-src 'self' 'nonce-x'` allows and blocks.
+
+### Database (30 min)
+
+1. **10 min** — write a vulnerable SQL snippet, then a fixed parameterised version. Do the same for a Mongo `find` with user input.
+2. **5 min** — write an N+1 pattern in Mongoose (`User.find` then loop with `Post.find`); fix with `populate`.
+3. **5 min** — given `WHERE author_id = ? ORDER BY published_at DESC`, write the composite index that serves both filter and sort.
+4. **5 min** — write a Mongo aggregation: `$match` → `$lookup` → `$group` → `$limit`.
+5. **5 min** — explain transactions: ACID; when you need them; what changes in MongoDB (single-document atomicity by default, multi-document needs a session).
+
+### Rendering + perf (30 min)
+
+1. **5 min** — write the critical rendering path stages in order. For ten common CSS properties, classify each as layout / paint / composite trigger.
+2. **10 min** — predict the console output of two scripts: one mixing `setTimeout(0)`, `Promise.then`, `queueMicrotask`, sync code; one mixing `process.nextTick`, `setImmediate`, `Promise.then` (Node only).
+3. **5 min** — list Web Vitals and thresholds; give one fix per metric.
+4. **5 min** — sketch a layout-thrashing example (read in a loop, then write); rewrite to batch.
+5. **5 min** — describe `defer` vs `async` vs neither for `<script>` placement.
+
+### React (30 min)
+
+1. **5 min** — write the hooks rules from memory (top level, same order, only in components / custom hooks).
+2. **5 min** — predict the behaviour of `useEffect` with deps `[]`, `[x]`, `[obj]` (new reference each render), and no array at all.
+3. **5 min** — write a controlled `<input>` with `value` + `onChange`; explain why you can't just set `defaultValue` and read from a ref later if the parent needs the live value.
+4. **10 min** — refactor a buggy list component: array index as `key`, mutating state with `.push`, fetching in render. Fix all three.
+5. **5 min** — sketch the React reconciliation idea (virtual DOM diff by `key` and component type).
+
+## Common essay-question patterns
+
+Past papers reuse these shapes. Practise the **structure** ahead of time so you don't waste minutes deciding how to lay it out.
+
+**Compare A and B for problem P.** Sessions vs JWT for auth. SQL vs NoSQL for X. REST vs GraphQL for Y. Offset vs cursor pagination. Server vs client rendering. **Structure:** one-sentence definition of each → 2-3 pros each → 2-3 cons each → recommendation in two sentences, naming P's specific constraints.
+
+**Design a small service for X.** "An API for a library that lets users borrow books." **Structure:** list resources (`/books`, `/loans`, `/users`) → list endpoints (verb + path + status + auth) → pick a DB and justify in one sentence → call out one security concern (e.g. authz on `/loans/:id`) → call out one cross-cutting concern (rate limiting, logging, idempotency).
+
+**Critique this code.** A snippet with 3-5 issues. **Structure:** number the issues. For each: identify in 3-5 words, severity (low / med / high), one-line fix. Don't write paragraphs — the marker wants a list.
+
+**Trace what happens.** "Walk through what happens when a user clicks Submit." **Structure:** client (event → `preventDefault` → `fetch`) → network (DNS → TCP → TLS → HTTP) → server (middleware → route → DB) → response (status → headers → body) → browser (parse → render → update DOM). One sentence per stage; mention one failure mode per stage.
+
+## Pitfall checklist (read the night before)
+
+Each item is something past students have lost marks on.
+
+**Predict-the-output traps:**
+
+- [ ] `null == undefined` is **true**; `null === undefined` is **false**.
+- [ ] `[] == false` is **true**; `[] === false` is **false**.
+- [ ] `typeof null` is `"object"`.
+- [ ] `var` in a `for` loop with `setTimeout` prints the final value N times. `let` prints 0, 1, 2, ....
+- [ ] `setTimeout(fn, 0)` does **not** run immediately. It runs after all sync code and all microtasks.
+- [ ] `process.nextTick` beats `Promise.then` beats `setTimeout(0)`.
+- [ ] `useEffect(fn, [])` runs **once on mount**, not after every render.
+- [ ] Arrow functions don't have their own `this`; they capture the enclosing scope.
+
+**Security mitigation traps:**
+
+- [ ] Parameterised queries **separate code from data**. They do not "escape" the input — there's no escaping involved.
+- [ ] Hash passwords with **bcrypt / argon2 / scrypt**, never SHA-256 or MD5. Fast hashes are wrong for passwords.
+- [ ] JWTs in `localStorage` are **vulnerable to XSS**. Use `HttpOnly` cookies for secure auth.
+- [ ] `SameSite=Strict` breaks too many flows; `Lax` is the right default for normal apps.
+- [ ] CORS protects the **browser's user**, not the server. The server still receives and processes the request.
+- [ ] `Access-Control-Allow-Origin: *` is **rejected by the browser** when credentials are included. Echo the specific origin and set `Allow-Credentials: true`.
+- [ ] `dangerouslySetInnerHTML` is **never safe** just because the data "came from our database" — a user put it there.
+- [ ] CSRF tokens defend state-changing requests; `SameSite` cookies defend differently. Know which question is being asked.
+
+**API design traps:**
+
+- [ ] POST is **not** idempotent. PUT and DELETE are. GET is both safe and idempotent.
+- [ ] 401 = no or invalid credentials; 403 = credentials OK but not allowed.
+- [ ] 400 = malformed (can't parse); 422 = parsed fine but semantically invalid.
+- [ ] 409 = conflict (e.g. duplicate email on signup, version mismatch).
+- [ ] 201 Created should include a `Location` header pointing at the new resource.
+- [ ] 204 No Content has **no body**, full stop.
+- [ ] Use `res.json(obj)` not `res.send(obj)` for JSON responses — the latter doesn't set `Content-Type: application/json`.
+
+**Design-on-the-spot traps:**
+
+- [ ] When asked to design a small API, write the **resource list first**, then routes. Don't start with code.
+- [ ] When asked to design a UI on the spot, sketch the **information hierarchy first** (what's on the page, in priority order), then the layout. Don't start with colours.
+- [ ] Always name **at least one security concern** and **one cross-cutting concern** (rate limiting, logging, idempotency, observability) in API design answers.
+- [ ] For UI design questions: name **at least one accessibility concern** (keyboard nav, ARIA label, contrast) and **one performance concern** (image size, hydration cost).
+
+## Condensed cheat-sheet — every week's main point
+
+One row per week. Each cell is the one thing to be able to say if the exam touches that week.
+
+| Week | Title | Main point in one sentence |
+|---|---|---|
+| 1 | How the web works + JS intro | A browser request is **DNS → TCP → TLS → HTTP**, and JS is single-threaded with an event loop running **sync → microtasks → macrotasks**. |
+| 2 | HTML + CSS foundations | **Specificity** is inline &gt; id &gt; class/attr/pseudo-class &gt; element, and the cascade picks the highest-specificity matching rule (with `!important` and source order as tiebreakers). |
+| 3 | DOM, events, fetch | `fetch` returns a Promise that **only rejects on network failure** — check `r.ok` for HTTP errors, and a CORS preflight fires on non-simple verbs/headers/content-types. |
+| 4 | Browser, rendering, performance | The critical rendering path is **DOM → CSSOM → Render Tree → Layout → Paint → Composite**; layout-triggering changes are expensive, composite-only (transform, opacity) is cheap. |
+| 5 | Node.js and Express | Express is **middleware chained by `next()`**, error handlers have arity 4 (`err, req, res, next`) and go **last**. |
+| 6 | Sessions, routes, MVC | Sessions store state server-side keyed by a cookie; **JWTs are stateless tokens** signed by the server — pick based on revocation needs and statelessness requirements. |
+| 7 | The database layer | **Always parameterise queries**; design composite indexes to match `WHERE` then `ORDER BY`; use `populate` / `include` to avoid N+1. |
+| 8 | React: client-side frameworks | React renders are **pure functions of props and state**; effects run after commit; never mutate state. |
+| 9 | Frameworks continued (state, routing, SSR) | SSR sends HTML on first paint then **hydrates** on the client; client routing is `history.pushState` + render swap, no full reload. |
+| 10 | Web services (REST, GraphQL, gRPC) | REST uses HTTP verbs and status codes as the protocol; **POST is not idempotent**, PUT and DELETE are; GraphQL solves over/under-fetching but introduces N+1 unless you batch with DataLoader. |
+| 11 | Web security | The OWASP top 10 mostly reduces to **untrusted input flowing into a trusted sink** — parameterise SQL, escape HTML output, validate redirects, sign and rotate tokens. |
+| 12 | Industry speakers | Production web work is **observability, on-call, and incremental rollout** as much as it is code — features ship behind flags, not branches. |
+
+## Final synthesis
+
+Web development sits on three layers: the **protocol** (HTTP, TCP, TLS, DNS), the **languages** (HTML, CSS, JS), and the **engineering disciplines** (security, performance, data modelling, testing). The exam tests whether you can move between layers and connect them. If you can describe what happens between a user typing a URL and seeing pixels — at the protocol level, the rendering level, the JS execution level, and the database level — you can answer almost any question on the paper.
+
+Good luck.

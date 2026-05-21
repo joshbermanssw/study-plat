@@ -1,0 +1,267 @@
+{
+  "unit": "COMP4347",
+  "week": 4,
+  "topic": "Browser and rendering process",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "Which is the correct order of the critical rendering path?",
+      "choices": [
+        "Parse → Paint → Layout → Composite",
+        "Parse HTML + CSS → Render tree → Layout → Paint → Composite",
+        "Layout → Parse → Composite → Paint",
+        "Composite → Paint → Layout → Parse"
+      ],
+      "correctIndex": 1,
+      "explanation": "DOM + CSSOM combine into the render tree, then layout computes geometry, paint fills pixels, and composite stitches layers."
+    },
+    {
+      "id": "q2",
+      "stem": "Which CSS change is a composite-only operation (no layout, no paint)?",
+      "choices": ["width", "color", "transform: translateX(10px)", "padding"],
+      "correctIndex": 2,
+      "explanation": "transform (and opacity) on a layer-promoted element runs on the GPU, skipping layout and paint."
+    },
+    {
+      "id": "q3",
+      "stem": "What does `<script async>` do?",
+      "choices": [
+        "Defers execution until after DOMContentLoaded",
+        "Downloads in parallel and runs as soon as ready, possibly before the DOM is parsed",
+        "Blocks the parser while downloading",
+        "Loads only on user interaction"
+      ],
+      "correctIndex": 1,
+      "explanation": "async fetches in parallel and executes immediately on availability, which means order is not guaranteed and parsing may pause."
+    },
+    {
+      "id": "q4",
+      "stem": "What does `<script defer>` guarantee?",
+      "choices": [
+        "Runs in document order, after HTML parsing finishes but before DOMContentLoaded",
+        "Runs before the DOM is parsed",
+        "Only runs on slow connections",
+        "Runs in a worker thread"
+      ],
+      "correctIndex": 0,
+      "explanation": "defer scripts download in parallel, run after parsing in document order, then DOMContentLoaded fires."
+    },
+    {
+      "id": "q5",
+      "stem": "Which call forces a synchronous layout (reflow)?",
+      "choices": ["el.style.color = 'red'", "el.offsetHeight read", "el.classList.toggle('x') then nothing else", "el.dataset.id = '1'"],
+      "correctIndex": 1,
+      "explanation": "Reading offsetHeight/Width/Top, getBoundingClientRect, etc forces the browser to flush any pending style/layout work."
+    },
+    {
+      "id": "q6",
+      "stem": "What is logged?\n\nconsole.log(1);\nsetTimeout(() => console.log(2));\nPromise.resolve().then(() => console.log(3));\nconsole.log(4);",
+      "choices": ["1 2 3 4", "1 4 3 2", "1 3 4 2", "4 1 2 3"],
+      "correctIndex": 1,
+      "explanation": "Sync first (1, 4). Microtasks drain before macrotasks, so 3 (Promise) before 2 (setTimeout)."
+    },
+    {
+      "id": "q7",
+      "stem": "Layout thrashing happens when:",
+      "choices": [
+        "Too many CSS files are loaded",
+        "Code interleaves reads (offsetWidth) and writes (style changes) in a loop, forcing repeated layout",
+        "Images are too large",
+        "JavaScript runs in a worker"
+      ],
+      "correctIndex": 1,
+      "explanation": "Each read after a write invalidates and re-runs layout. Batch all reads first, then all writes."
+    },
+    {
+      "id": "q8",
+      "stem": "Which CSS change triggers a repaint but not a reflow?",
+      "choices": ["height", "display", "background-color", "margin"],
+      "correctIndex": 2,
+      "explanation": "Colour changes don't affect box geometry, so layout is skipped. Anything that changes size/position triggers reflow."
+    },
+    {
+      "id": "q9",
+      "stem": "Cache-Control: max-age=31536000, immutable is appropriate for:",
+      "choices": [
+        "An HTML index file",
+        "A hash-fingerprinted JS bundle (e.g. app.a1b2c3.js)",
+        "An authenticated user profile JSON",
+        "A login form"
+      ],
+      "correctIndex": 1,
+      "explanation": "Fingerprinted assets never change at the same URL, so they can be cached for a year and skip revalidation."
+    },
+    {
+      "id": "q10",
+      "stem": "Which metric measures responsiveness to user interactions?",
+      "choices": ["LCP", "FCP", "CLS", "INP"],
+      "correctIndex": 3,
+      "explanation": "INP (Interaction to Next Paint) replaced FID as the Core Web Vital for responsiveness. Target < 200ms."
+    },
+    {
+      "id": "q11",
+      "stem": "What does `display: none` vs `visibility: hidden` mean for the render tree?",
+      "choices": [
+        "Both remove the element from the render tree",
+        "display:none removes it from the render tree; visibility:hidden keeps the box but makes it invisible",
+        "visibility:hidden removes it; display:none reserves space",
+        "Neither affects the render tree"
+      ],
+      "correctIndex": 1,
+      "explanation": "display:none means no box at all (no space reserved). visibility:hidden keeps geometry; the element still takes layout space."
+    },
+    {
+      "id": "q12",
+      "stem": "Why is JavaScript described as single-threaded with an event loop?",
+      "choices": [
+        "It cannot perform IO",
+        "One call stack runs at a time; async work returns control to the loop which dispatches queued callbacks",
+        "It has multiple threads internally",
+        "Workers replace the event loop"
+      ],
+      "correctIndex": 1,
+      "explanation": "The main thread runs to completion on each task, then drains microtasks, then renders, then picks the next task. No true concurrency on the main thread."
+    },
+    {
+      "id": "q13",
+      "stem": "Which header lets the server return 304 Not Modified for unchanged resources?",
+      "choices": ["Set-Cookie", "ETag / If-None-Match", "Content-Type", "Accept-Encoding"],
+      "correctIndex": 1,
+      "explanation": "Client sends If-None-Match with the previously received ETag. If unchanged, the server returns 304 with no body."
+    },
+    {
+      "id": "q14",
+      "stem": "A `<script>` tag without async/defer is encountered during parsing. What happens?",
+      "choices": [
+        "Parser continues, runs script later",
+        "Parser pauses, fetches and executes the script, then resumes",
+        "Script is ignored until DOMContentLoaded",
+        "Script runs in a worker"
+      ],
+      "correctIndex": 1,
+      "explanation": "Classic scripts are parser-blocking. The HTML parser stops until the script is downloaded and executed."
+    },
+    {
+      "id": "q15",
+      "stem": "Animating `left` from 0 to 300px will:",
+      "choices": [
+        "Run on the GPU with no layout",
+        "Trigger layout on each frame (expensive)",
+        "Cause no repaint",
+        "Use the compositor only"
+      ],
+      "correctIndex": 1,
+      "explanation": "left changes box position, which triggers layout. Use transform: translateX for composited animations."
+    },
+    {
+      "id": "q16",
+      "stem": "Which is true about microtasks vs macrotasks?",
+      "choices": [
+        "Microtasks run after every macrotask",
+        "Macrotasks run before microtasks",
+        "The microtask queue is fully drained between each macrotask",
+        "There is no difference"
+      ],
+      "correctIndex": 2,
+      "explanation": "After each task, the loop drains the entire microtask queue before potentially rendering and picking the next task."
+    },
+    {
+      "id": "q17",
+      "stem": "What does CLS (Cumulative Layout Shift) penalise?",
+      "choices": [
+        "Long network requests",
+        "Visible content jumping around as the page loads",
+        "JavaScript bundle size",
+        "Slow paint times"
+      ],
+      "correctIndex": 1,
+      "explanation": "CLS measures the total amount of unexpected layout shift during load. Reserve space for images/ads to avoid penalties."
+    },
+    {
+      "id": "q18",
+      "stem": "requestAnimationFrame runs callbacks:",
+      "choices": [
+        "Immediately",
+        "Before the next paint, synchronized to the display refresh",
+        "After all setTimeouts",
+        "On a worker thread"
+      ],
+      "correctIndex": 1,
+      "explanation": "rAF is the right hook for visual updates — it batches with the compositor and avoids extra reflows."
+    },
+    {
+      "id": "q19",
+      "stem": "A long synchronous JS task blocks:",
+      "choices": [
+        "Only network requests",
+        "Rendering, user input handling, and timers — everything on the main thread",
+        "Nothing — the browser is multithreaded",
+        "Only the current iframe"
+      ],
+      "correctIndex": 1,
+      "explanation": "The main thread is shared between JS, layout, paint, and event delivery. A long task starves all of them."
+    },
+    {
+      "id": "q20",
+      "stem": "Why use Web Workers?",
+      "choices": [
+        "To access the DOM in a separate thread",
+        "To run CPU-heavy work off the main thread without blocking UI",
+        "To skip the event loop",
+        "To bypass CORS"
+      ],
+      "correctIndex": 1,
+      "explanation": "Workers give you a real OS thread for computation. They communicate via postMessage and cannot touch the DOM."
+    },
+    {
+      "id": "q21",
+      "stem": "What does `Cache-Control: no-store` mean?",
+      "choices": [
+        "Cache but revalidate every time",
+        "Don't cache anywhere — sensitive data",
+        "Cache only in memory",
+        "Cache only for 1 second"
+      ],
+      "correctIndex": 1,
+      "explanation": "no-store forbids any cache (browser, proxy) from storing the response. Use for authenticated/sensitive responses."
+    },
+    {
+      "id": "q22",
+      "stem": "Which step is skipped for a transform-only animation on a promoted layer?",
+      "choices": ["Composite", "Layout and paint", "Parsing", "Garbage collection"],
+      "correctIndex": 1,
+      "explanation": "If the element is already on a separate compositor layer, the GPU handles the transform without layout or repaint."
+    },
+    {
+      "id": "q23",
+      "stem": "DOMContentLoaded fires when:",
+      "choices": [
+        "All images and stylesheets are loaded",
+        "The initial HTML has been parsed and deferred scripts have run, but external subresources may still be loading",
+        "On every reflow",
+        "Only on user interaction"
+      ],
+      "correctIndex": 1,
+      "explanation": "DOMContentLoaded marks the DOM being ready. The `load` event fires later, after images/stylesheets/etc finish."
+    },
+    {
+      "id": "q24",
+      "stem": "Why does inlining critical CSS in <head> improve LCP?",
+      "choices": [
+        "It compresses better",
+        "It avoids a render-blocking round trip for above-the-fold styling",
+        "It triggers JIT compilation",
+        "It enables GPU compositing"
+      ],
+      "correctIndex": 1,
+      "explanation": "External stylesheets block render. Inlining the minimum CSS needed for the first paint lets the browser draw without waiting."
+    },
+    {
+      "id": "q25",
+      "stem": "Which is the LCP target for a 'good' rating?",
+      "choices": ["< 4.0 s", "< 2.5 s", "< 1.0 s", "< 5.0 s"],
+      "correctIndex": 1,
+      "explanation": "Web Vitals: LCP < 2.5s good, 2.5-4s needs improvement, > 4s poor."
+    }
+  ]
+}

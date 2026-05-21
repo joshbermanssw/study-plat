@@ -1,0 +1,292 @@
+{
+  "unit": "COMP4347",
+  "week": 10,
+  "topic": "Web services",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "Which HTTP verb is idempotent but NOT safe?",
+      "choices": ["GET", "POST", "PUT", "OPTIONS"],
+      "correctIndex": 2,
+      "explanation": "PUT replaces the resource — repeating it has the same end state (idempotent) but it does mutate (not safe)."
+    },
+    {
+      "id": "q2",
+      "stem": "After POST /api/users succeeds, the response should include:",
+      "choices": [
+        "200 OK and the request body echoed",
+        "201 Created with Location header pointing to the new resource",
+        "204 No Content always",
+        "302 Found"
+      ],
+      "correctIndex": 1,
+      "explanation": "201 + Location: /api/users/<id> is the REST convention for resource creation."
+    },
+    {
+      "id": "q3",
+      "stem": "Which design is most RESTful?",
+      "choices": [
+        "POST /api/getUserById?id=1",
+        "GET /api/users/1",
+        "POST /api/userActions",
+        "GET /api/fetch/user?uid=1"
+      ],
+      "correctIndex": 1,
+      "explanation": "Nouns + verbs. GET reads, the URL identifies the resource."
+    },
+    {
+      "id": "q4",
+      "stem": "Validation fails because email isn't unique. Which status code is best?",
+      "choices": ["400", "404", "409", "500"],
+      "correctIndex": 2,
+      "explanation": "409 Conflict signals state collision with an existing resource. 400 is for malformed syntax; 422 for semantic invalidation that isn't a conflict."
+    },
+    {
+      "id": "q5",
+      "stem": "A REST client gets 429. The correct behavior is to:",
+      "choices": [
+        "Retry immediately",
+        "Back off, honouring Retry-After if present",
+        "Re-authenticate",
+        "Treat the call as permanently failed"
+      ],
+      "correctIndex": 1,
+      "explanation": "429 = rate limit. Exponential backoff or the Retry-After hint protects the server."
+    },
+    {
+      "id": "q6",
+      "stem": "Compared to REST, GraphQL trades:",
+      "choices": [
+        "Type safety for speed",
+        "HTTP-native caching for client-driven field selection (no over/under-fetch)",
+        "Reliability for cost",
+        "Nothing — it is strictly better"
+      ],
+      "correctIndex": 1,
+      "explanation": "GraphQL ships everything through one POST endpoint, so HTTP cache layers can't help. Clients pick exactly the fields they need."
+    },
+    {
+      "id": "q7",
+      "stem": "Which is the right status for a DELETE that succeeded with no response body?",
+      "choices": ["200", "204", "404", "410"],
+      "correctIndex": 1,
+      "explanation": "204 No Content is the common 'success, nothing to say' code for DELETE."
+    },
+    {
+      "id": "q8",
+      "stem": "A browser is about to make a PUT to a different origin. The browser first sends:",
+      "choices": [
+        "GET",
+        "An OPTIONS preflight request to check CORS",
+        "DELETE",
+        "Nothing — PUT is automatically allowed"
+      ],
+      "correctIndex": 1,
+      "explanation": "Methods other than simple GET/POST or non-simple headers trigger a CORS preflight."
+    },
+    {
+      "id": "q9",
+      "stem": "Which is NOT a simple request that skips CORS preflight?",
+      "choices": [
+        "GET with no custom headers",
+        "POST with application/x-www-form-urlencoded",
+        "POST with text/plain",
+        "PUT with application/json"
+      ],
+      "correctIndex": 3,
+      "explanation": "PUT and POST with application/json are non-simple and require preflight."
+    },
+    {
+      "id": "q10",
+      "stem": "Why is path-based versioning (/v1/) the most common?",
+      "choices": [
+        "It is fastest",
+        "It is visible, easy to route, and works with HTTP caches",
+        "Required by HTTP",
+        "Headers cannot be used"
+      ],
+      "correctIndex": 1,
+      "explanation": "Path versioning is debuggable in browsers, mappable to routers, and cacheable. Header versioning is cleaner but harder to operate."
+    },
+    {
+      "id": "q11",
+      "stem": "Which pagination scheme handles inserts and deletes during pagination most gracefully?",
+      "choices": [
+        "Offset/limit",
+        "Cursor-based",
+        "Random sampling",
+        "No pagination"
+      ],
+      "correctIndex": 1,
+      "explanation": "Offsets shift when items are added/removed, causing duplicates or skips. A cursor anchors to a stable position."
+    },
+    {
+      "id": "q12",
+      "stem": "Idempotent means:",
+      "choices": [
+        "Has no side effects",
+        "Repeating the call produces the same end state as one call",
+        "Returns 200",
+        "Cacheable"
+      ],
+      "correctIndex": 1,
+      "explanation": "Idempotent isn't the same as 'safe'. PUT changes state, but doing it twice leaves the same final state."
+    },
+    {
+      "id": "q13",
+      "stem": "Which is correct about OpenAPI/Swagger?",
+      "choices": [
+        "It is a transport protocol",
+        "A machine-readable specification format for REST APIs, used to generate docs, mocks, and clients",
+        "A database",
+        "Replacement for HTTP"
+      ],
+      "correctIndex": 1,
+      "explanation": "OpenAPI is the contract: YAML/JSON describing routes, schemas, security. Tooling generates everything else."
+    },
+    {
+      "id": "q14",
+      "stem": "An API returns 401. The client should:",
+      "choices": [
+        "Re-attempt with a fresh token (or re-auth) and retry; if it persists, prompt login",
+        "Treat the resource as deleted",
+        "Send the request without credentials",
+        "Switch HTTP version"
+      ],
+      "correctIndex": 0,
+      "explanation": "401 means missing/invalid credentials. The client should refresh the token (if any) and retry, or prompt for login."
+    },
+    {
+      "id": "q15",
+      "stem": "Which is true about Access-Control-Allow-Origin: * with cookies?",
+      "choices": [
+        "It is fully supported",
+        "Not allowed — wildcards cannot be combined with credentials (cookies). The server must echo a specific origin",
+        "Required for cookies",
+        "Allowed only on HTTPS"
+      ],
+      "correctIndex": 1,
+      "explanation": "Spec forbids wildcard + credentials. The server must reply with a single specific origin and Allow-Credentials: true."
+    },
+    {
+      "id": "q16",
+      "stem": "PATCH differs from PUT in that:",
+      "choices": [
+        "PATCH is for collections only",
+        "PATCH expresses a partial update; PUT replaces the resource representation entirely",
+        "PUT is unsafe",
+        "Both are the same"
+      ],
+      "correctIndex": 1,
+      "explanation": "PUT requires the full new state; PATCH carries a delta (or RFC 6902 JSON Patch operations)."
+    },
+    {
+      "id": "q17",
+      "stem": "Which is anti-RESTful?",
+      "choices": [
+        "GET /api/posts that mutates server state (e.g. counts a view)",
+        "GET that returns a list",
+        "GET with query parameters",
+        "GET returning 304 from cache"
+      ],
+      "correctIndex": 0,
+      "explanation": "GET must be safe. Side-effect GETs are abused by prefetchers, link previewers, and caches."
+    },
+    {
+      "id": "q18",
+      "stem": "Which is a defining property of gRPC?",
+      "choices": [
+        "It uses XML",
+        "It uses HTTP/2 + Protocol Buffers for typed, binary, bidirectional streaming RPC",
+        "It is browser-only",
+        "It cannot stream"
+      ],
+      "correctIndex": 1,
+      "explanation": "gRPC pairs IDL (.proto) with binary on HTTP/2. Great inside microservices, awkward in browsers without grpc-web."
+    },
+    {
+      "id": "q19",
+      "stem": "When should you choose 422 over 400?",
+      "choices": [
+        "Always — they are aliases",
+        "When the request is syntactically valid JSON but fails business validation (e.g. age is negative)",
+        "Never — only 400 is standard",
+        "Only for PATCH"
+      ],
+      "correctIndex": 1,
+      "explanation": "400 = malformed. 422 = parsable but semantically wrong. Lets clients distinguish parser vs validator failures."
+    },
+    {
+      "id": "q20",
+      "stem": "Which is true about HATEOAS?",
+      "choices": [
+        "It is a database engine",
+        "Hypermedia-driven REST: responses link to related resources, letting clients navigate without out-of-band URL knowledge",
+        "Required for all REST APIs",
+        "Replaces HTTP"
+      ],
+      "correctIndex": 1,
+      "explanation": "HATEOAS adds links into responses so clients can discover transitions. Praised in theory; rarely fully adopted in practice."
+    },
+    {
+      "id": "q21",
+      "stem": "Which header indicates client cache validation?",
+      "choices": [
+        "Cache-Control: no-store",
+        "If-None-Match: <etag>",
+        "Accept",
+        "Authorization"
+      ],
+      "correctIndex": 1,
+      "explanation": "If-None-Match carries the previously received ETag. Servers return 304 if unchanged."
+    },
+    {
+      "id": "q22",
+      "stem": "Which endpoint design is best for 'archive a post'?",
+      "choices": [
+        "GET /api/archivePost?id=1",
+        "POST /api/posts/1/archive (or PUT /api/posts/1 with {status: 'archived'})",
+        "DELETE /api/archive/1",
+        "POST /api/posts.archive"
+      ],
+      "correctIndex": 1,
+      "explanation": "Modelling a state transition either via a sub-resource action or by updating the resource itself fits REST. GET must never mutate."
+    },
+    {
+      "id": "q23",
+      "stem": "REST is described as 'stateless' meaning:",
+      "choices": [
+        "The server has no database",
+        "Each request must contain all info needed to process it; the server keeps no per-client conversation state",
+        "Cookies are forbidden",
+        "Responses cannot be cached"
+      ],
+      "correctIndex": 1,
+      "explanation": "Statelessness lets you scale horizontally. Identity travels in each request (cookies/tokens) rather than being implied by a connection."
+    },
+    {
+      "id": "q24",
+      "stem": "OPTIONS is most commonly used for:",
+      "choices": [
+        "Health checks",
+        "CORS preflight to learn allowed methods/headers",
+        "Reading metadata always",
+        "Authentication"
+      ],
+      "correctIndex": 1,
+      "explanation": "Browsers send OPTIONS before non-simple cross-origin requests, asking the server which methods/headers are acceptable."
+    },
+    {
+      "id": "q25",
+      "stem": "Which is correct about idempotency keys (e.g. Stripe's)?",
+      "choices": [
+        "They replace authentication",
+        "Clients send a unique key on POST so the server can detect retries and return the original result instead of duplicating the action",
+        "They are HTTP status codes",
+        "They are deprecated"
+      ],
+      "correctIndex": 1,
+      "explanation": "Idempotency keys turn naturally non-idempotent POSTs (charge a card) into idempotent ones, enabling safe retries."
+    }
+  ]
+}

@@ -1,0 +1,252 @@
+{
+  "unit": "COMP4347",
+  "week": 2,
+  "topic": "HTML and CSS",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "Which selector has the highest specificity?",
+      "choices": ["div.menu li a", "#nav ul li", "ul li.first a", ".header .nav a"],
+      "correctIndex": 1,
+      "explanation": "#nav ul li is (0,1,0,2). All others have 0 IDs. A single ID beats any number of classes/elements."
+    },
+    {
+      "id": "q2",
+      "stem": "With box-sizing: border-box, a div with width: 200px, padding: 20px, border: 5px has a rendered outer width of:",
+      "choices": ["200px", "245px", "250px", "230px"],
+      "correctIndex": 0,
+      "explanation": "border-box includes padding and border inside the declared width. With content-box the same element would be 200 + 40 + 10 = 250px."
+    },
+    {
+      "id": "q3",
+      "stem": "In flexbox with flex-direction: column, justify-content controls:",
+      "choices": [
+        "Horizontal alignment of items",
+        "Vertical alignment of items (the main axis)",
+        "Spacing between rows of wrapped items",
+        "The order of items"
+      ],
+      "correctIndex": 1,
+      "explanation": "justify-content is always on the main axis. When flex-direction is column, the main axis is vertical."
+    },
+    {
+      "id": "q4",
+      "stem": "Which element is removed from normal document flow?",
+      "choices": ["position: static", "position: relative", "position: sticky (before threshold)", "position: absolute"],
+      "correctIndex": 3,
+      "explanation": "absolute and fixed remove the element from flow. relative keeps it in flow (just offsets visually); sticky behaves like relative until its threshold."
+    },
+    {
+      "id": "q5",
+      "stem": "Which CSS rule wins?\n\n#x { color: red; }\nbody #x.note { color: blue; }",
+      "choices": ["red", "blue", "depends on source order", "neither — invalid"],
+      "correctIndex": 1,
+      "explanation": "body #x.note is (0,1,1,1) which beats (0,1,0,0). Higher specificity wins regardless of source order."
+    },
+    {
+      "id": "q6",
+      "stem": "What does `grid-template-columns: 1fr 2fr 1fr` produce?",
+      "choices": [
+        "Three equal columns",
+        "Columns split 25% / 50% / 25% of remaining space",
+        "Three rows",
+        "Columns split 1px / 2px / 1px"
+      ],
+      "correctIndex": 1,
+      "explanation": "fr is a fractional unit dividing remaining space. The ratio 1:2:1 gives 25/50/25 percent."
+    },
+    {
+      "id": "q7",
+      "stem": "Which is the correct semantic element for the main navigation?",
+      "choices": ["<div class=\"nav\">", "<nav>", "<menu>", "<aside>"],
+      "correctIndex": 1,
+      "explanation": "<nav> is the HTML5 semantic element for navigation blocks. It improves accessibility and SEO."
+    },
+    {
+      "id": "q8",
+      "stem": "An element has position: absolute but no positioned ancestor. Where is it positioned relative to?",
+      "choices": ["Its parent element", "The viewport", "The initial containing block (effectively the html element)", "It is not rendered"],
+      "correctIndex": 2,
+      "explanation": "Absolute positioning bubbles up looking for the nearest non-static ancestor. With none, it falls back to the initial containing block."
+    },
+    {
+      "id": "q9",
+      "stem": "Which is true about !important?",
+      "choices": [
+        "It can only be used in inline styles",
+        "It elevates a declaration above all non-important declarations regardless of specificity",
+        "It makes a selector more specific",
+        "It is only respected by older browsers"
+      ],
+      "correctIndex": 1,
+      "explanation": "!important changes the cascade tier so the declaration outranks any non-important rule, even one with much higher specificity."
+    },
+    {
+      "id": "q10",
+      "stem": "What is the specificity of `a:hover`?",
+      "choices": ["(0,0,0,1)", "(0,0,1,1)", "(0,0,1,0)", "(0,1,0,1)"],
+      "correctIndex": 1,
+      "explanation": "Pseudo-classes count as classes. a is one element (d=1), :hover is one class (c=1) → (0,0,1,1)."
+    },
+    {
+      "id": "q11",
+      "stem": "Flexbox is best described as a:",
+      "choices": ["Two-dimensional layout system", "One-dimensional layout system", "Replacement for tables only", "Print-only layout system"],
+      "correctIndex": 1,
+      "explanation": "Flexbox lays out items along a single axis (row or column). Grid is the two-dimensional system."
+    },
+    {
+      "id": "q12",
+      "stem": "Given `flex: 1 1 200px;` on an item, which is correct?",
+      "choices": [
+        "It has a fixed width of 200px",
+        "It can grow and shrink with a 200px basis",
+        "It always grows to 200px maximum",
+        "It will not appear if container is < 200px"
+      ],
+      "correctIndex": 1,
+      "explanation": "The shorthand is grow shrink basis. grow=1 and shrink=1 mean it flexes both directions; 200px is the starting size."
+    },
+    {
+      "id": "q13",
+      "stem": "Which heading structure is correct?",
+      "choices": [
+        "h1 → h3 → h2",
+        "h1 → h2 → h3 → h2",
+        "h2 → h1 → h2",
+        "multiple h1 without a hierarchy"
+      ],
+      "correctIndex": 1,
+      "explanation": "Headings must form a tree without skipping levels. h1 → h2 → h3 then back to h2 to start a sibling section is valid."
+    },
+    {
+      "id": "q14",
+      "stem": "Which CSS unit is relative to the root font size?",
+      "choices": ["em", "rem", "%", "px"],
+      "correctIndex": 1,
+      "explanation": "rem = root em, always relative to html font-size. em is relative to the element's own font-size."
+    },
+    {
+      "id": "q15",
+      "stem": "What does `align-items: center` do in a flex row?",
+      "choices": [
+        "Centers items horizontally",
+        "Centers items vertically (cross axis)",
+        "Centers the container in the page",
+        "Centers text within each item"
+      ],
+      "correctIndex": 1,
+      "explanation": "align-items is the cross-axis property. In a row, cross axis is vertical, so items are centered vertically."
+    },
+    {
+      "id": "q16",
+      "stem": "Margin collapsing applies to:",
+      "choices": [
+        "Horizontal margins of inline elements",
+        "Vertical margins of adjacent block elements in normal flow",
+        "Margins inside a flex container",
+        "Padding"
+      ],
+      "correctIndex": 1,
+      "explanation": "Adjacent vertical margins collapse to the larger of the two. Horizontal margins, flex/grid children, and padding never collapse."
+    },
+    {
+      "id": "q17",
+      "stem": "Which selector matches the second list item?",
+      "choices": ["li:first-child", "li:nth-child(2)", "li:last-child", "li:nth-of-type(odd)"],
+      "correctIndex": 1,
+      "explanation": "nth-child(2) selects the element that is the 2nd child of its parent."
+    },
+    {
+      "id": "q18",
+      "stem": "Why use semantic HTML over a soup of divs?",
+      "choices": [
+        "It renders faster",
+        "It improves accessibility, SEO, and code clarity",
+        "It is required by the HTML parser",
+        "It reduces JavaScript bundle size"
+      ],
+      "correctIndex": 1,
+      "explanation": "Semantic tags carry meaning for assistive tech and crawlers and make the document tree readable. The visual rendering is the same."
+    },
+    {
+      "id": "q19",
+      "stem": "What does `display: inline-block` enable that `display: inline` does not?",
+      "choices": [
+        "Setting width and height",
+        "Use of media queries",
+        "Use of pseudo-classes",
+        "Use of flexbox children"
+      ],
+      "correctIndex": 0,
+      "explanation": "Inline elements ignore width/height. inline-block respects them while still flowing inline with surrounding text."
+    },
+    {
+      "id": "q20",
+      "stem": "Which rule wins?\n\n.a.b { color: red; }\n.a { color: blue !important; }",
+      "choices": ["red", "blue", "depends on source order", "neither"],
+      "correctIndex": 1,
+      "explanation": "Despite .a.b being more specific (0,0,2,0 vs 0,0,1,0), the !important on .a moves it into a higher cascade tier."
+    },
+    {
+      "id": "q21",
+      "stem": "What is the meaning of `gap: 1rem` in a flex container?",
+      "choices": [
+        "Adds 1rem padding around the container",
+        "Adds 1rem margin around each item",
+        "Adds 1rem space between adjacent items only",
+        "Sets the container width to 1rem"
+      ],
+      "correctIndex": 2,
+      "explanation": "gap creates space only between items, not around the container edges. Cleaner than item margins."
+    },
+    {
+      "id": "q22",
+      "stem": "Which is true about `<article>` vs `<section>`?",
+      "choices": [
+        "<article> is for self-contained content; <section> is a thematic grouping",
+        "They are interchangeable aliases",
+        "<section> is for forms only",
+        "<article> only goes inside <main>"
+      ],
+      "correctIndex": 0,
+      "explanation": "An <article> should make sense extracted on its own (blog post, comment). <section> groups related content within a larger document."
+    },
+    {
+      "id": "q23",
+      "stem": "Which is the cleanest way to vertically center a single child inside a container?",
+      "choices": [
+        "Use position: absolute with negative margins",
+        "Use display: flex; align-items: center; justify-content: center;",
+        "Use vertical-align: middle on the parent",
+        "Use line-height equal to the container height"
+      ],
+      "correctIndex": 1,
+      "explanation": "Flexbox centering on both axes is the modern, reliable way and works regardless of child size."
+    },
+    {
+      "id": "q24",
+      "stem": "What does `box-sizing: content-box` (the default) mean for a div with width: 100px, padding: 10px?",
+      "choices": [
+        "The rendered width is 100px",
+        "The rendered width is 120px",
+        "The padding is ignored",
+        "The width is overridden to fit content"
+      ],
+      "correctIndex": 1,
+      "explanation": "content-box adds padding outside the declared width. 100 + 10 + 10 = 120px rendered."
+    },
+    {
+      "id": "q25",
+      "stem": "What problem does `<label for=\"email\">Email</label><input id=\"email\">` solve?",
+      "choices": [
+        "Validation",
+        "Associates the label with the input for screen readers and click-to-focus",
+        "Encrypts the input",
+        "Prevents autocomplete"
+      ],
+      "correctIndex": 1,
+      "explanation": "The for/id pairing makes the label clickable to focus the field and exposes the relationship to assistive technology."
+    }
+  ]
+}

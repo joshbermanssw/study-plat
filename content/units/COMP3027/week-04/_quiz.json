@@ -1,0 +1,307 @@
+{
+  "unit": "COMP3027",
+  "week": 4,
+  "topic": "Dynamic programming (intro)",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "Which two structural properties must a problem have for DP to apply?",
+      "choices": [
+        "Convexity and continuity",
+        "Optimal substructure and overlapping subproblems",
+        "Polynomial input size and bounded depth",
+        "Sortedness and uniqueness"
+      ],
+      "correctIndex": 1,
+      "explanation": "Optimal substructure lets you express OPT in terms of smaller OPTs; overlapping subproblems is what memoisation exploits."
+    },
+    {
+      "id": "q2",
+      "stem": "If a problem has optimal substructure but NO overlapping subproblems, the natural technique is:",
+      "choices": [
+        "Dynamic programming",
+        "Divide and conquer",
+        "Linear programming",
+        "Greedy"
+      ],
+      "correctIndex": 1,
+      "explanation": "Without overlapping subproblems there is nothing to memoise; divide-and-conquer recursion already runs in polynomial time."
+    },
+    {
+      "id": "q3",
+      "stem": "What is the Weighted Interval Scheduling recurrence?",
+      "choices": [
+        "OPT(j) = max(w_j, OPT(j-1))",
+        "OPT(j) = w_j + OPT(j-1)",
+        "OPT(j) = max(w_j + OPT(p(j)), OPT(j-1))",
+        "OPT(j) = min(w_j + OPT(j-1), OPT(p(j)))"
+      ],
+      "correctIndex": 2,
+      "explanation": "Either include j (gain w_j, then jump to p(j)) or exclude j (recurse on j-1). Take the max."
+    },
+    {
+      "id": "q4",
+      "stem": "What is p(j) in Weighted Interval Scheduling?",
+      "choices": [
+        "The previous job in the input",
+        "The largest index i < j with f_i <= s_j",
+        "The job with smallest start time",
+        "The number of jobs that overlap j"
+      ],
+      "correctIndex": 1,
+      "explanation": "p(j) is the latest job that finishes before j starts — found via binary search after sorting by finish time."
+    },
+    {
+      "id": "q5",
+      "stem": "The 0/1 Knapsack DP runs in time:",
+      "choices": [
+        "O(n)",
+        "O(n log n)",
+        "O(nW)",
+        "O(n^2)"
+      ],
+      "correctIndex": 2,
+      "explanation": "Two indices (item count n, residual capacity w) give an n*W table; each cell does O(1) work."
+    },
+    {
+      "id": "q6",
+      "stem": "Why is the O(nW) 0/1 Knapsack DP called pseudo-polynomial?",
+      "choices": [
+        "It is approximate",
+        "It is polynomial in W's value but exponential in W's bit length (log W)",
+        "It uses pseudorandom numbers",
+        "It runs only on small inputs"
+      ],
+      "correctIndex": 1,
+      "explanation": "Input size measures bits. O(nW) is exponential in log W, so polynomial in value but not in input length. Decision Knapsack is NP-complete."
+    },
+    {
+      "id": "q7",
+      "stem": "What is the subproblem definition in Kadane's max-subarray DP?",
+      "choices": [
+        "Max subarray sum of any subarray in A[1..i]",
+        "Max subarray sum ending exactly at index i",
+        "Max element in A[1..i]",
+        "Sum of A[1..i]"
+      ],
+      "correctIndex": 1,
+      "explanation": "OPT[i] must end at i, which yields the simple recurrence OPT[i] = max(OPT[i-1] + A[i], A[i])."
+    },
+    {
+      "id": "q8",
+      "stem": "Which problem has the recurrence L[i] = 1 + max{L[j] : j < i, X[j] < X[i]}?",
+      "choices": [
+        "Longest Common Subsequence",
+        "Longest Increasing Subsequence",
+        "Edit distance",
+        "Knapsack"
+      ],
+      "correctIndex": 1,
+      "explanation": "L[i] is the LIS length ending at index i; we extend the longest LIS ending at a smaller value seen earlier."
+    },
+    {
+      "id": "q9",
+      "stem": "After computing the DP table, how do you reconstruct which jobs are in the optimal Weighted Interval Scheduling solution?",
+      "choices": [
+        "Sort by weight",
+        "Walk back through the table comparing OPT(j) to OPT(j-1); include j when including improves",
+        "Run a greedy",
+        "Compute LCS"
+      ],
+      "correctIndex": 1,
+      "explanation": "At each j, decide which branch of the max was used: if w_j + OPT(p(j)) >= OPT(j-1), include j and jump to p(j); else jump to j-1."
+    },
+    {
+      "id": "q10",
+      "stem": "Memoisation differs from tabulation in:",
+      "choices": [
+        "Asymptotic time",
+        "Direction of computation (top-down recursive vs bottom-up iterative)",
+        "The problems they solve",
+        "Whether they work at all"
+      ],
+      "correctIndex": 1,
+      "explanation": "Both achieve identical asymptotic time. Top-down memoisation skips unnecessary subproblems; bottom-up tabulation has tighter constants."
+    },
+    {
+      "id": "q11",
+      "stem": "What is the naive (no memoisation) recursion time for Weighted Interval Scheduling?",
+      "choices": [
+        "Polynomial",
+        "Exponential (Theta(phi^n) Fibonacci-like)",
+        "Linear",
+        "Logarithmic"
+      ],
+      "correctIndex": 1,
+      "explanation": "Two recursive branches per call yield Fibonacci-like growth Theta(phi^n) ~ 1.618^n. Memoisation reduces to polynomial."
+    },
+    {
+      "id": "q12",
+      "stem": "In the 0/1 Knapsack recurrence, when w_i > w (current capacity), OPT(i, w) equals:",
+      "choices": [
+        "OPT(i-1, w)",
+        "b_i + OPT(i-1, w)",
+        "OPT(i-1, w - w_i)",
+        "0"
+      ],
+      "correctIndex": 0,
+      "explanation": "If item i doesn't fit, the optimum is the same as the optimum without item i."
+    },
+    {
+      "id": "q13",
+      "stem": "Which is NOT a step in the standard DP recipe?",
+      "choices": [
+        "Define subproblem",
+        "State the recurrence and base cases",
+        "Determine evaluation order",
+        "Sort by deadline before recurring"
+      ],
+      "correctIndex": 3,
+      "explanation": "Sorting may appear in specific problems (Weighted Interval Scheduling) but is not a generic DP recipe step."
+    },
+    {
+      "id": "q14",
+      "stem": "An optimal substructure means:",
+      "choices": [
+        "The problem is convex",
+        "The optimal solution decomposes into optimal solutions of subproblems",
+        "There is a greedy solution",
+        "Subproblems have unique answers"
+      ],
+      "correctIndex": 1,
+      "explanation": "Optimal substructure is the property that lets you write OPT in terms of OPT on smaller subproblems."
+    },
+    {
+      "id": "q15",
+      "stem": "What is the space complexity of a straightforward 0/1 Knapsack DP?",
+      "choices": [
+        "O(n)",
+        "O(W)",
+        "O(nW)",
+        "O(2^n)"
+      ],
+      "correctIndex": 2,
+      "explanation": "The 2D table is n*W entries; space can be reduced to O(W) by keeping only the last row, but the naive bound is O(nW)."
+    },
+    {
+      "id": "q16",
+      "stem": "Why is Weighted Interval Scheduling's DP O(n log n) total, despite linear DP work?",
+      "choices": [
+        "Memoisation overhead is O(log n)",
+        "Sorting by finish time and computing p(j) via binary search cost O(n log n); the DP itself is O(n)",
+        "Inputs are sorted in O(log n)",
+        "Cache effects"
+      ],
+      "correctIndex": 1,
+      "explanation": "Pre-sort + binary search for p(j) costs O(n log n); the DP sweep is linear. Total O(n log n)."
+    },
+    {
+      "id": "q17",
+      "stem": "When you write a DP, what is the FIRST artefact you produce?",
+      "choices": [
+        "Pseudocode",
+        "Subproblem definition in one sentence",
+        "Time complexity",
+        "Reconstruction trace"
+      ],
+      "correctIndex": 1,
+      "explanation": "Every DP starts from a precise subproblem definition. Without it the recurrence is meaningless."
+    },
+    {
+      "id": "q18",
+      "stem": "Which is a correct subproblem for Longest Increasing Subsequence in the O(n^2) DP?",
+      "choices": [
+        "Length of longest increasing subsequence of X[1..i]",
+        "Length of longest increasing subsequence ending at index i",
+        "Length of any subsequence of X[1..i]",
+        "Number of inversions in X[1..i]"
+      ],
+      "correctIndex": 1,
+      "explanation": "Pinning the subsequence to end at i makes the recurrence local: L[i] = 1 + max over earlier compatible indices."
+    },
+    {
+      "id": "q19",
+      "stem": "For 0/1 Knapsack, decision form (does a subset of value >= V fit?) is:",
+      "choices": [
+        "In P",
+        "NP-complete",
+        "Not in NP",
+        "Solvable in O(log n)"
+      ],
+      "correctIndex": 1,
+      "explanation": "Decision Knapsack is one of Karp's 21 NP-complete problems. The pseudo-polynomial DP doesn't contradict this."
+    },
+    {
+      "id": "q20",
+      "stem": "Which DP would you use for 'is there a subset of {a_1, ..., a_n} summing to T'?",
+      "choices": [
+        "1D DP with O(n) cells",
+        "2D DP with O(nT) cells",
+        "Greedy",
+        "Divide and conquer"
+      ],
+      "correctIndex": 1,
+      "explanation": "Subset Sum has the same shape as Knapsack: subproblem indexed by (i, t). Pseudo-polynomial in T."
+    },
+    {
+      "id": "q21",
+      "stem": "What does 'order of evaluation' mean in a bottom-up DP?",
+      "choices": [
+        "Random order",
+        "The order that respects the dependency relation in the recurrence",
+        "Order by problem name",
+        "Order by call-stack depth"
+      ],
+      "correctIndex": 1,
+      "explanation": "Subproblem c must be computed before any larger subproblem that depends on c. Typically smaller indices first."
+    },
+    {
+      "id": "q22",
+      "stem": "When is a memoised top-down DP strictly faster than a bottom-up tabulated DP?",
+      "choices": [
+        "Never — they have the same asymptotic complexity",
+        "When the dependency graph is sparse so many cells are not needed",
+        "When recursion is faster than iteration",
+        "Always"
+      ],
+      "correctIndex": 1,
+      "explanation": "Both are the same asymptotically. Top-down can skip cells the answer doesn't depend on; bottom-up always fills the entire table."
+    },
+    {
+      "id": "q23",
+      "stem": "If the recurrence OPT(j) requires both OPT(j-1) and OPT(p(j)), what is the cell evaluation order?",
+      "choices": [
+        "Decreasing j",
+        "Increasing j",
+        "Random",
+        "Depth-first from j = n"
+      ],
+      "correctIndex": 1,
+      "explanation": "Since OPT(j-1) and OPT(p(j) with p(j) <= j-1) are smaller indices, computing j = 1, 2, ..., n in increasing order respects dependencies."
+    },
+    {
+      "id": "q24",
+      "stem": "Which technique is NOT typically used to reduce space in a DP?",
+      "choices": [
+        "Keeping only the last one or two rows",
+        "Using bitmasks for the inner dimension",
+        "Replacing the table with a polylog factor of itself",
+        "Switching to greedy"
+      ],
+      "correctIndex": 3,
+      "explanation": "Greedy is not a space-reduction tactic; the other three are standard DP space optimisations."
+    },
+    {
+      "id": "q25",
+      "stem": "Which BEST captures the difference between an algorithm with running time O(n + W) and O(nW)?",
+      "choices": [
+        "They are the same",
+        "O(n + W) is genuinely polynomial in input size only if W is at most polynomial in n; O(nW) is pseudo-polynomial in W",
+        "O(nW) is always faster",
+        "O(n + W) is exponential"
+      ],
+      "correctIndex": 1,
+      "explanation": "Both depend on the value of W, but a fully polynomial-in-input algorithm must be polynomial in log W. O(nW) and O(n + W) are both pseudo-polynomial."
+    }
+  ]
+}

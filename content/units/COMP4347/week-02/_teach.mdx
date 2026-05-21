@@ -1,0 +1,650 @@
+---
+title: "Week 2 — HTML and CSS"
+unit: COMP4347
+week: 2
+type: overview
+status: done
+---
+
+## What this week is really about
+
+Week 2 looks like the easy week. It isn't. **HTML is the structure layer; CSS is the presentation layer.** Almost every layout bug in the wild comes from confusing the two.
+
+Ori frames the whole lecture around a single analogy. **A webpage is a Word document done differently.** A Word doc is a hierarchy of objects — a body with headings, paragraphs, tables, images, captions. HTML is a language for writing that hierarchy down in plain text. CSS is a separate language whose only job is to record **visual rules** — "headings should be blue", "table cells should have borders". Different language, same document, two responsibilities cleanly split.
+
+The tutorial drives this home. You get a `week2.html` and a `week2.css`. Most of the CSS rules are already written. Your job is to write HTML whose elements **match the selectors the CSS already expects.** That single exercise — "read a CSS rule, then write the HTML the rule will catch" — is the mental model the entire week is teaching.
+
+The four ideas the lecture spends the most time on, in priority order:
+
+1. **The categories of HTML tags** — text formatting, containers, forms, tables, multimedia, semantic.
+2. **CSS selectors** — element, class, ID, group; then child, descendant, pseudo-class.
+3. **The box model** — content, padding, border, margin. Why a 320px element occupies 404px.
+4. **Cascading** — inheritance, specificity, location, in that order.
+
+Grid, flexbox, positioning, and z-index get one slide each. Don't waste your study budget on them this week — those land in Week 3.
+
+## Webpages as a hierarchy of objects
+
+Open the slide titled "A Hierarchy of Objects". A document has metadata, a body, a heading, a paragraph containing a link, a table containing rows containing cells, a figure with an image and caption. **Every page on the web is a tree like that.**
+
+HTML answers four questions about the tree:
+
+- **What are the types of objects?** (Heading, paragraph, link, table, image.)
+- **What is the order of objects?** (Paragraph after heading.)
+- **Which objects are parts of which?** (Cell inside row, row inside table.)
+- **What metadata does each object carry?** (Image file path, link URL, language code.)
+
+Every other HTML question is downstream of those four. If you can describe a page as a tree on paper, you can write the HTML.
+
+The tree shows up in the lecture as **the family tree vocabulary**: parent, child, sibling, ancestor, descendant.
+
+- **Parent** — the element directly above in the tree.
+- **Child** — directly below.
+- **Sibling** — same parent.
+- **Ancestor** — any element above you in the chain.
+- **Descendant** — any element below you, at any depth.
+
+These words matter because CSS selectors talk in this language. `ul > li` says "li that is a direct **child** of ul". `div p` says "p that is a **descendant** of div, any depth".
+
+## HTML tags — anatomy and nesting
+
+A tag has a fixed anatomy. Memorise it now; the lecture redraws it twice.
+
+```html
+<a href="http://www.centralpark.com">Central Park</a>
+```
+
+- **Element name** — `a`. Defines the type of HTML object.
+- **Attribute** — `href="..."`. Key properties of the object.
+- **Opening tag** — `<a ...>`.
+- **Content** — `Central Park`. May be text or other HTML elements.
+- **Closing tag** — `</a>`.
+
+Some elements are **empty** — they have no content and no closing tag. They self-close with a trailing slash:
+
+```html
+<br />
+<img src="logo.png" alt="Logo" />
+<meta charset="utf-8" />
+```
+
+**Nesting rule:** a child's closing tag must appear before its parent's. The lecture shows the right and wrong versions:
+
+```html
+<!-- correct -->
+<h1>Share Your <strong>Travels</strong></h1>
+
+<!-- WRONG — strong's closing tag is outside h1's -->
+<h1>Share Your <strong>Travels</h1></strong>
+```
+
+Browsers try to recover from broken nesting, but the resulting tree is undefined behaviour — different browsers may build different trees and your selectors will start matching things they shouldn't. Always close inner tags first.
+
+### The skeleton of an HTML file
+
+Every page starts with the same five-line scaffold. Be able to write this from memory.
+
+```html
+<!DOCTYPE html>
+<html>
+  <head lang="en">
+    <meta charset="utf-8" />
+    <title>Share Your Travels — Central Park</title>
+    <link rel="stylesheet" href="css/main.css" />
+    <script src="js/html5shiv.js"></script>
+  </head>
+  <body>
+    <h1>Main heading goes here</h1>
+    ...
+  </body>
+</html>
+```
+
+What each line does:
+
+- **`<!DOCTYPE html>`** tells the browser "process this as HTML5, not plain text". Without it, browsers fall back to "quirks mode". Always include it.
+- **`<html>`** is the root of the tree.
+- **`<head>`** holds non-visible resources — metadata, stylesheets, scripts, the title.
+- **`<body>`** holds everything the user sees.
+
+Inside `<head>`, **`<meta>` sets metadata** that browsers, search engines, and accessibility software read — character encoding, language, viewport. **`<link>` pulls in external resources**, most commonly a stylesheet. The result is the equivalent of pasting that file's contents where the `<link>` sits.
+
+The lecture footnote: `<html>`, `<head>`, and `<body>` are technically optional in HTML5 — browsers can infer them. **Write them anyway.** They make your file readable.
+
+## The six categories of body tags
+
+Ori divides every visible HTML tag into six families. Memorise the list — exam questions often ask "which category does `<aside>` belong to?".
+
+1. **Text formatting** — headings, paragraphs, hyperlinks, inline emphasis.
+2. **Containers** — group other elements together for styling or layout.
+3. **Forms** — collect input from the user.
+4. **Tables** — display grid-like data.
+5. **Multimedia** — images, audio, video, embedded content.
+6. **Semantic** — containers with meaning attached (`<header>`, `<footer>`, `<article>`).
+
+**Categories overlap.** A `<header>` is a semantic container; an `<a>` is text formatting but can wrap an image. Don't treat the boundaries as strict.
+
+### Text formatting
+
+The tags that define text structure:
+
+- **`<h1>` through `<h6>`** — headings, six sizes. `<h1>` is the page title.
+- **`<p>`** — paragraph. Always block-level (line break before and after by default).
+- **`<a>`** — hyperlink.
+
+Decorations applied **inside** other text:
+
+- **`<b>`** — bold (visual emphasis).
+- **`<em>`** — italic (semantic emphasis).
+- **`<br />`** — single line break. Empty element.
+
+Containers that change how text is spaced:
+
+- **`<code>`** — inline code.
+- **`<pre>`** — preserves whitespace exactly as typed (good for code blocks).
+- **`<blockquote>`** — quoted prose, usually indented by default styles.
+
+### "Isn't formatting CSS's job?"
+
+The lecture asks this directly. Aren't headings just paragraphs with bigger text? **Not quite — every HTML tag has default behaviour, and using the wrong tag fights those defaults.** If you use `<p>` for a heading and style it large in CSS, screen readers, search engines, and reader-mode tools still see a paragraph. **HTML is more readable when the tags tell the story.**
+
+### Containers
+
+Containers exist to **logically group elements** so you can style or position them together — for example, every element that makes up a video thumbnail. The two generic containers are:
+
+- **`<div>`** — block-level. Adds no line break of its own beyond block behaviour.
+- **`<span>`** — inline. Doesn't add line breaks. Used to wrap a slice of text.
+
+Use `<div>` for "this is a block of stuff that needs to be styled together". Use `<span>` for "I want to colour these three words red".
+
+### Lists
+
+Lists are special containers with strict child rules.
+
+```html
+<ul>
+  <li>Unordered: bullet point</li>
+  <li>Another item</li>
+</ul>
+
+<ol>
+  <li>Ordered: numbered point</li>
+  <li>Another item</li>
+</ol>
+```
+
+- **`<ul>`** — unordered list (bullets).
+- **`<ol>`** — ordered list (numbers).
+- **`<li>`** — list item. Only valid as a child of `<ul>` or `<ol>` (or `<menu>`).
+
+There are also **description lists** (`<dl>`, `<dt>`, `<dd>`) for key–value pairs — useful for definitions and FAQ entries.
+
+## Forms, tables, and multimedia
+
+These three categories share a slide each. Cover them together.
+
+### Forms
+
+Forms collect input. The lecture covers the structural tags and the most common input types.
+
+```html
+<form action="/submit" method="post">
+  <label for="email">Email</label>
+  <input id="email" type="email" name="email" />
+
+  <label>
+    <input type="checkbox" name="subscribe" /> Subscribe me
+  </label>
+
+  <label>
+    <input type="radio" name="size" value="s" /> Small
+  </label>
+  <label>
+    <input type="radio" name="size" value="m" /> Medium
+  </label>
+
+  <label for="country">Country</label>
+  <select id="country" name="country">
+    <option value="au">Australia</option>
+    <option value="nz">New Zealand</option>
+  </select>
+
+  <button type="submit">Send</button>
+</form>
+```
+
+The pieces:
+
+- **`<form>`** — wraps every input that submits together.
+- **`<label>`** — describes an input. Either wrap the input or use `for="inputId"`.
+- **`<input>`** — empty element with a `type` attribute: `text`, `password`, `email`, `checkbox`, `radio`, `submit`, and many more.
+- **`<select>`** + **`<option>`** — dropdown menu.
+- **`<button>`** — clickable button. `type="submit"` triggers form submission.
+
+**Always pair an input with a label.** Clicking the label focuses or toggles the input, and screen readers announce the label when the input is focused. Unlabeled inputs are the most common accessibility bug in student code.
+
+### Tables
+
+Tables display grid-like data — a leaderboard, a price list, a schedule. **Tables are for tabular data, not for page layout.** Using tables for layout breaks accessibility and was the bad habit CSS Grid was built to retire.
+
+```html
+<table>
+  <thead>
+    <tr>
+      <th>Name</th>
+      <th>Score</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>Jane</td>
+      <td>92</td>
+    </tr>
+    <tr>
+      <td>Ahmed</td>
+      <td>88</td>
+    </tr>
+  </tbody>
+</table>
+```
+
+The tags:
+
+- **`<table>`** — the outer container.
+- **`<thead>`** — header section.
+- **`<tbody>`** — body section.
+- **`<tr>`** — table row.
+- **`<th>`** — table header cell (bold + centred by default; announced as a header by screen readers).
+- **`<td>`** — table data cell.
+
+For arbitrary page layout, use **CSS Grid or Flexbox** — covered briefly later in this document and in depth in Week 3.
+
+### Multimedia
+
+The four multimedia tags worth knowing now:
+
+- **`<img>`** — reserves a space for an image.
+- **`<audio>`** / **`<video>`** — multimedia players. Child elements (`<source>`, `<track>`) configure playback.
+- **`<svg>`** — scalable vector graphics. Draw shapes with elements; scales without quality loss.
+- **`<iframe>`** — embed another webpage inside yours (YouTube share-embed uses this).
+
+The `<img>` tag has four attributes the lecture flags explicitly:
+
+```html
+<img
+  src="images/central-park.jpg"
+  alt="Central Park"
+  title="Central Park"
+  width="80"
+  height="40"
+/>
+```
+
+- **`src`** — URL of the image. Standard relative referencing applies (`./`, `../`).
+- **`alt`** — short description for users who can't see it. Screen readers read this aloud; search engines index it. **Every meaningful image needs an alt.**
+- **`title`** — tooltip text shown on hover. Optional.
+- **`width`** / **`height`** — pixel dimensions. Setting these prevents layout shift while the image loads.
+
+If the image is purely decorative, use `alt=""` — an empty alt tells screen readers to skip it.
+
+## Semantic markup vs "div soup"
+
+The lecture devotes two slides to the same diagram. On the left, "div soup" — `<div id="header">`, `<div id="main">`, `<div class="story">`, `<div id="footer">`. On the right, semantic markup — `<header>`, `<main>`, `<article>`, `<footer>`. The page renders identically. The right version is **dramatically better for everything else.**
+
+The semantic elements to know:
+
+- **`<header>`** — top section of page **or** section. An `<article>` can have its own inner `<header>`.
+- **`<nav>`** — major navigation only. A list of footer links is just a `<ul>`, not a `<nav>`.
+- **`<main>`** — principal content. Appears once. "Skip to content" links target this.
+- **`<section>`** — thematic grouping **with a heading**. If you can't sensibly give it an `<h2>`, use a `<div>` instead.
+- **`<article>`** — self-contained content that still makes sense copied elsewhere — a blog post, a review, a product card.
+- **`<aside>`** — tangentially related content. Sidebars, related links.
+- **`<footer>`** — bottom section of page or section. Copyright, secondary nav.
+- **`<figure>`** + **`<figcaption>`** — image with a caption tied to it.
+
+**Why bother?** The lecture lists four benefits and they are all real:
+
+1. **Readability** — future-you can see the structure at a glance.
+2. **CSS frameworks** often ship nice defaults that key off semantic tags.
+3. **SEO** — search-engine crawlers infer importance from semantic tags. A title in `<h1>` inside `<main>` ranks differently from the same text in a `<div>`.
+4. **Accessibility** — screen readers expose semantic regions as navigation landmarks. A user can jump to `<nav>`, then `<main>`, then the next `<article>` with single keystrokes.
+
+In the tutorial, "Related Photos" is a `<section>` (it has a heading). "Reviews" is a `<section>` containing two `<article>` elements (each review is self-contained). The "Share" bar lives **inside** the photo's `<article>`, not as a sibling.
+
+## CSS syntax and the four basic selectors
+
+A CSS document is a list of **style rules**. Each rule has a selector followed by a list of declarations. Each declaration is a `property: value;` pair.
+
+```css
+h1 {
+  color: blue;
+  font-size: 24pt;
+}
+```
+
+The selector picks which elements the rule applies to. The four selectors the lecture lists as essential:
+
+- **Element selector** — `p { ... }` selects every `<p>` on the page.
+- **Class selector** — `.card { ... }` selects every element with `class="card"`.
+- **ID selector** — `#birthday { ... }` selects the one element with `id="birthday"`. IDs must be unique per page.
+- **Group selector** — `h1, .card, #birthday { ... }` applies the same rules to any element matching any of the listed selectors.
+
+**Classes for repeated things; IDs for unique things.** A page can have many `.card` elements but only one `#main-nav`. This is enforced by convention, not by the browser — but breaking it makes JavaScript and accessibility tooling unhappy.
+
+### Advanced selectors
+
+Three more that the lecture covers, each of which keeps your CSS shorter and your HTML cleaner:
+
+- **Child selector (`>`)** — `ul > li` selects only `<li>` that are **direct** children of `<ul>`. A nested `<li>` two levels deep doesn't match.
+- **Descendant selector (space)** — `div p` selects every `<p>` inside a `<div>`, **at any depth.**
+- **Pseudo-class** — `a:hover`, `input:focus`, `ul:first-child`, `ul:last-child`, `ul:nth-child(3)`. Matches elements in a particular state or position.
+
+Pseudo-element (`::before`) and attribute (`a[href^="#"]`) selectors also exist — see MDN when you reach for them.
+
+The tutorial's recurring drill is exactly this: **read a selector, build the HTML.** A rule like `article .review .user-info a` applies only if your HTML has an `<article>` containing a `.review` containing a `.user-info` containing an `<a>`. Open `week2.css`, find the rule for the Share bar, then build the matching ancestor chain.
+
+## The box model
+
+Every HTML element in CSS is a **rectangular box made of four nested layers.** From innermost to outermost: content, padding, border, margin.
+
+- **Content box** — the text or child elements. For text, it's the sentence width by the line height.
+- **Padding** — gap between content and border. Painted with the element's background.
+- **Border** — the visible (or invisible) line around the padding.
+- **Margin** — empty space outside the border that pushes other elements away. Its colour defers to the parent.
+
+```css
+.card {
+  width: 320px;
+  padding: 16px;
+  border: 2px solid #333;
+  margin: 24px;
+}
+```
+
+The default `box-sizing` is **`content-box`**, which means `width` measures **only the content box**. To compute how much horizontal space `.card` occupies:
+
+```
+content + padding-left + padding-right
+        + border-left + border-right
+        + margin-left + margin-right
+= 320 + 16 + 16 + 2 + 2 + 24 + 24
+= 404px
+```
+
+Switch to **`box-sizing: border-box`** and `width` includes padding and border. The same card then occupies:
+
+```
+width + margin-left + margin-right
+= 320 + 24 + 24
+= 368px
+```
+
+Border-box is so much saner that virtually every modern stylesheet opens with:
+
+```css
+*, *::before, *::after { box-sizing: border-box; }
+```
+
+With border-box, `width: 100%` actually means "fill the parent" even when padding is present. Without it, `width: 100%` + `padding: 16px` overflows the parent by 32px.
+
+### Collapsing margins
+
+**The subtlest rule the lecture flags:** when the vertical margins of two block-level siblings touch, the larger margin wins and the smaller collapses to zero. **Horizontal margins never collapse.**
+
+```css
+h2 { margin-bottom: 24px; }
+p  { margin-top: 16px; }
+```
+
+The gap between `<h2>` and the next `<p>` is `24px`, not `40px`. This is right for prose but wrong for component layouts. For predictable spacing in components, prefer `padding` on the parent or `gap` on a flex/grid container — neither collapses.
+
+### Border shorthand and the four sides
+
+CSS lets you set each side individually:
+
+```css
+.card {
+  border-top-color: red;
+  border-right-color: green;
+  border-bottom-color: yellow;
+  border-left-color: blue;
+}
+```
+
+Or all four sides at once:
+
+```css
+.card { border-color: red; }                      /* all four sides red */
+.card { border-color: red green orange blue; }    /* top right bottom left */
+```
+
+The same shorthand works for `margin` and `padding`. Four values go **clockwise from the top.**
+
+### Flex and grid — a quick preview
+
+The lecture mentions Flexbox and CSS Grid only briefly, as the modern replacements for table-based layout. Both get fuller treatment in Week 3 — for now, recognise them on sight.
+
+**Flexbox is for one-dimensional layout** — a single row or column. The container declares an axis; the children flow along it.
+
+```css
+.toolbar {
+  display: flex;
+  justify-content: space-between;  /* spread along the main axis */
+  align-items: center;             /* centre on the cross axis */
+  gap: 12px;
+}
+```
+
+**Grid is for two-dimensional layout** — rows and columns simultaneously.
+
+```css
+.dashboard {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  grid-template-rows: auto 1fr auto;
+  gap: 16px;
+}
+```
+
+Decision rule: a row of items that wraps → flex. A page shell with header / sidebar / main / footer that line up in two dimensions → grid. The deeper flex/grid material lands in Week 3.
+
+## Cascading — the three rules that decide which style wins
+
+When two CSS rules try to style the same element with conflicting declarations, the browser picks a winner using three rules, in this order: **inheritance, specificity, location.**
+
+### 1. Inheritance
+
+Some properties cascade from parent to child automatically; most do not. The lecture splits them cleanly:
+
+- **Inheritable** — `font`, `color`, `text-*`, list properties. Set them on `<body>` and every descendant picks them up unless overridden.
+- **Not inheritable** — `margin`, `padding`, `border`, `background`, `width`, `height`, every layout/sizing/spacing property.
+
+The shortcut: **text properties inherit; box properties don't.** That's the lecture's rule of thumb and it works for almost every property you'll see this semester.
+
+```css
+body { font-family: "Helvetica", sans-serif; color: #222; }
+/* every paragraph, heading, span inherits these */
+```
+
+You can opt in or out explicitly with `inherit`, `initial`, `unset`, and `revert` — useful but rarely needed in this unit.
+
+### 2. Specificity
+
+If inheritance doesn't decide it, **the rule with the more specific selector wins.** The lecture's ranking, from highest to lowest priority:
+
+1. **Inline `style="..."`** — beats anything not flagged `!important`.
+2. **ID selector** — `#submit`.
+3. **Class / attribute / pseudo-class** — `.btn`, `[type="text"]`, `:hover`.
+4. **Element / pseudo-element** — `div`, `::before`.
+5. **Universal `*`** — lowest priority.
+
+The MDN scoring rule:
+
+| Selector kind | Score |
+|---|---|
+| `*` (universal) | 0,0,0,0 |
+| Element / pseudo-element | 0,0,0,1 |
+| Class / attribute / pseudo-class | 0,0,1,0 |
+| ID | 0,1,0,0 |
+| Inline `style="..."` | 1,0,0,0 |
+| `!important` | beats anything in the same origin |
+
+Count each component left to right; the first non-tie wins. **IDs outweigh any number of classes.** `#a .b` is `0,1,1,0` and beats `.a .b .c` which is `0,0,3,0`.
+
+```css
+.btn { background: blue; }              /* 0,0,1,0 */
+.btn.primary { background: green; }     /* 0,0,2,0 — wins over .btn */
+#header .btn { background: red; }       /* 0,1,1,0 — wins over both */
+```
+
+`!important` defeats specificity within the same origin. Use it sparingly — every future override needs **another** `!important`. Refactor instead.
+
+### 3. Location
+
+If inheritance and specificity both tie, **the closer (later) rule wins.** Closeness order: inline > embedded `<style>` > external stylesheet > user-agent defaults. Within a single file, **later rules beat earlier ones** — which is why utility CSS files are typically imported last.
+
+An inline rule is "closer" to the element than rules in an external file, so it wins on ties:
+
+```html
+<h1 style="color: red;">Heading</h1>
+```
+
+```css
+h1 { color: blue; }   /* loses to the inline style */
+```
+
+## CSS location and units of measurement
+
+Two short but examinable topics. First, **where** CSS lives. Then, **what units** values are expressed in.
+
+### Inline, embedded, external
+
+The lecture gives you three places CSS can live. Know which to use when.
+
+```html
+<!-- 1. Inline — quick testing, not recommended -->
+<h2 style="font-size: 24pt;">Description</h2>
+```
+
+Inline CSS is fast to type and easy to lose track of. Useful when poking around; not for production.
+
+```html
+<!-- 2. Embedded — better, still not great -->
+<head>
+  <style>
+    h1 { font-size: 24pt; }
+    h2 { font-size: 18pt; font-weight: bold; }
+  </style>
+</head>
+```
+
+Embedded styles live in the same file as the HTML. Better than inline, but not reusable across pages.
+
+```html
+<!-- 3. External — the recommended approach -->
+<head>
+  <link rel="stylesheet" href="styles.css" />
+</head>
+```
+
+External stylesheets are the default for any non-trivial site. One stylesheet powers every page, the browser caches it, edits propagate instantly. **Use external unless you have a strong reason not to.**
+
+Note: the browser also has a **default stylesheet** — built-in rules for elements you haven't customised. Chrome's defaults are public at [chromium.googlesource.com](https://chromium.googlesource.com/chromium/blink/+/master/Source/core/css/html.css). When you can't explain why an unstyled `<ul>` has bullets, the answer is in there.
+
+### Units — relative vs absolute
+
+Sizes in CSS come in two flavours. **Absolute units have a real-world size** (`px` for screen pixels, `pt` for print points). **Relative units are sized by something else** — usually a parent element or the viewport.
+
+The relative units worth knowing:
+
+- **`em`** — relative to the current element's font-size. `1.5em` is 1.5× the font-size of the element itself.
+- **`rem`** — relative to the **root** font-size (i.e. the `<html>` element). `1.5rem` ignores nested font-size changes.
+- **`%`** — relative to the parent's value of the same property.
+- **`vw` / `vh`** — 1% of the viewport width / height.
+
+#### Font sizes — ems and percents
+
+Browsers default `<body>` font-size to **16 pixels**. Every relative size descends from there. The lecture's worked example:
+
+```css
+body { font-size: 100%; }    /* 100% of 16px = 16px */
+h3   { font-size: 1.125em; } /* 1.125 × 16 = 18px */
+h2   { font-size: 1.5em; }   /* 1.5 × 16 = 24px */
+h1   { font-size: 2em; }     /* 2 × 16 = 32px */
+```
+
+`200%` and `2em` mean the same thing for font-size. The reason to prefer relative units: **users can change the default font-size in their browser, and relative units scale with them.** Pixel-based sites stay tiny when a user enlarges defaults.
+
+#### Device pixel vs CSS pixel
+
+A **device pixel** is one physical dot on the screen. A **CSS pixel** is what `1px` means in your stylesheet. On Retina or high-DPI displays, one CSS pixel is two or three device pixels — that's how the browser draws crisp text on the same logical layout. **You write CSS in CSS pixels; the browser maps to device pixels.** This is why media queries (`min-width: 720px`) describe logical layout width, not raw screen pixels.
+
+## HTML extras and debugging in DevTools
+
+The closing lecture section covers small but examinable details: link types, HTML entities, and how to use the browser's DevTools to read the cascade live.
+
+### Links revisited
+
+An anchor has a destination and a label. The label can be text **or** an image:
+
+```html
+<a href="http://www.centralpark.com">Central Park</a>
+
+<a href="index.html"><img src="logo.gif" alt="Home" /></a>
+```
+
+Types of links the lecture lists:
+
+- **External** — `href="http://other-site.com/page"`. Full URL.
+- **Internal page** — `href="about.html"`. Relative path on the same site.
+- **In-page anchor** — `href="#related"`. Jumps to the element with `id="related"` on the current page. The tutorial uses exactly this to make the top nav scroll down to the "Related Photos" section you create.
+- **Email** — `href="mailto:someone@example.com"`. Opens the user's mail client.
+
+### Special characters and HTML entities
+
+Some characters have reserved meanings in HTML, or are just awkward to type. Use an **entity**.
+
+| Entity | Renders as | Why |
+|---|---|---|
+| `&nbsp;` | non-breaking space | Prevents an awkward line break |
+| `<` | less-than sign | `<` is reserved (it starts a tag) |
+| `>` | greater-than sign | mirror of above |
+| `&amp;` | ampersand | `&` is reserved (it starts an entity) |
+| `&copy;` | copyright | © without typing the symbol |
+| `&trade;` | trademark | ™ |
+
+If you write code samples inside `<pre>` tags, you'll quickly meet `<` and `>` — they display an HTML tag as text rather than letting the browser parse it.
+
+### Inspect element
+
+Every modern browser has DevTools (right-click → Inspect, or `F12`). The Elements panel shows:
+
+- **Where each element lives in the DOM tree** — click an element, see its ancestors highlighted.
+- **Which CSS rules apply, in priority order** — overridden declarations are crossed out, the winning rule is at the top.
+- **Live editing** — tick or untick declarations, edit values, see the page update in real time.
+
+You'll spend more time in DevTools this semester than in any editor. Learn the shortcuts: click-to-inspect, edit-in-place, and the "Computed" tab that shows the final value of every property after the cascade has run.
+
+When a rule isn't applying:
+
+1. Open DevTools, click the element.
+2. Look at Styles. Is your rule listed? If not, the selector doesn't match — try a `*` selector to confirm CSS is loading.
+3. If listed but crossed out, a more specific rule won. The winner is at the top.
+
+## Common exam patterns
+
+The unit's lecturer hints at recurring exam questions. Be able to do each on a blank sheet in under three minutes.
+
+1. **Pick the right tag for a description.** "Sidebar of related links?" → `<aside>`. "Self-contained blog post?" → `<article>`. Know the six categories and which semantic tag fits each role.
+
+2. **Compute total occupied width.** Given `width`, `padding`, `border`, `margin`, and `box-sizing`, calculate the horizontal space. `content-box` adds padding and border *outside* the width; `border-box` includes them. Add margin either way. The canonical answer: `320 + 16 + 16 + 2 + 2 + 24 + 24 = 404px`.
+
+3. **Rank rules by specificity and pick the winner.** Score each as `a,b,c,d` and compare left to right. Ties broken by source order. Inline `style="..."` beats anything not flagged `!important`. ID > class > pseudo-class > element.
+
+4. **Which properties inherit?** Inheritable: font, color, text, list. Not inheritable: layout, sizing, border, background, spacing. Shortcut: text inherits, boxes don't.
+
+5. **Read a CSS selector and write matching HTML.** Given `article .review .user-info a`, write the minimum HTML: an `<article>` containing a `.review` containing a `.user-info` containing an `<a>`.
+
+6. **Spot the broken nesting.** Given `<h1>Share Your <strong>Travels</h1></strong>`, explain why it's wrong and fix it. The child's closing tag must precede the parent's.
+
+7. **Inline vs embedded vs external — when to use which?** Inline for quick testing; embedded when page-specific; external for anything reusable. External CSS is the production default — cacheable, reusable, maintainable.

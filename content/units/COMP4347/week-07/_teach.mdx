@@ -1,0 +1,461 @@
+---
+title: "Week 7 — Connecting to a database (MongoDB + Mongoose)"
+unit: COMP4347
+week: 7
+type: overview
+status: done
+---
+
+## Why the database layer is a separate problem
+
+**Your web app and your database live in different worlds, and connecting them safely and quickly is its own engineering discipline.** The Express controllers you wrote last week run inside a single Node.js process; the database runs in another process, usually on another host, and the two communicate over a network socket. Every query is a round-trip — serialise the request, send bytes, wait for the server to plan and execute, receive bytes back, deserialise. The fastest controller in the world can be made arbitrarily slow by a bad query, a missing index, or a connection that has to be re-opened on every request.
+
+This week stitches together five distinct concerns:
+
+1. **Choosing a store.** SQL or NoSQL? MongoDB or Postgres? The unit emphasises MongoDB, so we will lean there, but the trade-offs matter regardless.
+2. **Talking to the store safely.** Prepared statements, parameter binding, and why string concatenation is the most common security bug in web apps.
+3. **Talking to the store quickly.** Connection pools, indexes, the N+1 problem, and why your query is slow even though the data is small.
+4. **Talking to the store ergonomically.** ORMs, ODMs (Mongoose), query builders, and when each is the wrong choice.
+5. **Talking to the store correctly.** Transactions, eventual consistency, and what "consistent" actually means in a distributed system.
+
+The exam will mostly test (1), (2), (4), and the Mongo-specific bits of (3). But you cannot reason about Mongoose if you do not first understand what it sits on top of — so we'll start with the relational world, then pivot to Mongo for most of the lecture.
+
+## SQL vs NoSQL: a decision matrix, not a religion
+
+**Pick the database whose data model matches your access patterns, not the one with the cooler logo.** Both families can scale, both have transactions now, both have JSON support. The real differences are about *how you model your data* and *what kinds of queries are cheap*.
+
+**Relational (Postgres, MySQL, SQLite).** Data lives in tables with fixed columns. Relationships are expressed by foreign keys and resolved with JOINs at query time. The schema is enforced by the database — adding a column requires a migration. Strong points: arbitrary multi-table queries, ACID transactions across many rows, decades of tooling, mature query optimisers. Weak points: schema changes are painful at scale; horizontal sharding requires application-level partitioning.
+
+**Document (MongoDB, CouchDB).** Data lives in collections of JSON-ish documents. Documents can nest arrays and sub-objects. Relationships are typically embedded (sub-documents) or referenced (store an `ObjectId`, resolve client-side or via `$lookup`). The schema is enforced by your application (or by Mongoose), not the database — adding a field is just writing a new document with that field. Strong points: flexible schemas for evolving data, natural fit for tree-shaped or denormalised data, easy horizontal sharding. Weak points: cross-document joins are second-class, multi-document transactions exist but are expensive, no query optimiser as sophisticated as a mature RDBMS.
+
+A working decision matrix:
+
+| Question | Lean SQL if... | Lean NoSQL if... |
+|----------|---------------|------------------|
+| What does the data look like? | Many entity types, lots of joins | One central entity with embedded children |
+| How stable is the schema? | Stable, regulated (finance, health) | Rapidly evolving, user-defined fields |
+| What's the dominant query? | Ad-hoc analytics, multi-table | Look up one document by id, render it |
+| Transactional needs? | Cross-row ACID is critical | Single-document atomicity suffices |
+| Scaling story? | Vertical, with read replicas | Horizontal sharding from day one |
+| Team familiarity? | SQL skills on hand | JS-first team, document = object |
+
+**A blog with comments**: comments-embedded-in-post is a perfect Mongo document; comments-in-their-own-table is a perfect SQL design. Neither is wrong.
+
+**A banking ledger**: SQL. Always SQL. You need transactions across accounts, and the schema is regulated.
+
+The COMP4347 unit picks MongoDB because the rest of the stack (Node, Express, JSON over HTTP) lines up cleanly with documents — your model, your wire format, and your storage are all the same shape.
+
+## Prepared statements and SQL injection
+
+**Never build a query by concatenating user input into a string.** This is the single most exploited bug in the history of web applications, and the fix is built into every driver.
+
+Here is the canonical vulnerable code:
+
+```js
+// VULNERABLE — do not ship this
+app.get('/users', (req, res) => {
+  const name = req.query.name;
+  const sql = "SELECT * FROM users WHERE name = '" + name + "'";
+  db.query(sql, (err, rows) => res.json(rows));
+});
+```
+
+If a user requests `/users?name=alice`, the SQL becomes `SELECT * FROM users WHERE name = 'alice'`. Fine. But if they request `/users?name=' OR '1'='1`, it becomes `SELECT * FROM users WHERE name = '' OR '1'='1'`, which returns every row. Worse, `/users?name='; DROP TABLE users;--` does what it says on the tin.
+
+**The fix is parameterised queries** (also called *prepared statements*). The driver sends the query template and the parameters separately; the database parses the template once, then binds parameter values into placeholders without ever interpreting them as SQL.
+
+```js
+// SAFE — driver substitutes ? with the bound value
+app.get('/users', (req, res) => {
+  const name = req.query.name;
+  const sql = 'SELECT * FROM users WHERE name = ?';
+  db.query(sql, [name], (err, rows) => res.json(rows));
+});
+```
+
+**Why this works.** The query is parsed before parameters are bound, so a quote inside `name` cannot terminate the string literal — it stays a quote inside a value, not SQL syntax. Parsing and parameter binding are *separate phases*; injection requires fooling the parser, and the parser never sees the user data.
+
+**Mongo's equivalent risk.** MongoDB does not parse SQL, but it does interpret query *objects*, and you can still get burned. If you do `db.users.find(JSON.parse(req.query.filter))`, an attacker can post `{"password": {"$ne": null}}` and get a list of every user with a password. The defence: never trust user input as a query operator. Validate the shape of incoming filters, and prefer building the query object yourself with whitelisted fields. Mongoose helps here by coercing values to the schema's declared types, which neutralises most operator-injection attacks.
+
+**Bottom line.** Treat user input as data, never as code. Use placeholders. Validate shapes. Strip operators (`$`-prefixed keys) from anything that came from the network.
+
+## Connection pools: don't open a socket per request
+
+**Opening a TCP connection to a database costs tens of milliseconds; a busy app would melt if every HTTP request opened its own.** Connection pools solve this by keeping a small set of open connections alive and lending them out for the duration of a single query.
+
+The pool is a queue of pre-opened sockets. A request comes in, the controller asks for a connection, the pool hands one over (or blocks briefly if none is free), the query runs, the controller releases the connection back into the pool. Connections never close until the app shuts down.
+
+```js
+// node-postgres example
+import pg from 'pg';
+const pool = new pg.Pool({ max: 20, idleTimeoutMillis: 30000 });
+
+app.get('/users/:id', async (req, res) => {
+  const { rows } = await pool.query('SELECT * FROM users WHERE id = $1', [req.params.id]);
+  res.json(rows[0]);
+});
+```
+
+**Sizing the pool.** Too small: requests queue waiting for a free connection, and tail latency balloons. Too large: the database hits its own connection limit, and you starve other apps sharing the same DB. A reasonable default is `2 × cores`, capped at `db_max_connections / app_replicas`. Postgres tops out around a few hundred connections per server before context-switching overhead dominates — beyond that, use [PgBouncer](https://www.pgbouncer.org/) as an external pooler.
+
+**Mongoose pools automatically.** When you call `mongoose.connect(uri)`, it opens a pool sized by the `maxPoolSize` option (default 100). You never explicitly acquire or release; every model method picks a connection from the pool, runs the operation, and returns it. This is one of the convenience wins of an ODM.
+
+**The classic anti-pattern.** Inside an HTTP handler, calling `mongoose.connect(uri)` again — this is a no-op after the first call (Mongoose is idempotent), but if you ever wrote `new MongoClient(uri); await client.connect()` per request, you would open a fresh pool on every request and exhaust the database in minutes. The rule: **one pool per process, opened at startup, closed at shutdown**.
+
+**Leaked connections.** With raw drivers, if you forget to release a connection on the error path, the pool leaks one slot. Eventually the pool is empty and the app hangs. ORMs and ODMs hide this by tying the connection to the lifetime of a query, not your code.
+
+## ORM, ODM, query builder, raw — pick your altitude
+
+**Higher-level libraries give you ergonomics and footguns in equal measure.** Know what each layer does and what it costs.
+
+**Raw driver.** You write SQL or Mongo query objects by hand and call `driver.query(...)`. Maximum control, minimum safety net. Use when you need a query the higher level cannot express, or for performance-critical hot paths.
+
+**Query builder (Knex for SQL).** A fluent API that mirrors SQL but is composable JavaScript. `knex('users').where('age', '>', 18).orderBy('name').limit(10)`. You still think in terms of tables and joins; the builder handles parameter binding and dialect differences (Postgres vs MySQL). No object mapping — results are plain objects.
+
+**ORM (Sequelize, Prisma, TypeORM).** Maps rows to JavaScript classes. You define models (`class User extends Model`), declare associations (`User.hasMany(Post)`), and call methods (`User.findAll({ include: Post })`). The ORM generates SQL behind the scenes. Productivity is high, but you can write code that looks O(1) and generates O(n) queries — see the N+1 section.
+
+- **Sequelize**: mature, callback-flavoured roots, works with all major SQL dialects.
+- **Prisma**: newer, schema-first (`schema.prisma` file), generates a fully typed client. Heavier toolchain but excellent TypeScript ergonomics.
+
+**ODM (Mongoose for MongoDB).** Like an ORM but for documents. You define a `Schema`, compile it to a `Model`, and call `Model.find(...)`. Mongoose adds: type coercion, validation, middleware (`pre('save')`), virtuals, and population (the document-store equivalent of joins). Crucially, Mongoose does **not** generate ad-hoc queries from a higher-level DSL — your `find` call is almost the same shape as the underlying Mongo query, just with extra type-checking. That is why Mongoose is easier to predict than a full SQL ORM.
+
+```js
+// Mongoose
+import mongoose from 'mongoose';
+const { Schema } = mongoose;
+
+const userSchema = new Schema({
+  name:   { type: String, required: true },
+  email:  { type: String, required: true, unique: true },
+  age:    { type: Number, min: 0 },
+  posts:  [{ type: Schema.Types.ObjectId, ref: 'Post' }]
+});
+
+const User = mongoose.model('User', userSchema);
+
+const adults = await User.find({ age: { $gte: 18 } })
+  .select('name email')
+  .sort({ name: 1 })
+  .limit(20);
+```
+
+**Trade-off summary.** Lower altitude = more control, more code, more chances to forget to bind a parameter. Higher altitude = fewer keystrokes, but you must understand what the library is doing under the hood, or you will ship the N+1 problem.
+
+## The N+1 problem
+
+**The N+1 problem is what happens when an ORM convenience hides a query you didn't mean to write.** It is the most common performance bug in apps that use object mappers, and the fix is always the same: tell the library to fetch related data in one extra query, not in N extra queries.
+
+Suppose you want to render a list of 20 users with their post counts.
+
+```js
+// BAD: one query to find users, then one query per user — 1 + 20 = 21 queries
+const users = await User.find().limit(20);
+for (const user of users) {
+  const posts = await Post.find({ author: user._id }); // a query EACH iteration
+  user.postCount = posts.length;
+}
+```
+
+At 20 users, this is 21 queries. At 1000 users, 1001. Each one is a round-trip. Latency stacks.
+
+**Fix in Mongoose with `populate` (single follow-up query).**
+
+```js
+const users = await User.find().limit(20).populate('posts');
+// 2 queries total: one for users, one for all posts whose author is in the user-id set.
+```
+
+`populate` runs a second query like `Post.find({ author: { $in: [userIds...] } })` and stitches the results onto the user documents in memory. Two round-trips total, regardless of how many users.
+
+**Fix in SQL with a JOIN.**
+
+```sql
+SELECT u.id, u.name, COUNT(p.id) AS post_count
+FROM users u
+LEFT JOIN posts p ON p.author_id = u.id
+GROUP BY u.id, u.name
+LIMIT 20;
+```
+
+One query, one round-trip.
+
+**Fix in Mongo with `$lookup` aggregation.**
+
+```js
+await User.aggregate([
+  { $lookup: { from: 'posts', localField: '_id', foreignField: 'author', as: 'posts' } },
+  { $addFields: { postCount: { $size: '$posts' } } },
+  { $project: { name: 1, postCount: 1 } },
+  { $limit: 20 }
+]);
+```
+
+**How to detect N+1.** Turn on query logging in development (Mongoose: `mongoose.set('debug', true)`; Sequelize: `logging: console.log`). If you see the same query template firing in a loop with different parameter values, that's N+1. APM tools like Datadog and New Relic flag it automatically in production.
+
+**The mental model.** Every ORM call is shorthand for at least one round-trip. If your shorthand sits inside a loop, you have N round-trips. Move the loop inside the database (`$in`, `JOIN`, `populate`) instead of around it.
+
+## Indexes: B-trees, covering, partial
+
+**An index is a sorted side-structure that lets the database find rows without scanning the whole collection.** Without one, every query is a full scan — fine for 100 documents, catastrophic for 10 million.
+
+**B-tree, the default.** Almost all relational and document databases use a B-tree (or B+ tree) variant for their indexes. A B-tree is a balanced tree where each node holds many keys (typically thousands per disk page), so the tree stays shallow even for huge data. Lookups are O(log n) with a very small base. Range queries are cheap because adjacent keys are stored adjacently. MongoDB's default `createIndex` builds a B-tree.
+
+```js
+// Mongo shell
+db.users.createIndex({ age: 1 })          // ascending B-tree on age
+db.users.createIndex({ age: 1, name: 1 }) // compound — order matters
+```
+
+**Compound indexes and prefix queries.** A compound index on `{ age: 1, name: 1 }` can serve queries that filter by `age` alone, or by `age` *and then* `name`. It cannot serve `name`-only queries efficiently, because `name` is sorted only *within each age group*. The rule: a compound index supports any **prefix** of its fields.
+
+**Covering index.** An index "covers" a query if the index entries themselves contain every field the query needs — the database can answer from the index without touching the document. Massive speedup. For Mongo:
+
+```js
+db.users.createIndex({ age: 1, name: 1 });
+db.users.find({ age: { $gte: 18 } }, { age: 1, name: 1, _id: 0 }); // covered
+```
+
+The query returns only `age` and `name`, and both are in the index, so the planner skips the document fetch.
+
+**Partial index.** Only indexes documents matching a filter. Saves space and write cost when most rows don't need indexing.
+
+```js
+db.users.createIndex(
+  { email: 1 },
+  { partialFilterExpression: { active: true } }
+);
+```
+
+Now only `active: true` users are in the index. Queries on inactive users will not use it; queries that filter to active users will, and the index is a fraction of the full size.
+
+**Mongo's `_id` index** is automatic, unique, and cannot be dropped. Sparse indexes (Mongo-specific) skip documents missing the field. Unique indexes reject duplicates.
+
+**The trade-off.** Every index speeds up reads and slows down writes — each insert/update/delete must also update every relevant index. Do not index fields you never query. Use `explain()` to see whether the planner picked your index.
+
+## MongoDB CRUD and query operators
+
+**Mongo's query language is JSON in, JSON out.** Filter documents go in one object; projection (which fields to return) goes in another; modifiers (sort, limit, skip) chain on the cursor.
+
+**Insert.**
+
+```js
+db.users.insertOne({ name: 'Alice', age: 30, city: 'Sydney' });
+db.users.insertMany([{ name: 'Bob' }, { name: 'Carol' }]);
+```
+
+**Find.**
+
+```js
+db.users.find({ age: { $gte: 18 } });                            // filter
+db.users.find({ city: 'Sydney' }, { name: 1, age: 1, _id: 0 });  // projection
+db.users.find({}).sort({ age: -1 }).skip(20).limit(10);          // cursor modifiers
+```
+
+**Update.** Update operators tell Mongo *how* to change the document. `$set` replaces a field, `$inc` adds, `$unset` removes.
+
+```js
+db.users.updateOne({ _id: 1 }, { $set: { city: 'Melbourne' } });
+db.users.updateMany({ city: 'Sydney' }, { $inc: { age: 1 } });
+db.users.replaceOne({ _id: 1 }, { name: 'Alice', age: 31 });   // total replacement
+```
+
+**Delete.**
+
+```js
+db.users.deleteOne({ _id: 1 });
+db.users.deleteMany({ active: false });
+```
+
+**Comparison operators.** `$eq`, `$ne`, `$gt`, `$gte`, `$lt`, `$lte`, `$in`, `$nin`. Used inside filter values.
+
+```js
+db.users.find({ age: { $gte: 18, $lt: 65 } });
+db.users.find({ city: { $in: ['Sydney', 'Melbourne'] } });
+db.users.find({ status: { $ne: 'banned' } });
+```
+
+**Logical operators.** `$and`, `$or`, `$not`, `$nor`. `$and` is implicit when you list multiple keys at the top level.
+
+```js
+db.users.find({ $or: [{ age: { $lt: 18 } }, { age: { $gt: 65 } }] });
+```
+
+**Element operators.** `$exists`, `$type`. Useful in flexible schemas where some documents have a field and others do not.
+
+```js
+db.users.find({ phone: { $exists: true } });
+```
+
+**Array operators.** `$all` (every value present), `$elemMatch` (at least one element matches a sub-query), `$size` (array length).
+
+```js
+db.posts.find({ tags: { $all: ['mongo', 'db'] } });
+db.posts.find({ comments: { $elemMatch: { author: 'alice', votes: { $gt: 10 } } } });
+```
+
+**The mental model.** A Mongo query is a *predicate document*: keys are field paths, values are either literals (equality) or operator objects. Updates are *operation documents*: keys are `$`-prefixed operators, values are the field-and-amount payload.
+
+## The aggregation pipeline
+
+**For anything beyond `find`, Mongo's aggregation pipeline is the answer.** A pipeline is an array of stages; each stage takes documents in and emits documents out. Stages compose like Unix pipes.
+
+```js
+db.orders.aggregate([
+  { $match:   { status: 'paid' } },
+  { $group:   { _id: '$customerId', total: { $sum: '$amount' } } },
+  { $sort:    { total: -1 } },
+  { $limit:   10 },
+  { $project: { customer: '$_id', total: 1, _id: 0 } }
+]);
+```
+
+This finds the top 10 paying customers. The stages:
+
+- **`$match`** filters documents, like `find`. Place it first to use indexes.
+- **`$group`** collapses documents by a key, computing accumulators (`$sum`, `$avg`, `$max`, `$min`, `$push`, `$first`).
+- **`$sort`** orders the stream.
+- **`$limit`** / **`$skip`** trim.
+- **`$project`** reshapes documents — include, exclude, or compute new fields.
+- **`$lookup`** is the Mongo equivalent of a JOIN; pulls documents from another collection into an array field.
+- **`$unwind`** turns an array field into one document per array element.
+- **`$addFields`** appends computed fields without dropping the rest.
+
+**Optimisation hints.** Place `$match` and `$project` as early as possible — the planner can push `$match` before an index scan, and `$project` reduces the data flowing through later stages. Avoid `$lookup` in tight inner loops; consider denormalising instead.
+
+**When aggregation beats find.** Any time the answer requires grouping, joining, computing derived fields, or pivoting. `find` is for "give me documents matching this filter"; `aggregate` is for "compute this result". A useful tell: if you find yourself doing `forEach` over a cursor and accumulating in JavaScript, you probably want `$group`.
+
+**Single-purpose helpers.** Mongo exposes `count`, `distinct`, `estimatedDocumentCount` as shortcuts for very common aggregations. Use them when you do not need the full pipeline — they are clearer and sometimes faster.
+
+## Mongoose: Schema, Model, Document
+
+**Mongoose adds three layers on top of the raw driver: Schema (shape + validation), Model (the collection handle), Document (an instance you can mutate and save).** It is an ODM — Object Document Mapper — analogous to an ORM for relational data.
+
+**Schema.** Defines paths (fields) and their types, validators, defaults, and indexes.
+
+```js
+import mongoose from 'mongoose';
+const { Schema } = mongoose;
+
+const movieSchema = new Schema({
+  title:  { type: String, required: true, trim: true },
+  year:   { type: Number, min: 1888, max: 2100 },
+  genres: [{ type: String, enum: ['Comedy', 'Drama', 'Action', 'Sci-Fi'] }],
+  director: { type: Schema.Types.ObjectId, ref: 'Person' }
+}, { timestamps: true });
+
+movieSchema.index({ year: 1, title: 1 });
+```
+
+`timestamps: true` auto-adds `createdAt` and `updatedAt`. The `ref` field marks `director` as a reference to a `Person` document — `populate` will resolve it.
+
+**Model.** Compile the schema against a collection name.
+
+```js
+const Movie = mongoose.model('Movie', movieSchema, 'movies');
+```
+
+The third argument is the collection name in MongoDB; if you omit it, Mongoose pluralises the model name (`Movie` → `movies`).
+
+**Document.** An instance you can mutate, validate, and save.
+
+```js
+const m = new Movie({ title: 'Ride With the Devil', year: 1999 });
+await m.save();          // runs validators, then insertOne
+m.year = 2000;
+await m.save();          // runs an updateOne with only the changed fields
+```
+
+**Queries on the Model.** Same operators as the shell, returning either a Query (chainable, awaitable) or a Promise directly.
+
+```js
+const movie = await Movie.findOne({ title: 'Sense and Sensibility' });
+const recent = await Movie.find({ year: { $gte: 2000 } })
+  .select('title year')
+  .sort({ year: -1 })
+  .limit(20)
+  .lean();   // returns plain JS objects instead of Mongoose Documents (faster)
+```
+
+**Statics and methods.** Reusable queries on the Model (static) or behaviours on a Document (method).
+
+```js
+movieSchema.statics.findByYear = function (year) {
+  return this.find({ year }).select('title year');
+};
+
+movieSchema.methods.sameYear = function () {
+  return this.model('Movie').find({ year: this.year, _id: { $ne: this._id } });
+};
+```
+
+**Middleware (hooks).** `pre('save')` runs before validation; useful for hashing passwords or normalising data.
+
+```js
+userSchema.pre('save', async function () {
+  if (this.isModified('password')) this.password = await bcrypt.hash(this.password, 10);
+});
+```
+
+**Connection.** One call at startup; Mongoose handles the pool and emits events on state changes.
+
+```js
+await mongoose.connect('mongodb://localhost/comp4347', { maxPoolSize: 20 });
+mongoose.connection.on('error', err => console.error('mongo error', err));
+```
+
+**MVC discipline.** Database code lives in the model layer. Controllers call `Movie.findById(req.params.id)` and never see a connection object. Swap MongoDB for Postgres later by rewriting the model layer; controllers stay untouched.
+
+## Transactions and eventual consistency
+
+**A transaction is a group of operations that either all happen or none happen, with the database guaranteeing isolation from concurrent work.** ACID — Atomicity, Consistency, Isolation, Durability — is the classical four-letter promise.
+
+**SQL transactions** are decades old and rock-solid.
+
+```sql
+BEGIN;
+  UPDATE accounts SET balance = balance - 100 WHERE id = 1;
+  UPDATE accounts SET balance = balance + 100 WHERE id = 2;
+COMMIT;
+```
+
+If the second UPDATE fails, `ROLLBACK` undoes the first. Other readers see either both updates or neither — never one without the other.
+
+**MongoDB transactions** exist (since 4.0 for replica sets, 4.2 for sharded clusters) and use a session.
+
+```js
+const session = await mongoose.startSession();
+session.startTransaction();
+try {
+  await Account.updateOne({ _id: 1 }, { $inc: { balance: -100 } }, { session });
+  await Account.updateOne({ _id: 2 }, { $inc: { balance:  100 } }, { session });
+  await session.commitTransaction();
+} catch (err) {
+  await session.abortTransaction();
+  throw err;
+} finally {
+  session.endSession();
+}
+```
+
+**Mongo's idiomatic alternative**: model the transactional unit as a single document. Updates to one document are always atomic in Mongo — no transaction needed. If you can embed both sides of a relationship in one document, you sidestep the question entirely. Mongo's transaction support exists for when you genuinely need cross-document atomicity (e.g., transferring between two accounts that must remain separate documents).
+
+**Isolation levels.** Postgres defaults to *read committed*; Mongo's transactions are *snapshot* by default. The CAP-theorem subtleties matter less than knowing your database's default and whether it is what you want.
+
+**Eventual consistency.** In a replica set or distributed system, writes propagate to secondaries with some lag. If you read from a secondary immediately after writing to the primary, you might see stale data. "Eventually" the secondary catches up. This is the trade for horizontal scale: you cannot have strong consistency, full availability, *and* partition tolerance simultaneously (CAP theorem). Pick two.
+
+**Mongo's read concerns** let you choose: `local` (whatever the local replica has, possibly stale), `majority` (only data acknowledged by a majority — slower but consistent), `linearizable` (strongest, single-document only). Mongo's **write concerns** similarly trade durability for latency: `w: 1` (primary only), `w: 'majority'` (majority of replica set).
+
+**The mental model.** A single-node database is fast and consistent but does not scale. A distributed database scales but forces you to choose between freshness and availability on every read. Pick your defaults deliberately, and audit them when the data matters (money, auth, audit logs).
+
+## Common exam patterns
+
+- **"SQL or NoSQL for X?"** Identify the access pattern. Many joins, regulated data → SQL. One-document-per-entity, evolving schema, horizontal scale → NoSQL. Never answer "Mongo is more modern" — that is a non-reason.
+- **"Why is this code vulnerable?"** Spot string concatenation into a query. Rewrite with placeholders (`?` or `$1`) and a separate parameter array. For Mongo, spot `JSON.parse(req.query.x)` going straight into `find`.
+- **"Why is this query slow?"** Missing index; unindexed `sort`; full-collection scan revealed by `explain()`; or N+1 in the calling code. Suggest a compound index whose prefix matches the filter, ordered so the sort is free.
+- **"Write a Mongoose schema for X."** Required fields, types, validators (`min`, `max`, `enum`), a `ref` for any relationship, an index on whatever you query by, and timestamps.
+- **"Write a query that does X."** Pick CRUD method (`find` / `findOne` / `aggregate`), build the filter with the right operators (`$gte`, `$in`, `$exists`), add projection if asked, chain `sort`/`limit`. If grouping is involved, switch to `aggregate` with `$match` first, then `$group`.
+- **"Explain N+1."** Show the bad loop. Show the fix (`populate`, `$lookup`, or `JOIN`). State that round-trips dominate latency.
+- **"What does this index cover?"** Read the compound key left to right. List the query shapes that can use a prefix. State whether a given query is covered (all returned fields in the index).
+- **"Transaction or single document?"** If the invariant fits in one document, no transaction needed — Mongo guarantees per-document atomicity. Otherwise, explicit session + `commitTransaction`/`abortTransaction`.
+- **"Eventual consistency means..."** Reads from secondaries may lag primary writes; the system converges over time. Use `readConcern: 'majority'` when you cannot tolerate stale reads.
+- **"Why a connection pool?"** Opening a TCP connection per request costs tens of ms; the pool keeps a fixed set warm. Mongoose manages the pool automatically; size it via `maxPoolSize`.

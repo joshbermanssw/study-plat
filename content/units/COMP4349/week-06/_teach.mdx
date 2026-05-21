@@ -1,0 +1,394 @@
+---
+title: "Week 6 — Cloud Security"
+unit: COMP4349
+week: 6
+type: overview
+status: done
+---
+
+Week 6 is the highest-density exam topic in the unit. The week-13 review explicitly flags Weeks 5 (networking), 6 (security) and 11 (Kubernetes) as the dominant exam material. You need to read IAM policy JSON fluently, apply the evaluation rules under pressure, classify shared-responsibility questions, and explain federation flows. Practise on real policies.
+
+## The shared responsibility model — "of" vs "in" the cloud
+
+AWS publishes a diagram drawing a clean line:
+
+- **AWS is responsible for security *of* the cloud** — physical data centres (locked, guarded, biometric access), hardware lifecycle (storage decommissioning to NIST 800-88), the host operating system and hypervisor, the global network backbone, virtualisation infrastructure, instance isolation.
+- **The customer is responsible for security *in* the cloud** — data classification and encryption, IAM users/roles/policies, OS-level patching of EC2 guests, security group and NACL rules, network configuration choices, application code, key management, identity federation.
+
+The line shifts depending on the service:
+
+| Service model | Customer manages | AWS manages |
+|---|---|---|
+| IaaS (EC2) | OS, runtime, app, data, IAM, network config | Hypervisor, hardware, facility |
+| Managed (RDS, Aurora) | Schema, queries, DB users, network config | OS patching, engine patching, backups, hardware |
+| Container (ECS Fargate) | Container image, app, data, IAM | Host OS, container runtime, hardware |
+| FaaS (Lambda) | Function code, libraries, IAM | Runtime, OS, hardware, scaling |
+| SaaS (Trusted Advisor, Chime) | Account access, data | Everything else |
+
+Pitfall: "AWS handles security" is wrong even on SaaS — the customer always owns identity, access policies, and data classification. The exam often asks "for service X, who is responsible for Y?" — anchor to which side of AWS's published line Y sits on.
+
+## Identity and Access Management — the four primitives
+
+IAM is the global service that controls who can do what in your account. Four entities:
+
+- **IAM user** — a long-lived identity. Has a username/password for console access (with optional MFA) and/or an access key ID + secret access key for CLI/SDK. Used for humans, legacy automation, and one-account scenarios.
+- **IAM group** — a container for users. You attach policies to the group; every user inherits them. Groups can't be nested and there's no default group.
+- **IAM role** — a set of permissions that no person owns. Assumed via AWS Security Token Service (STS) to receive temporary credentials. Used by EC2 instance profiles, Lambda execution roles, cross-account access, federated users.
+- **IAM policy** — a JSON document that defines what is allowed/denied. Identity-based policies attach to users/groups/roles; resource-based policies attach to resources (S3 buckets, SQS queues, KMS keys, Lambda functions).
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "ListBucketsInUserPath",
+      "Effect": "Allow",
+      "Action": ["s3:ListBucket", "s3:GetObject"],
+      "Resource": [
+        "arn:aws:s3:::company-data",
+        "arn:aws:s3:::company-data/${aws:username}/*"
+      ]
+    }
+  ]
+}
+```
+
+### Root user — lock it away
+
+The root user has unrestricted access including billing. AWS strongly recommends:
+
+1. Create one IAM admin user (or a permission set in IAM Identity Center).
+2. Add MFA to the root account.
+3. Delete root access keys; do not create new ones.
+4. Use the IAM admin for day-to-day; touch the root only for the small set of tasks that require it (close account, change support plan, view billing tax invoices).
+
+### IAM users vs IAM roles
+
+A user has fixed long-term credentials; a role has no credentials of its own, only a permission policy and a trust policy. When something assumes a role, STS issues temporary credentials (access key + secret + session token) that expire (15 min - 12 h).
+
+Use a role when:
+
+- An EC2 instance needs to call AWS APIs (attach via instance profile).
+- A Lambda function needs to call AWS APIs (set as execution role).
+- A federated user authenticates with an external IdP and needs AWS access.
+- An external AWS account needs to call into yours (cross-account access).
+
+Pitfall: hardcoding access keys in source code or AMIs. Always prefer roles for service-to-service auth. CloudTrail and `git secrets` scan for accidentally-committed keys.
+
+## How EC2 instance roles work
+
+The flow:
+
+1. You create an IAM role with a permission policy (e.g. allow `s3:PutObject` on `my-bucket/*`).
+2. You wrap the role in an **instance profile** (CloudFormation does this for you).
+3. You attach the instance profile to the EC2 instance.
+4. EC2 assumes the role via STS and exposes the temporary credentials at the **Instance Metadata Service (IMDS)** at `http://169.254.169.254/latest/meta-data/iam/security-credentials/<role-name>`.
+5. The AWS SDK on the instance reads IMDS automatically.
+6. Credentials are rotated on the IMDS endpoint roughly every hour, before they expire.
+
+Use IMDSv2 (token-based, defends against server-side request forgery (SSRF)). The Capital One breach exploited IMDSv1 SSRF; IMDSv2 closes that hole.
+
+## IAM policy evaluation — explicit deny > allow > implicit deny
+
+The single most tested IAM fact:
+
+1. Every action starts as **implicit deny**.
+2. An **explicit allow** (in any applicable identity- or resource-based policy) flips it to allow.
+3. An **explicit deny** anywhere flips it back to deny — and nothing can override that.
+
+When a request comes in, IAM gathers every policy that could apply (identity-based on the principal, resource-based on the resource, permission boundaries, session policies from `AssumeRole`, organisation Service Control Policies) and runs them through this funnel.
+
+```text
+                Start: implicit deny
+                       │
+       ┌───────────────┴───────────────┐
+       ▼                               ▼
+  Any explicit deny? ──── Yes ───► DENY (final)
+       │ No
+       ▼
+  Any explicit allow? ──── Yes ───► ALLOW (final)
+       │ No
+       ▼
+  Final: DENY (implicit)
+```
+
+### Policy document structure
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Sid": "OptionalLabel",
+      "Effect": "Allow|Deny",
+      "Principal": { "AWS": "arn:aws:iam::123:user/bob" },
+      "Action": ["s3:GetObject"],
+      "Resource": ["arn:aws:s3:::bucket/*"],
+      "Condition": {
+        "StringEquals": { "aws:RequestedRegion": "ap-southeast-2" },
+        "IpAddress":   { "aws:SourceIp": "203.0.113.0/24" }
+      }
+    }
+  ]
+}
+```
+
+`Principal` only appears in resource-based policies — identity-based policies are *attached* to the principal so it's implicit. ARNs follow `arn:aws:service:region:account:resource` with `*` wildcards.
+
+### Identity-based vs resource-based examples
+
+```json
+// Identity-based, attached to user Bob — what can Bob do?
+{
+  "Statement": [{
+    "Effect": "Allow",
+    "Action": ["s3:GetObject"],
+    "Resource": "arn:aws:s3:::bucket-x/*"
+  }]
+}
+```
+
+```json
+// Resource-based, attached to bucket-x — who can do what to bucket-x?
+{
+  "Statement": [{
+    "Effect": "Allow",
+    "Principal": { "AWS": "arn:aws:iam::123456789012:user/bob" },
+    "Action": ["s3:GetObject"],
+    "Resource": "arn:aws:s3:::bucket-x/*"
+  }]
+}
+```
+
+For cross-account access, both sides must grant — Bob's identity policy must allow `s3:GetObject` on bucket-x, *and* bucket-x's resource policy must allow Bob.
+
+## Worked policy reading
+
+The exam will hand you a JSON policy and ask "can user X do Y?" The right approach:
+
+1. List every applicable statement.
+2. Apply explicit deny first — if any matches, the answer is no.
+3. Apply explicit allow — if any matches the action and resource, the answer is yes.
+4. Otherwise, implicit deny.
+
+Example: a user has the following policy:
+
+```json
+{ "Statement": [
+  { "Effect": "Allow", "Action": "ec2:TerminateInstances", "Resource": "*" },
+  { "Effect": "Deny",  "Action": "ec2:TerminateInstances", "Resource": "*",
+    "Condition": { "NotIpAddress": { "aws:SourceIp": ["192.0.2.0/24","203.0.113.0/24"] } } }
+]}
+```
+
+Can the user terminate an instance from `192.0.2.43`? Yes — the explicit deny applies only when the source IP is *not* in the listed ranges, and `192.0.2.43` is inside `192.0.2.0/24`, so the deny does not fire; the allow does. From a different IP, the deny fires and overrides.
+
+## Attribute-based access control (ABAC)
+
+**RBAC** (role-based access control) gives permissions per job role; you list resources explicitly. RBAC scales poorly — every new project means new policies.
+
+**ABAC** uses **tags** (key=value pairs) on principals and resources, with conditions like `aws:ResourceTag/Project` and `aws:PrincipalTag/Department`. One policy can scale to many projects:
+
+```json
+{
+  "Effect": "Allow",
+  "Action": ["ec2:StartInstances", "ec2:StopInstances"],
+  "Resource": "*",
+  "Condition": {
+    "StringEquals": {
+      "aws:ResourceTag/CostCenter": "${aws:PrincipalTag/CostCenter}"
+    }
+  }
+}
+```
+
+This says: a user can start/stop any instance whose `CostCenter` tag matches the user's own `CostCenter` tag. Adding a new cost centre means tagging things — no policy edits.
+
+Pitfall: ABAC requires disciplined tagging — missing tags = no permissions. Pair with tag policies and a "deny untagged" guardrail at the org level.
+
+## AWS Key Management Service (KMS)
+
+KMS is the AWS keystore. Two key types:
+
+- **Customer-managed CMKs** — you create and control. Can rotate annually (automated) or on-demand.
+- **AWS-managed CMKs** — created on your behalf when a service first uses encryption (e.g. `aws/s3`, `aws/rds`). Less control, less work.
+
+Each CMK has:
+
+- A **key policy** (resource policy on the CMK) — who can use the key.
+- Optional **grants** — narrow temporary permissions, often issued by services.
+- An **alias** — friendly name (`alias/prod-orders`).
+
+### Envelope encryption
+
+For large data, KMS uses **envelope encryption**: KMS encrypts a per-object **data key**, which the service uses to encrypt the actual data. This means KMS only encrypts/decrypts small keys, not gigabytes of data, which is much faster and gives a clean audit trail (every decrypt of the data key is logged in CloudTrail).
+
+### Secrets Manager vs Parameter Store
+
+- **AWS Secrets Manager** — managed secret store with automatic rotation for RDS, Redshift, DocumentDB, and custom Lambda rotation. Per-secret pricing.
+- **AWS Systems Manager Parameter Store** — simpler store for config plus secrets (with `SecureString` parameters). Free standard tier. Advanced parameters cost a small amount.
+
+Use Secrets Manager when you need rotation; Parameter Store for general configuration.
+
+## Cognito — auth for your applications
+
+Cognito has two distinct products that share a name:
+
+- **User Pools** — a managed user directory (sign-up, sign-in, password recovery, MFA, SAML/OIDC federation). Issues OIDC ID tokens and OAuth2 access tokens.
+- **Identity Pools** (federated identities) — exchange a user-pool token (or a third-party IdP token) for **temporary AWS credentials** via STS. Used when a mobile/web app needs to call AWS APIs directly as the signed-in user.
+
+Common pattern: User Pool authenticates the user → app holds the ID token → app calls a backend API → backend authorises via API Gateway authoriser; OR app exchanges the token at an Identity Pool for temp creds and calls S3/DynamoDB directly.
+
+## Edge protection — WAF, Shield, GuardDuty, Macie
+
+- **AWS WAF** — Web Application Firewall. Rules to block SQL injection, XSS, bots, geo, rate limits. Attaches to CloudFront, ALB, API Gateway, AppSync.
+- **AWS Shield Standard** — free DDoS protection on every account; basic L3/L4.
+- **AWS Shield Advanced** — \$3000/month subscription; deep DDoS protection, DDoS Response Team access, cost protection for spikes.
+- **Amazon GuardDuty** — managed threat detection. Analyses VPC Flow Logs, DNS logs, CloudTrail for anomalies (port scanning, credentials exposed on GitHub, crypto-mining).
+- **Amazon Macie** — discovers and classifies sensitive data (PII, credentials, source code) in S3.
+
+## Audit and compliance — CloudTrail, Config, Security Hub
+
+- **AWS CloudTrail** — records every API call as a JSON event (who, what, when, from where). Enabled by default for the last 90 days; create a trail to ship to S3 indefinitely. Critical for forensics and audit.
+- **AWS Config** — records resource state and configuration changes; evaluates "config rules" (e.g. "every EBS volume must be encrypted"). For continuous compliance.
+- **AWS Security Hub** — aggregates findings from GuardDuty, Macie, Inspector, third-party tools, mapped to CIS benchmarks and AWS Foundational Security Best Practices.
+
+## Encryption — in transit and at rest
+
+In transit: TLS everywhere. AWS Certificate Manager (ACM) issues and auto-renews public certs free; you attach them to ALB, CloudFront, API Gateway.
+
+At rest: KMS-managed encryption on EBS, RDS, S3, DynamoDB, EFS, Redshift, and almost every other service. Enable encryption by default at the account level for EBS.
+
+## Federation — workforce, social, and SAML
+
+**Identity federation** lets users authenticate with an external Identity Provider (IdP) and gain AWS access without an IAM user. Two big patterns:
+
+- **Workforce federation via SAML 2.0 or OIDC** — typically Active Directory Federation Services or Okta or IAM Identity Center. User clicks SSO → IdP authenticates → AWS sees a SAML assertion → STS issues temp creds for a chosen role.
+- **Web identity federation** (mobile/web apps) — user signs in with Google/Facebook/Cognito User Pool → app exchanges the IdP token at Cognito Identity Pool → STS issues temp creds.
+
+### IAM Identity Center
+
+The successor to AWS Single Sign-On. Central hub where you create users (or sync from AD), define "permission sets" (essentially IAM roles), and assign users to AWS accounts. One sign-in, console portal for every account they have access to. Best practice for any organisation with multiple AWS accounts (which is every organisation).
+
+### Identity broker pattern
+
+```text
+User → On-prem IdP authenticates → Identity Broker calls STS:AssumeRoleWithSAML
+                                                          ↓
+                          Temporary creds (access key + secret + session token)
+                                                          ↓
+                          Broker issues a federated console sign-in URL
+                                                          ↓
+                                    User redirected into AWS Console
+```
+
+## OWASP basics in the cloud context
+
+Same fundamentals as web app security:
+
+- **Injection (SQL, command, NoSQL)** — parameterised queries, input validation, WAF as defence-in-depth.
+- **Broken authentication** — strong passwords, MFA, session expiry, never roll your own crypto.
+- **Sensitive data exposure** — encrypt at rest with KMS, in transit with TLS, classify with Macie, prevent public S3 buckets with account-level block.
+- **XML External Entities / SSRF** — IMDSv2 closes the IMDS SSRF path; otherwise standard input validation.
+- **Broken access control** — least privilege, ABAC, deny-by-default.
+- **Security misconfiguration** — Config rules, Trusted Advisor, regular audits.
+- **Logging and monitoring failures** — CloudTrail to S3, GuardDuty, alerts to PagerDuty/Slack via SNS.
+
+## Best-practice checklist
+
+- Root: MFA, no access keys, used only for absolute necessities.
+- IAM users for humans (or, better, federation via IAM Identity Center).
+- Roles for services and cross-account access.
+- Least-privilege policies; explicit deny on dangerous actions (delete bucket, modify root account).
+- Tag everything; use ABAC.
+- Encrypt at rest by default; enforce TLS in transit.
+- CloudTrail on, GuardDuty on, Security Hub on.
+- Block public S3 buckets at account level unless explicitly opted out.
+- Rotate keys (annual KMS rotation, Secrets Manager rotation for DB credentials).
+
+## Common exam traps
+
+- "Default access for a new IAM user" — none. No policies, no permissions.
+- "Explicit deny vs allow" — deny wins. Always. Even cross-policy.
+- "IAM user MFA" — additional auth factor, doesn't grant permissions by itself.
+- "Where does an EC2 instance get permissions?" — through its instance profile → IAM role → IMDS.
+- "Cross-account access requires both sides to allow" — yes; identity policy in account A + resource policy in account B.
+- "Federated user identity" — STS returns temp creds; the principal in CloudTrail is the role + session name, not the user directly.
+- "Cognito User Pool vs Identity Pool" — User Pool authenticates users, Identity Pool authorises them to call AWS APIs.
+- "WAF vs Shield" — WAF is L7 (request-content rules); Shield is L3/L4 (DDoS).
+- "GuardDuty vs Macie" — GuardDuty is threat detection; Macie discovers sensitive data in S3.
+- "KMS envelope encryption" — KMS encrypts a data key; the service encrypts the data with the data key.
+
+## AWS Organizations and Service Control Policies (SCPs)
+
+For multi-account environments — and every serious AWS deployment is multi-account — **AWS Organizations** is the management hub. It lets you:
+
+- Create new accounts programmatically and group them into **Organisational Units (OUs)**.
+- Apply **Service Control Policies (SCPs)** that restrict what any user/role in member accounts can do.
+- Consolidate billing.
+
+An SCP is a JSON policy that looks like an IAM policy but acts as a guardrail at the account level. Even if a user's IAM policy says `Allow s3:*`, an SCP saying `Deny s3:DeleteBucket` blocks the action. SCPs cannot grant — they can only deny or limit the maximum.
+
+Typical SCPs:
+
+- Deny `iam:CreateUser` (force everyone to use IAM Identity Center).
+- Deny operations outside a list of approved Regions.
+- Deny disabling CloudTrail or GuardDuty.
+- Deny modifying organisation-managed resources.
+
+## IAM permission boundaries
+
+A **permission boundary** is the maximum permissions a user or role can have, regardless of attached identity policies. Used by central security teams to delegate IAM admin without giving full power — e.g. developers can create roles but only with permissions within the boundary.
+
+Effective permissions = (identity policy) ∩ (permission boundary) ∩ (SCP).
+
+## Session policies
+
+A **session policy** is passed during `AssumeRole` and further restricts the session's permissions. Used by AWS Academy labs (session policy limits each lab's permissions on the shared `voclabs` role) and by web identity flows (Cognito Identity Pool sets a session policy when issuing temp creds).
+
+Effective permissions for an assumed role = (role policy) ∩ (session policy).
+
+## STS — token lifetimes and use cases
+
+AWS Security Token Service issues temporary credentials. Token lifetimes:
+
+- `AssumeRole` — 15 min to 12 hours (default 1 hour).
+- `AssumeRoleWithSAML` — 15 min to 12 hours.
+- `AssumeRoleWithWebIdentity` — 15 min to 12 hours.
+- `GetFederationToken` — up to 36 hours.
+- `GetSessionToken` (for MFA-protected calls) — up to 36 hours, default 12.
+
+The `MaxSessionDuration` set on the role caps these.
+
+## Cross-account access patterns
+
+Three common patterns:
+
+1. **Cross-account role assumption** — account B creates a role that trusts account A; users in A `AssumeRole` into B. Most common for centralised security/logging accounts.
+2. **Resource-based policies** — bucket policy in account B grants account A access to the bucket. No role assumption needed for the supported services (S3, KMS, SNS, SQS, Lambda, etc.).
+3. **AWS RAM (Resource Access Manager)** — share specific resources (subnets, Transit Gateway, License Manager configurations) with other accounts in the same Organisation.
+
+## Encryption deep-dive — at rest options per service
+
+A quick reference for "encrypt the data" across AWS:
+
+- **S3** — SSE-S3 (default), SSE-KMS, SSE-C, DSSE-KMS. Bucket-level default; per-object override.
+- **EBS** — KMS-managed, with "encryption by default" at account level.
+- **RDS / Aurora** — KMS at instance create. Can't enable on an existing unencrypted instance; restore from snapshot to encrypted.
+- **DynamoDB** — KMS, always encrypted (with AWS-owned, AWS-managed, or your CMK).
+- **EFS / FSx** — KMS, opt-in at creation.
+- **Redshift** — KMS or HSM, opt-in.
+- **SNS, SQS, Lambda env vars** — KMS encryption at rest.
+
+## In-transit encryption — TLS everywhere
+
+Required between every component:
+
+- Public endpoints — TLS 1.2+ enforced by AWS.
+- Load balancers — terminate TLS at ALB with ACM certificate; end-to-end TLS by re-encrypting to targets.
+- VPC — Nitro System encrypts traffic between instances on supported types (default for many newer families).
+- Direct Connect / VPN — IPsec for VPN; MACsec available for Direct Connect.
+
+## AWS Certificate Manager (ACM)
+
+Issues and auto-renews public TLS certificates **free** for use with AWS services (ALB, NLB, CloudFront, API Gateway, App Runner). Private CAs available for internal mTLS. Always use ACM for public-facing certs — no more annual cert-rotation drama.

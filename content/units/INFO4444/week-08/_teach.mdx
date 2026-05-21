@@ -1,0 +1,254 @@
+---
+title: "Week 8 — Commercialisation II: Innovation Management and Strategy"
+unit: INFO4444
+week: 8
+type: overview
+status: done
+---
+
+## What this week is really about
+
+Week 7 looked at innovation from the perspective of a startup founder running build-measure-learn loops with limited capital. Week 8 looks at the same problem from the opposite end of the telescope: how does a *large established organisation* manage innovation across a portfolio of products, business units, and time horizons simultaneously? The intellectual centre of gravity this week is the **innovation management** literature — Joe Tidd, John Bessant and Keith Pavitt's *Managing Innovation* (now in its 7th edition, 2020), the *ambidextrous organisation* (March 1991; O'Reilly and Tushman 2004), the **stage-gate process** (Robert Cooper 1986), the **three-horizon model** (McKinsey 1999), and the **blue ocean / value innovation** framework (Kim and Mauborgne 2005). Each of these is a partial answer to the same problem: how do you do *new* things (exploration) without breaking the *current* business (exploitation)? By the end of the overview you should be able to (a) state Tidd-Bessant's four-stage innovation-management process, (b) explain the explore-vs-exploit tension and the ambidextrous-organisation response, (c) walk through Cooper's stage-gate process, (d) place a real product portfolio on the three horizons, (e) describe blue-ocean strategy and the ERRC grid, (f) state a critique of stage-gate (especially for disruptive innovation).
+
+## Tidd, Bessant, Pavitt: the four-stage process
+
+The Tidd-Bessant-Pavitt framework (originally *Managing Innovation* 1997, latest 2020) decomposes the innovation-management challenge into four interacting stages — **search, select, implement, capture** — supported by an *innovation strategy* and a *learning organisation* underneath.
+
+```
+            ┌─────────────────────────────────────────┐
+            │           INNOVATION STRATEGY           │
+            └─────────────────────────────────────────┘
+                 ↓        ↓         ↓         ↓
+         ┌──────────┐ ┌────────┐ ┌─────────┐ ┌────────┐
+         │  SEARCH  │→│ SELECT │→│IMPLEMENT│→│CAPTURE │
+         │          │ │        │ │         │ │        │
+         │Scan tech,│ │Choose  │ │Develop, │ │Profit, │
+         │market,   │ │which to│ │launch,  │ │protect,│
+         │regulation│ │pursue  │ │scale    │ │learn   │
+         └──────────┘ └────────┘ └─────────┘ └────────┘
+                 ↑        ↑         ↑         ↑
+            ┌─────────────────────────────────────────┐
+            │       LEARNING / ORGANISATION /         │
+            │       KNOWLEDGE MANAGEMENT              │
+            └─────────────────────────────────────────┘
+```
+
+**Search.** Scan the environment systematically — technology trends, customer behaviour, competitor moves, regulation, supplier capability, geopolitics. Tools: technology roadmaps, customer-development interviews, Gartner-style hype-cycle tracking, scenario planning. Most large firms have weak search capability because the organisational rewards are for *executing* what is known, not for *finding* what is new. A *search competence* requires explicit investment (corporate-venture arms, university partnerships, scouting roles, technology councils).
+
+**Select.** Choose which of the many candidate opportunities to pursue. This is a *portfolio* decision — you cannot fund everything, and you should not fund proportionally because some opportunities have non-linear returns. Tools: portfolio matrices (see below), scoring models, real-options analysis (Trigeorgis 1996 — treat each project as an option whose value depends on the right to abandon), strategic-fit scoring. The danger: selection criteria optimised for *core* business reliably reject *disruptive* opportunities (the Christensen failure, Week 3).
+
+**Implement.** Develop the selected innovation from concept through launch. This is where stage-gate processes (below) live. Tools: project management, NPD process, design thinking, agile development (Week 7).
+
+**Capture.** Generate and protect the returns. Pricing, IP (Week 6), business model design, channel choice. Many innovations *succeed* in shipping and *fail* in capture — Xerox PARC inventing the GUI and not profiting from it is the textbook case.
+
+The underline: **learning** runs across all four. Each cycle should produce knowledge the organisation can deploy in the next cycle. The most innovation-mature organisations explicitly invest in *learning processes* (post-mortems, lessons-learned databases, communities of practice).
+
+## March's exploration vs exploitation
+
+The most-cited paper in innovation management is James March, *"Exploration and Exploitation in Organizational Learning"* (Organization Science, 1991). March's argument:
+
+- **Exploration** is the search for new knowledge — experimentation, variation, risk-taking, discovery, innovation. Returns are *uncertain*, *distant*, and *often negative* before they are positive.
+- **Exploitation** is the use of existing knowledge — refinement, efficiency, selection, execution. Returns are *certain*, *near*, and *positive*.
+
+The tension is structural: organisations face *bounded resources*. Spending on exploration *now* means less exploitation *now*, which hurts current performance. But spending only on exploitation depletes the future pipeline — when the current business model decays, there is nothing to replace it. March showed *formally* that the optimal mix changes with environmental volatility (more volatile environments require more exploration) and that organisations are systematically biased toward exploitation (because its returns are immediate and measurable, while exploration's returns are diffuse and delayed).
+
+The exploitation bias has a deeper organisational source. *People who exploit well get promoted*. They hit targets, deliver projects on time, manage budgets. *People who explore well often look bad* — their projects fail more often, they spend money on things that don't ship, they advocate for opportunities that don't materialise. So the internal labour market filters for exploiters. Over time, the leadership ranks are populated by people who do not have the disposition (or the experience) to lead exploration. This is one explanation for why incumbents fail at disruption: *the people in charge cannot lead it*.
+
+## The ambidextrous organisation
+
+If exploration and exploitation require different cultures, structures, incentives, and people, can the same organisation do both? Charles O'Reilly and Michael Tushman, in *"The Ambidextrous Organization"* (HBR, 2004) and *Lead and Disrupt* (2016), argued *yes* — but only via structural separation. The **ambidextrous organisation** runs *exploit* business units and *explore* business units in parallel, with:
+
+- *Separate teams* with their own people, culture, P&L.
+- *Separate processes* (stage-gate for exploit; lean experimentation for explore).
+- *Separate metrics* (financial returns for exploit; learning milestones for explore).
+- *Shared senior leadership* — the CEO or COO bridges the two, allocating capital and politically protecting the explore unit from cannibalisation arguments.
+
+The empirical record is mixed. **Successful ambidexterity cases**: IBM's Emerging Business Opportunities (EBO) programme under Sam Palmisano launched 22 new businesses with cumulative $15B revenue by 2005; Amazon's separation of AWS from retail allowed AWS to develop its own culture (pricing, sales motion, latency obsession) different from retail's; Apple's deliberate separation of the iPhone team from the Mac team inside the company. **Unsuccessful cases**: many corporate-innovation-lab efforts that produced prototypes but never integrated commercially with the parent (Microsoft Research vs commercialisation; many bank "innovation labs" that produced demos and PR but no products).
+
+The core managerial difficulty is *political*. The exploit business is paying the bills; the explore business is spending the bills. Exploit leaders will lobby — sometimes openly, sometimes via accounting — to redirect resources away from explore. Senior leadership must visibly and continuously protect the explore unit, even when the exploit unit complains. This is hard because the exploit complaints are usually *correct in the short run* — the resources *would* generate more return in exploit. Long-run logic is the only thing that justifies the trade.
+
+A related literature: **dynamic capabilities** (David Teece, *"Explicating Dynamic Capabilities"*, Strategic Management Journal, 2007). Teece argues that the firm-level capability to *sense* changes in the environment, *seize* opportunities, and *transform* the organisation is itself a competitive asset. Ambidexterity is one expression of dynamic capability.
+
+## The stage-gate process
+
+Robert Cooper's stage-gate process (1986, refined repeatedly through the 1990s and 2000s) is the dominant *implementation* of innovation management in large firms — used at P&G, Kraft, ExxonMobil, 3M, Toyota, and thousands of others. It decomposes a project from concept to launch into a sequence of *stages* (work phases) separated by *gates* (go/kill decisions).
+
+```
+   Gate 1            Gate 2           Gate 3          Gate 4          Gate 5
+   "Initial          "Second          "Go to          "Go to          "Go to
+    screen"           screen"          development"    testing"        launch"
+       │                │                │               │               │
+       ▼                ▼                ▼               ▼               ▼
+   ┌────────┐  →  ┌────────┐  →  ┌────────────┐ →  ┌──────────┐ → ┌──────────┐ → 
+   │Stage 1 │      │Stage 2 │      │  Stage 3   │    │ Stage 4  │   │ Stage 5  │   POST-
+   │ Idea / │      │Scoping │      │Development │    │  Test &  │   │Launch &  │   LAUNCH
+   │concept │      │        │      │            │    │Validation│   │implement │   REVIEW
+   └────────┘      └────────┘      └────────────┘    └──────────┘   └──────────┘
+```
+
+Each gate has *deliverables* (a business case, market research, technical feasibility, prototype, etc.) and *criteria* (financial return, strategic fit, technical risk, etc.) that a *governance body* (cross-functional gatekeepers — marketing, engineering, finance, operations leaders) evaluates. Projects that pass continue with funding; projects that fail are killed (or recycled, or held). The cumulative cost rises through the stages, so killing early is much cheaper than killing late.
+
+Stage-gate works well for *incremental and adjacent* innovation in mature businesses where:
+- Customer needs are known and stable.
+- Technology risk is moderate.
+- Business model is the existing one.
+- Cross-functional coordination matters (manufacturing, sales, distribution need to be synced).
+
+Stage-gate works *badly* for *disruptive* or *radical* innovation because:
+- The financial criteria at early gates reject low-margin, small-market opportunities (the Christensen failure).
+- Customer research at early gates returns "this won't work" for products that customers cannot yet imagine wanting.
+- The linear sequence assumes a known problem; disruptive innovation requires problem discovery.
+- Gates produce internal political ammunition for killing projects whose champions are junior.
+
+Modern variants explicitly address these weaknesses. *Stage-gate lite* uses a faster cycle for low-cost early stages. *Stage-gate with parallel agile* lets development happen inside stages on agile cycles. *Discovery-driven planning* (Rita McGrath 1995) replaces ROI projections with assumption inventories that are tested at each gate.
+
+A useful synthesis for honours-level answers: stage-gate is the *governance* of execution, lean is the *governance* of search. Mature firms need both, applied to different parts of the portfolio.
+
+## The three-horizon model
+
+McKinsey's *The Alchemy of Growth* (Mehrdad Baghai, Stephen Coley, David White, 1999) introduced the three-horizon framework, now ubiquitous in corporate-innovation conversations.
+
+```
+            Profit
+              │                                       Horizon 3:
+              │                                       Create
+              │                                       (new growth options,
+              │                                  ╱   risky, distant)
+              │                              ╱
+              │       Horizon 2:           ╱
+              │       Build              ╱
+              │       (emerging      ╱
+              │       businesses)  ╱
+              │                  ╱
+              │         ╱─────╱
+              │      ╱
+              │   ╱
+              │ ╱  Horizon 1:
+              │    Extend & defend
+              │    (core business — today's earnings)
+              │
+              └──────────────────────────────────────► Time
+```
+
+- **Horizon 1** — the *core business*. Extend and defend. Pays the bills today. Stage-gate, operational excellence, incremental innovation, share-of-wallet expansion.
+- **Horizon 2** — *emerging businesses*. Build. Real revenue, growing fast, not yet at full scale. Will become Horizon 1 in 2–5 years. Adjacent expansions, new geographies, new customer segments.
+- **Horizon 3** — *future options*. Create. Currently no significant revenue, may not pay off for 5–10+ years. R&D investments, corporate ventures, moonshots.
+
+The framework's *normative* claim: a healthy organisation invests in *all three* horizons simultaneously, with a portfolio mix that depends on industry clockspeed (faster industries need more Horizon 3 investment). A typical guideline: 70% of resource on H1, 20% on H2, 10% on H3 — but this varies hugely by industry.
+
+Worked example: **Amazon**.
+- H1: Amazon retail (the original business, still the largest revenue line).
+- H2: AWS (started 2006, now the most profitable line), Prime Video, Whole Foods.
+- H3: Project Kuiper (satellite internet), Zoox (autonomous vehicles), Alexa AI, drone delivery, the AI products from the Bedrock/Titan stack.
+
+Useful exam usage: the three-horizon framework is not a *theory* in the academic sense — it is a *categorisation tool* that helps you talk about portfolio balance and the explore/exploit tension at a strategic level. It is most useful for diagnosing under-investment in H2 or H3.
+
+## Portfolio matrices
+
+Two classic 2×2s, both with critiques.
+
+**BCG Growth-Share Matrix (Bruce Henderson, 1970).** Plots business units on (industry growth rate) × (relative market share).
+
+```
+                     Industry growth rate
+                     HIGH          LOW
+                  ┌──────────┬──────────┐
+       HIGH       │   STAR   │   CASH   │
+                  │          │   COW    │
+   Relative       │ Invest   │  Milk    │
+   market         │          │          │
+   share          ├──────────┼──────────┤
+       LOW        │  QUESTION│   DOG    │
+                  │   MARK   │          │
+                  │          │ Divest   │
+                  │ Invest or│          │
+                  │ divest   │          │
+                  └──────────┴──────────┘
+```
+
+The implicit theory: cash cows fund stars and selected question marks; dogs are divested. Critique: market share is not the only predictor of profitability; many "dogs" are actually durable niche businesses; the model encourages strategic decisions based on internal accounting rather than customer value.
+
+**GE-McKinsey matrix.** Plots business units on (industry attractiveness) × (business strength), each on a multi-factor scoring. Richer than BCG but more subjective.
+
+Both matrices are now dated as primary strategic tools. They remain useful as *vocabulary* for portfolio conversations and as starting points for case analysis.
+
+## Blue ocean strategy
+
+W. Chan Kim and Renée Mauborgne, *Blue Ocean Strategy* (Harvard Business School Press, 2005, revised 2015), argue against direct competition in saturated markets ("red oceans" — bloody from competitive war) and in favour of creating new market spaces ("blue oceans") where competition is irrelevant. The core construct is **value innovation**: simultaneously raise *buyer value* and lower *cost* — refusing the conventional trade-off between differentiation and low cost.
+
+The toolkit is the **ERRC grid** (Eliminate, Reduce, Raise, Create):
+
+- **Eliminate** — which factors that the industry takes for granted should be eliminated?
+- **Reduce** — which factors should be reduced well below industry standard?
+- **Raise** — which factors should be raised well above industry standard?
+- **Create** — which factors should be created that the industry has never offered?
+
+Cirque du Soleil (Kim and Mauborgne's headline case) eliminated animal shows, star performers, and the three-ring circus; reduced fun-and-humour content and aisle concessions; raised venue ambience and artistic music; created theme-based performance and refined entertainment. The result was a new category — neither circus nor theatre — that grew at high margins for two decades. Other claimed blue-ocean cases: Yellow Tail wine (eliminated wine jargon and complexity, raised approachability), Cirque du Soleil, Casella's [yellowtail], NetJets (fractional aircraft ownership), the Nintendo Wii (eliminated graphics arms race, created motion-control casual gaming).
+
+A critique. Many "blue ocean" cases look more like clever red-ocean repositioning in hindsight. The Wii's blue ocean was rapidly invaded by Microsoft Kinect and Sony Move. Blue oceans are *temporary*; the framework underplays the durability of competitive response. Stuart Roper's 2008 critique and the broader replication literature finds that the "blue ocean" cases are often selected ex post for their success rather than predicting it ex ante.
+
+Useful synthesis: blue-ocean thinking is a creative-strategy *prompt* — the ERRC grid is a genuinely useful brainstorming exercise — rather than a *theory* that explains durable competitive advantage. Use it in essays as a generative tool, with awareness of its limits.
+
+## Business-model innovation and the canvas
+
+Alex Osterwalder's *Business Model Generation* (2010) introduced the **Business Model Canvas** as a single-page representation of how a firm creates, delivers, and captures value. Nine blocks:
+
+```
+   ┌────────────────────────────────────────────────────────────┐
+   │ Key       │ Key        │ Value      │ Customer  │ Customer │
+   │Partners   │ Activities │Propositions│Relationships│Segments│
+   │           ├────────────┤            ├───────────┤          │
+   │           │ Key        │            │ Channels  │          │
+   │           │ Resources  │            │           │          │
+   ├───────────┴────────────┴────────────┴───────────┴──────────┤
+   │   Cost Structure              │    Revenue Streams         │
+   └────────────────────────────────────────────────────────────┘
+```
+
+The canvas's value is *not* the framework per se — it is the discipline of forcing nine fundamental questions to be answered together. Ash Maurya's **Lean Canvas** (2010, derived from Osterwalder for early-stage startups) replaces partners/activities with *problem*, key resources with *solution*, customer relationships with *unfair advantage*, channels stays but customer segments includes *early adopters*. The lean canvas pairs naturally with Week 7's lean-startup framework.
+
+A *business-model innovation* is a change to one or more blocks while keeping the others (broadly) stable. Salesforce's innovation (1999) was not a CRM product — Siebel had the better software — it was the *channel* + *revenue-stream* innovation: cloud-hosted (no on-prem deployment), monthly subscription (no upfront licence). The product changed only modestly; the business model changed completely. Same with Netflix vs Blockbuster (subscription vs per-rental), Spotify vs iTunes Store (subscription vs per-track), and most "disruptive" software businesses of the 2000s and 2010s.
+
+## Critique of stage-gate, and the case for hybrid models
+
+The single most important Week 8 critique to be able to articulate: **stage-gate is structurally hostile to disruptive innovation**. Five reasons.
+
+1. *Financial gates kill small markets.* The required NPV at Gate 2 or Gate 3 is calibrated to the firm's existing margin structure. Disruptive opportunities with $20M revenue and 8% margin (Christensen's mini-mills) flunk every gate.
+
+2. *Customer research at gates returns confirmation of the current model.* Asking existing customers what they want gives you the existing product. Disruptive customers are non-customers; they cannot be researched the same way.
+
+3. *Cross-functional approvals favour incumbents inside the firm.* Sales (who care about quota), manufacturing (who care about capacity), and finance (who care about margin) all have veto power. Disruptive projects threaten their existing operations and they vote accordingly.
+
+4. *Linear sequencing assumes a known problem.* Lean's build-measure-learn loop assumes the *problem itself* is being explored. Stage-gate assumes the problem is known.
+
+5. *Gate cadence is too slow for early-stage learning.* A monthly or quarterly gate review is fine for a 24-month NPD project; it is far too slow for a 2-week MVP iteration.
+
+The synthesis you should be able to articulate: large firms need *multiple* innovation processes, calibrated to the *type* of innovation. Stage-gate for incremental and adjacent (Horizon 1, H2 maturation). Lean experimentation for disruptive (H3, exploratory H2). Acquisition for some categories of strategic capability gap. The *governance challenge* is matching the process to the opportunity and protecting non-standard processes politically.
+
+This is the heart of the ambidextrous-organisation argument and is the bridge to Week 9's funding discussion: different kinds of innovation need different capital structures as well as different governance.
+
+## A worked example: Amazon as ambidextrous organisation
+
+Amazon (founded 1994) is the most-studied case of large-scale ambidexterity. The firm runs an enormous Horizon-1 retail business at razor-thin margins; a Horizon-1/2 cloud business (AWS) that produces most of the profit; and continuous Horizon-3 experimentation with new business launches.
+
+*Structural separation*. AWS was deliberately separated from retail in 2003-06, with its own P&L, leadership, and sales motion. The two units share infrastructure but not management. Without separation, retail's culture (every penny counts, margin pressure dominant) would have killed AWS's high-investment growth strategy in its first three years.
+
+*Investment in exploration*. Amazon publicly tolerates and even celebrates failed experiments — Fire Phone (2014, ~$170M write-off), Amazon Local, Amazon Destinations, Amazon Auctions, Amazon WebPay. Bezos's explicit messaging ("a few big wins compensate for dozens of failures") protects exploration politically.
+
+*Stage-gate where it fits, lean where it fits*. Retail product launches use stage-gate-like governance. New-business launches (Prime Video Originals, Alexa devices, Project Kuiper) use a more lean-startup-shaped process internally. The choice of process is matched to the kind of bet.
+
+*Working backwards / PR-FAQ memos*. Week 12's Amazon-style narrative memo originated here — every new initiative starts with a press release (what it would look like at launch) and an FAQ (what the customer would ask). This forces *outside-in* thinking before product development.
+
+Amazon does not always succeed (Fire Phone is the famous failure, Amazon Care medical services discontinued 2022, Just Walk Out checkout technology being scaled back). But the *aggregate* portfolio is what matters — the wins (AWS, Prime, Marketplace, Kindle, Alexa, Ring) compensate for the losses, and the *system* keeps producing both.
+
+## What you should be able to do by next week
+
+- Walk through Tidd-Bessant-Pavitt's four stages with examples of each.
+- State March's exploration/exploitation tension and explain the structural bias toward exploitation.
+- Describe the ambidextrous organisation and name a successful case.
+- Walk through Cooper's stage-gate process and identify two specific weaknesses for disruptive innovation.
+- Place a real product portfolio on the three horizons (Amazon, Microsoft, your own example).
+- Apply the ERRC grid to a chosen industry.
+- Identify a business-model innovation and name the blocks of the canvas that changed.
+
+Week 9 turns to the question this week postponed: **funding**. Where does the capital for innovation come from, what does each source require, and how does the cap table evolve as a company scales?

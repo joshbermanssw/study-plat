@@ -10,18 +10,27 @@ localFile: data/sources/COMP3027/Week_2_-_Greedy_algorithms_(1).pdf
 fetchedAt: 2026-05-19T03:59:52.109Z
 fileSize: 1636110
 fileContentType: application/pdf
+editedAt: 2026-05-21T00:12:58.115Z
 ---
-
 {/* note-summary-start */}
+
+<br />
+
+Great links: [https://web.stanford.edu/class/archive/cs/cs161/cs161.1138/handouts/120%20Guide%20to%20Greedy%20Algorithms.pdf](https://web.stanford.edu/class/archive/cs/cs161/cs161.1138/handouts/120%20Guide%20to%20Greedy%20Algorithms.pdf)
+
 ## Summary
 
 Lecture 2 introduces greedy algorithms — make a locally optimal choice at each step — and the two canonical proof techniques (exchange argument, structural lower bound) that justify them. First major algorithm-design paradigm in the W2–W10 reduction roadmap.
 
-- **Fractional Knapsack:** sort by benefit/weight ratio, take greedily; O(n log n). Correctness by exchange argument (swap a fractional unit between items with different b/w ratios → strictly improves OPT, contradiction).
-- **Interval Scheduling:** Earliest-Finish-Time is optimal in O(n log n); ESF, shortest-interval, fewest-conflicts all give counter-examples. Proof via "stays ahead" / exchange + induction.
-- **Scheduling to minimise lateness:** Earliest-Deadline-First is optimal. Exchange argument: any inversion (i,k) with d_i < d_k scheduled k-before-i can be swapped without increasing max lateness; iterate.
-- **Interval Partitioning:** sort by start time, assign to earliest-free room; number of rooms = depth (structural lower bound).
-- **General template:** define greedy → try simple counter-examples → exchange or structural-bound proof.
+* **Fractional Knapsack:** sort by benefit/weight ratio, take greedily; O(n log n). Correctness by exchange argument (swap a fractional unit between items with different b/w ratios → strictly improves OPT, contradiction).
+
+* **Interval Scheduling:** Earliest-Finish-Time is optimal in O(n log n); ESF, shortest-interval, fewest-conflicts all give counter-examples. Proof via "stays ahead" / exchange + induction.
+
+* **Scheduling to minimise lateness:** Earliest-Deadline-First is optimal. Exchange argument: any inversion (i,k) with d\_i &lt; d\_k scheduled k-before-i can be swapped without increasing max lateness; iterate.
+
+* **Interval Partitioning:** sort by start time, assign to earliest-free room; number of rooms = depth (structural lower bound).
+
+* **General template:** define greedy → try simple counter-examples → exchange or structural-bound proof.
 
 **Exam focus:** prove correctness via a clean exchange argument (define inversion, swap, show cost does not increase) or derive the structural bound matching the greedy output.
 

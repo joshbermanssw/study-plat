@@ -1,0 +1,301 @@
+{
+  "unit": "COMP4347",
+  "week": 13,
+  "topic": "Review and exam structure",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "401 vs 403:",
+      "choices": [
+        "401 = not allowed; 403 = unknown user",
+        "401 = missing/invalid credentials; 403 = authenticated but not authorised",
+        "Both mean 'unauthorised'",
+        "401 is for GET only"
+      ],
+      "correctIndex": 1,
+      "explanation": "401 is an identification failure; 403 is an authorisation failure."
+    },
+    {
+      "id": "q2",
+      "stem": "Which CSS change skips layout and paint when the element is on a compositor layer?",
+      "choices": ["width", "color", "transform", "padding"],
+      "correctIndex": 2,
+      "explanation": "transform and opacity on a promoted layer go straight to the GPU compositor."
+    },
+    {
+      "id": "q3",
+      "stem": "Which mitigation actually defends against SQL injection?",
+      "choices": [
+        "Escape characters in the input",
+        "Parameterised queries",
+        "Use HTTPS",
+        "Disable cookies"
+      ],
+      "correctIndex": 1,
+      "explanation": "Placeholders separate code from data. Escape lists are routinely bypassed."
+    },
+    {
+      "id": "q4",
+      "stem": "fetch('/x') with a 404 response:",
+      "choices": [
+        "Rejects the promise",
+        "Resolves with a Response whose ok is false",
+        "Throws synchronously",
+        "Times out"
+      ],
+      "correctIndex": 1,
+      "explanation": "fetch only rejects on network failure. Always check response.ok or status."
+    },
+    {
+      "id": "q5",
+      "stem": "Which cookie flag prevents JS from reading the cookie?",
+      "choices": ["Secure", "HttpOnly", "SameSite", "Path"],
+      "correctIndex": 1,
+      "explanation": "HttpOnly hides the cookie from document.cookie / DOM APIs."
+    },
+    {
+      "id": "q6",
+      "stem": "Which is a sign of an N+1 query?",
+      "choices": [
+        "Two queries with identical results",
+        "One outer query plus one additional query per returned row, scaling with the result set",
+        "An index conflict",
+        "A duplicate key error"
+      ],
+      "correctIndex": 1,
+      "explanation": "Symptom: query count proportional to rendered list size. Fix with JOIN, IN batching, or populate."
+    },
+    {
+      "id": "q7",
+      "stem": "In React, what does the dependency array `[]` mean for useEffect?",
+      "choices": [
+        "Run every render",
+        "Run once after first commit and clean up on unmount",
+        "Never run",
+        "Run synchronously"
+      ],
+      "correctIndex": 1,
+      "explanation": "Empty deps means the effect doesn't depend on anything from render; it runs once."
+    },
+    {
+      "id": "q8",
+      "stem": "Which event-loop order is correct in the browser?",
+      "choices": [
+        "sync → macrotasks → microtasks",
+        "sync → microtasks → render → macrotasks",
+        "macrotasks → sync → microtasks",
+        "microtasks → sync → macrotasks"
+      ],
+      "correctIndex": 1,
+      "explanation": "Run sync to completion, drain all microtasks, optionally render, then pick the next task."
+    },
+    {
+      "id": "q9",
+      "stem": "PUT vs POST:",
+      "choices": [
+        "PUT is unsafe, POST is safe",
+        "PUT is idempotent (replacing twice → same state); POST is not (creates twice)",
+        "Both are idempotent",
+        "Neither has a body"
+      ],
+      "correctIndex": 1,
+      "explanation": "Idempotency is the key distinction. PUT puts the resource into a target state; POST appends."
+    },
+    {
+      "id": "q10",
+      "stem": "Which is the right index for `WHERE country = ? AND age > ?`?",
+      "choices": ["(age)", "(country, age)", "(age, country)", "(name)"],
+      "correctIndex": 1,
+      "explanation": "Equality column first, range column after. The B-tree seeks then ranges."
+    },
+    {
+      "id": "q11",
+      "stem": "SameSite=Lax cookie is sent on:",
+      "choices": [
+        "No cross-site request",
+        "Top-level cross-site navigations (e.g. clicking a link) but not on cross-site subresource requests/POSTs",
+        "Every cross-site request",
+        "Only same-site"
+      ],
+      "correctIndex": 1,
+      "explanation": "Lax is the modern default and blocks most CSRF on state-changing methods."
+    },
+    {
+      "id": "q12",
+      "stem": "Predict: `[] + {}` evaluates to:",
+      "choices": [
+        "0",
+        "'[object Object]'",
+        "NaN",
+        "TypeError"
+      ],
+      "correctIndex": 1,
+      "explanation": "Array toString gives ''; then '' + '[object Object]' = '[object Object]'."
+    },
+    {
+      "id": "q13",
+      "stem": "Which is the safest place to display user-supplied bio in a page?",
+      "choices": [
+        "Assign to innerHTML",
+        "Use textContent or a templating engine that auto-escapes",
+        "Use document.write",
+        "Concatenate into a <script> tag"
+      ],
+      "correctIndex": 1,
+      "explanation": "textContent never parses HTML; templating engines (EJS, JSX) escape by default."
+    },
+    {
+      "id": "q14",
+      "stem": "Which is true about React keys when rows can be reordered?",
+      "choices": [
+        "Use the array index",
+        "Use a stable id from the data; index keys cause state to attach to the wrong row after reorders",
+        "Use Math.random()",
+        "Keys are optional"
+      ],
+      "correctIndex": 1,
+      "explanation": "Stable, item-derived keys preserve component identity across reorders. Index keys silently misattribute state."
+    },
+    {
+      "id": "q15",
+      "stem": "Which is the right authentication setup for a typical browser SPA?",
+      "choices": [
+        "JWT in localStorage",
+        "Short-lived access token + refresh token with refresh stored as HttpOnly Secure SameSite=Strict cookie",
+        "Basic auth every request",
+        "Session id in URL"
+      ],
+      "correctIndex": 1,
+      "explanation": "Minimises both XSS exposure (refresh hidden from JS) and CSRF (SameSite=Strict)."
+    },
+    {
+      "id": "q16",
+      "stem": "Why is `setCount(c => c + 1); setCount(c => c + 1);` safer than `setCount(count + 1); setCount(count + 1);`?",
+      "choices": [
+        "It is shorter",
+        "Functional updaters receive the latest queued value; positional updates may both capture the same stale count",
+        "It allocates less memory",
+        "It triggers fewer renders"
+      ],
+      "correctIndex": 1,
+      "explanation": "Two captured `count + 1` calls produce the same result; functional updaters compound correctly."
+    },
+    {
+      "id": "q17",
+      "stem": "Best status code for a POST that violates a unique constraint?",
+      "choices": ["400", "409", "404", "500"],
+      "correctIndex": 1,
+      "explanation": "409 Conflict signals a clash with existing resource state (e.g. duplicate email)."
+    },
+    {
+      "id": "q18",
+      "stem": "Which is correct about CSP?",
+      "choices": [
+        "It encrypts JS",
+        "Content-Security-Policy restricts which scripts and resources can be loaded, blocking many XSS payloads",
+        "It replaces HTTPS",
+        "It removes cookies"
+      ],
+      "correctIndex": 1,
+      "explanation": "default-src 'self'; script-src 'self' blocks inline and cross-origin scripts, defusing most XSS vectors."
+    },
+    {
+      "id": "q19",
+      "stem": "Which is the cleanest fix for layout thrashing?",
+      "choices": [
+        "Use jQuery",
+        "Batch DOM reads first, then perform all writes",
+        "Disable CSS",
+        "Add !important"
+      ],
+      "correctIndex": 1,
+      "explanation": "Avoid interleaving reads (which force layout) with writes (which invalidate it)."
+    },
+    {
+      "id": "q20",
+      "stem": "Which is the safest password storage?",
+      "choices": [
+        "MD5",
+        "SHA-256",
+        "bcrypt/argon2 with appropriate cost and a per-password salt",
+        "Plaintext encrypted with AES"
+      ],
+      "correctIndex": 2,
+      "explanation": "Password hashes must be slow on purpose; bcrypt/argon2 include cost factor and salt by design."
+    },
+    {
+      "id": "q21",
+      "stem": "Which best describes IDOR?",
+      "choices": [
+        "Injection of malicious JS",
+        "Direct object reference (often in URL or body) accepted without an authorisation check against the requester",
+        "Open redirect",
+        "Cookie theft"
+      ],
+      "correctIndex": 1,
+      "explanation": "GET /api/orders/43 should verify the caller may view order 43, not assume the URL implies permission."
+    },
+    {
+      "id": "q22",
+      "stem": "What does `aria-describedby` do?",
+      "choices": [
+        "Hides the element",
+        "Links a control to an element whose contents the screen reader announces as additional description",
+        "Marks an input invalid",
+        "Sets focus"
+      ],
+      "correctIndex": 1,
+      "explanation": "Used to attach help text or error messages to form controls."
+    },
+    {
+      "id": "q23",
+      "stem": "Why does a typical industry recommendation favour 'start as a monolith'?",
+      "choices": [
+        "Microservices don't work",
+        "A modular monolith avoids the operational tax of microservices until team/traffic scale justifies it",
+        "Monoliths are required by Node",
+        "Microservices break TLS"
+      ],
+      "correctIndex": 1,
+      "explanation": "Microservices solve organisational scaling more than technical scaling. Premature splitting compounds complexity."
+    },
+    {
+      "id": "q24",
+      "stem": "Predict: `console.log(typeof null);`",
+      "choices": ["'null'", "'object'", "'undefined'", "'boolean'"],
+      "correctIndex": 1,
+      "explanation": "Famous JS quirk preserved for backward compatibility — typeof null is 'object'."
+    },
+    {
+      "id": "q25",
+      "stem": "Which is the right pairing of OWASP topic to mitigation?",
+      "choices": [
+        "SQL injection → blacklist apostrophes",
+        "XSS → escape output AND/or use a strict CSP",
+        "CSRF → HTTPS only",
+        "IDOR → unguessable IDs"
+      ],
+      "correctIndex": 1,
+      "explanation": "Output-context-aware escaping + CSP is the real defense against XSS. The other three options are common but wrong answers."
+    },
+    {
+      "id": "q26",
+      "stem": "What is the LCP target for a 'good' rating?",
+      "choices": ["< 1.0s", "< 2.5s", "< 4.0s", "< 5.0s"],
+      "correctIndex": 1,
+      "explanation": "Largest Contentful Paint: < 2.5s = good, 2.5-4s = needs improvement, > 4s = poor."
+    },
+    {
+      "id": "q27",
+      "stem": "Which order is correct for the critical rendering path?",
+      "choices": [
+        "Layout → Parse → Paint → Composite",
+        "Parse HTML+CSS → Render tree → Layout → Paint → Composite",
+        "Paint → Layout → Composite",
+        "Composite → Layout → Paint"
+      ],
+      "correctIndex": 1,
+      "explanation": "DOM + CSSOM combine into a render tree; layout computes geometry; paint fills pixels; compositor stitches layers."
+    }
+  ]
+}

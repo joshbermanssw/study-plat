@@ -1,0 +1,307 @@
+{
+  "unit": "COMP4347",
+  "week": 11,
+  "topic": "Web application security",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "Which is the only reliable mitigation for SQL injection?",
+      "choices": [
+        "Escape ' and ;",
+        "Use parameterised queries / prepared statements",
+        "Run as a non-root DB user",
+        "Encrypt the database"
+      ],
+      "correctIndex": 1,
+      "explanation": "Placeholders separate code from data. Escape lists are bypassable; least-privilege is defense in depth but doesn't prevent the injection."
+    },
+    {
+      "id": "q2",
+      "stem": "Stored XSS happens when:",
+      "choices": [
+        "An attacker tricks a user into clicking a malicious URL whose query parameter is reflected unescaped",
+        "Malicious JS is saved to the database and rendered to subsequent viewers",
+        "The CSS file is hijacked",
+        "A cookie is stolen"
+      ],
+      "correctIndex": 1,
+      "explanation": "Stored XSS persists in storage and victimises every later viewer. Reflected XSS lives in the URL of a single request."
+    },
+    {
+      "id": "q3",
+      "stem": "Which Content-Security-Policy directive most effectively limits XSS impact?",
+      "choices": [
+        "frame-ancestors *",
+        "default-src 'self'; script-src 'self'",
+        "img-src *",
+        "report-uri /csp"
+      ],
+      "correctIndex": 1,
+      "explanation": "Restricting script-src to 'self' blocks inline scripts and external loads, neutralising most XSS payloads."
+    },
+    {
+      "id": "q4",
+      "stem": "GET /api/orders/43 returns order 43 even when the requester owns only order 42. This is:",
+      "choices": [
+        "XSS",
+        "CSRF",
+        "IDOR (Insecure Direct Object Reference)",
+        "Clickjacking"
+      ],
+      "correctIndex": 2,
+      "explanation": "The URL exposes the object, and the server doesn't check whether the caller may access it."
+    },
+    {
+      "id": "q5",
+      "stem": "Why is SHA-256(password) NOT a safe password storage scheme?",
+      "choices": [
+        "SHA-256 is reversible",
+        "It is too fast — GPUs can compute billions per second, enabling offline brute-force; use bcrypt/argon2 with a work factor",
+        "It is not deterministic",
+        "It produces collisions"
+      ],
+      "correctIndex": 1,
+      "explanation": "Password hashes must be slow on purpose. Bcrypt/argon2/scrypt include a tunable cost and salt."
+    },
+    {
+      "id": "q6",
+      "stem": "Which cookie attributes give the strongest session protection?",
+      "choices": [
+        "Domain only",
+        "HttpOnly + Secure + SameSite=Lax (or Strict)",
+        "Max-Age only",
+        "Path=/ alone"
+      ],
+      "correctIndex": 1,
+      "explanation": "HttpOnly blocks JS access (XSS), Secure forces HTTPS, SameSite blocks most CSRF."
+    },
+    {
+      "id": "q7",
+      "stem": "Strict-Transport-Security (HSTS) tells the browser to:",
+      "choices": [
+        "Always use HTTPS to this host for the lifetime of the header",
+        "Compress responses",
+        "Disable cookies",
+        "Cache static assets"
+      ],
+      "correctIndex": 0,
+      "explanation": "HSTS prevents SSL stripping by refusing to talk HTTP to the host (and subdomains, if specified) until max-age expires."
+    },
+    {
+      "id": "q8",
+      "stem": "An attacker uses an internal admin endpoint by making the server fetch http://169.254.169.254/. This is:",
+      "choices": [
+        "XSS",
+        "SSRF (Server-Side Request Forgery)",
+        "Privilege escalation via SQL",
+        "Cache poisoning"
+      ],
+      "correctIndex": 1,
+      "explanation": "SSRF: the server is tricked into fetching a URL on the attacker's behalf, often to reach private cloud metadata or internal services."
+    },
+    {
+      "id": "q9",
+      "stem": "Which is correct about CSRF in 2026 browsers when using cookies?",
+      "choices": [
+        "CSRF is impossible",
+        "SameSite=Lax (modern default) blocks most CSRF on state-changing methods; tokens add defense in depth",
+        "Only HTTPS matters",
+        "CSRF only affects GET"
+      ],
+      "correctIndex": 1,
+      "explanation": "Modern browsers default cookies to Lax. Belt-and-braces apps still ship CSRF tokens for sensitive actions."
+    },
+    {
+      "id": "q10",
+      "stem": "Which is the right header to prevent MIME sniffing?",
+      "choices": [
+        "X-Frame-Options",
+        "X-Content-Type-Options: nosniff",
+        "Strict-Transport-Security",
+        "Referrer-Policy"
+      ],
+      "correctIndex": 1,
+      "explanation": "nosniff stops browsers from second-guessing the Content-Type and rendering text/plain as script, etc."
+    },
+    {
+      "id": "q11",
+      "stem": "Which prevents the page from being embedded in an iframe (clickjacking)?",
+      "choices": [
+        "CSP frame-ancestors 'self' (or X-Frame-Options: DENY)",
+        "X-Content-Type-Options",
+        "HSTS",
+        "CORP: same-origin"
+      ],
+      "correctIndex": 0,
+      "explanation": "frame-ancestors is the modern CSP directive. X-Frame-Options is the legacy header."
+    },
+    {
+      "id": "q12",
+      "stem": "Why is `eval(userInput)` dangerous beyond XSS?",
+      "choices": [
+        "It is slow",
+        "It executes arbitrary code with full app privileges — direct remote code execution if the input is attacker-controlled",
+        "Eval cannot be overridden",
+        "It logs the user out"
+      ],
+      "correctIndex": 1,
+      "explanation": "Eval turns strings into running code. Avoid it entirely; if you think you need it you almost certainly don't."
+    },
+    {
+      "id": "q13",
+      "stem": "Best mitigation for brute-force login attempts?",
+      "choices": [
+        "Longer session timeout",
+        "Rate-limiting + account lockout + MFA, plus slow password hashing on the server",
+        "HTTPS alone",
+        "Mandatory password rotation"
+      ],
+      "correctIndex": 1,
+      "explanation": "Defense in depth: limit attempts, slow each one, require a second factor. Forced rotation is now discouraged (NIST 800-63B)."
+    },
+    {
+      "id": "q14",
+      "stem": "Which is most likely an XSS sink?",
+      "choices": [
+        "element.textContent",
+        "element.innerHTML",
+        "element.classList.add",
+        "element.dataset.x"
+      ],
+      "correctIndex": 1,
+      "explanation": "innerHTML parses strings as HTML. Attribute event handlers in injected markup will run."
+    },
+    {
+      "id": "q15",
+      "stem": "An app uses HTTPS but loads jQuery over HTTP. Result:",
+      "choices": [
+        "Mixed content warning; the script load is blocked by modern browsers and the page is effectively compromisable in transit",
+        "Faster loading",
+        "Cached forever",
+        "No problem"
+      ],
+      "correctIndex": 0,
+      "explanation": "Mixed-content scripts are blocked; even if they loaded, a network attacker could swap the JS for malicious code."
+    },
+    {
+      "id": "q16",
+      "stem": "Which is true about JWT and revocation?",
+      "choices": [
+        "JWTs are inherently revocable",
+        "Stateless JWTs are valid until expiration; revocation requires a server-side blocklist or short-lived tokens with rotated refresh",
+        "Revocation is automatic on logout",
+        "Revocation needs HTTPS"
+      ],
+      "correctIndex": 1,
+      "explanation": "JWT's stateless property cuts both ways. Practical setups pair short access TTLs with refresh tokens to enable quick revocation."
+    },
+    {
+      "id": "q17",
+      "stem": "OWASP A01 'Broken Access Control' includes:",
+      "choices": [
+        "TLS misconfiguration",
+        "Missing/incorrect authorisation checks, IDOR, privilege escalation",
+        "Outdated libraries",
+        "Logging gaps"
+      ],
+      "correctIndex": 1,
+      "explanation": "A01 covers all the ways authorisation fails. It has been the top category for several years."
+    },
+    {
+      "id": "q18",
+      "stem": "Why use bcrypt's cost parameter (e.g. 12)?",
+      "choices": [
+        "It encrypts the hash",
+        "It scales the work per hash to keep brute-force expensive as hardware speeds up",
+        "Required by HTTP",
+        "It enables salting"
+      ],
+      "correctIndex": 1,
+      "explanation": "Cost = log2 rounds. Raise it as hardware improves so verifying a password stays slow enough to deter offline attacks."
+    },
+    {
+      "id": "q19",
+      "stem": "Why are detailed error messages a security risk?",
+      "choices": [
+        "They confuse users",
+        "Stack traces, SQL errors, or framework hints help attackers fingerprint the stack and craft targeted exploits",
+        "They use more bandwidth",
+        "They violate ACID"
+      ],
+      "correctIndex": 1,
+      "explanation": "Log details server-side, return generic messages to clients. Especially never echo SQL errors."
+    },
+    {
+      "id": "q20",
+      "stem": "Which is true about CORS?",
+      "choices": [
+        "CORS protects the server from malicious requests",
+        "CORS is a browser feature relaxing same-origin policy; servers must opt in. It does not protect the server from non-browser clients",
+        "CORS replaces CSRF defenses",
+        "CORS encrypts requests"
+      ],
+      "correctIndex": 1,
+      "explanation": "CORS keeps the browser from letting attacker JS read cross-origin responses. The server still needs its own auth/CSRF defenses."
+    },
+    {
+      "id": "q21",
+      "stem": "Best fix for IDOR?",
+      "choices": [
+        "Use UUIDs only",
+        "Authorise every object access against the authenticated user's permissions, regardless of URL guessability",
+        "Hide URLs",
+        "Add captcha"
+      ],
+      "correctIndex": 1,
+      "explanation": "Security through obscurity (unguessable IDs) is not enough. The server must enforce ownership on every access."
+    },
+    {
+      "id": "q22",
+      "stem": "What does `Permissions-Policy: camera=(), microphone=()` do?",
+      "choices": [
+        "Disables HTTPS",
+        "Tells the browser not to grant the page (or its iframes) access to the camera/microphone APIs",
+        "Removes cookies",
+        "Disables JS"
+      ],
+      "correctIndex": 1,
+      "explanation": "Permissions-Policy denies specified powerful features. Useful to scope third-party iframes."
+    },
+    {
+      "id": "q23",
+      "stem": "What is the principle of least privilege?",
+      "choices": [
+        "Give every user admin",
+        "Give every component the minimum privileges it needs to function",
+        "Use only HTTPS",
+        "Allow only GETs"
+      ],
+      "correctIndex": 1,
+      "explanation": "Limit blast radius: app DB users shouldn't own DDL; build agents shouldn't read prod data; etc."
+    },
+    {
+      "id": "q24",
+      "stem": "Reviewing this code: `res.send('<h1>Hi ' + req.query.name + '</h1>')`. The vulnerability is:",
+      "choices": [
+        "Open redirect",
+        "Reflected XSS — query parameter rendered as HTML without escaping",
+        "CSRF",
+        "Path traversal"
+      ],
+      "correctIndex": 1,
+      "explanation": "`?name=<script>...</script>` runs in the victim's browser. Escape or use a templating engine that auto-escapes."
+    },
+    {
+      "id": "q25",
+      "stem": "Which is true about session fixation?",
+      "choices": [
+        "The attacker steals the cookie via XSS",
+        "The attacker sets the victim's session id (e.g. via URL) before login; after login, the attacker now shares the authenticated session",
+        "It only affects mobile apps",
+        "It is the same as CSRF"
+      ],
+      "correctIndex": 1,
+      "explanation": "Mitigate by regenerating the session id after authentication (req.session.regenerate())."
+    }
+  ]
+}

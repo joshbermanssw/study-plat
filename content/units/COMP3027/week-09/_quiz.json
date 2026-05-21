@@ -1,0 +1,307 @@
+{
+  "unit": "COMP3027",
+  "week": 9,
+  "topic": "NP-hardness (intro)",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "What does X <=_p Y formally mean?",
+      "choices": [
+        "X is solvable in time |Y|",
+        "There is a polynomial-time function f such that I in X iff f(I) in Y",
+        "X has fewer instances than Y",
+        "X and Y have the same algorithms"
+      ],
+      "correctIndex": 1,
+      "explanation": "Polynomial-time (Karp) reduction: f maps instances, and the answer is preserved in both directions."
+    },
+    {
+      "id": "q2",
+      "stem": "Polynomial-time reductions are transitive: X <=_p Y and Y <=_p Z imply:",
+      "choices": [
+        "X = Y",
+        "X <=_p Z",
+        "Z <=_p X",
+        "X is in P"
+      ],
+      "correctIndex": 1,
+      "explanation": "Composing two polynomial-time reductions yields another polynomial-time reduction. Transitivity is central to chaining hardness."
+    },
+    {
+      "id": "q3",
+      "stem": "If Y has a polynomial algorithm and X <=_p Y, what follows?",
+      "choices": [
+        "X is in NP",
+        "X is in P",
+        "X = Y",
+        "Y is NP-hard"
+      ],
+      "correctIndex": 1,
+      "explanation": "Translate I to f(I) in polynomial time, run Y's algorithm. Gives X in P."
+    },
+    {
+      "id": "q4",
+      "stem": "Independent Set <=_p Vertex Cover uses which mapping?",
+      "choices": [
+        "(G, k) -> (G, n - k); S is IS iff V \\ S is VC",
+        "Swap edges and vertices",
+        "Take the complement graph",
+        "Add a super-source"
+      ],
+      "correctIndex": 0,
+      "explanation": "S is independent iff its complement V \\ S is a vertex cover. Hence the IS/VC duality is a 'simple equivalence' reduction."
+    },
+    {
+      "id": "q5",
+      "stem": "Independent Set <=_p Clique uses which mapping?",
+      "choices": [
+        "(G, k) -> (G-bar, k) where G-bar is the complement graph",
+        "(G, k) -> (G, n - k)",
+        "Doubling all vertices",
+        "Adding random edges"
+      ],
+      "correctIndex": 0,
+      "explanation": "S is IS in G iff S is a clique in the complement graph G-bar."
+    },
+    {
+      "id": "q6",
+      "stem": "Which best describes the 3-SAT to IS gadget reduction?",
+      "choices": [
+        "Triangle per clause + conflict edges between literal and its negation; k = number of clauses",
+        "Add a source/sink",
+        "Use a flow network",
+        "Sort clauses by length"
+      ],
+      "correctIndex": 0,
+      "explanation": "Each clause gets a triangle (one node per literal); conflict edges connect x and not-x across triangles. IS of size m exists iff phi is satisfiable."
+    },
+    {
+      "id": "q7",
+      "stem": "Why is k = m (number of clauses) in the 3-SAT to IS reduction?",
+      "choices": [
+        "Random",
+        "An IS can take at most one node per triangle, so a satisfying assignment selects one literal per clause -> exactly m IS nodes",
+        "k = n (number of variables)",
+        "k = m * 3"
+      ],
+      "correctIndex": 1,
+      "explanation": "Each triangle contributes at most one IS node; total of m. Setting all chosen literals to true satisfies the formula."
+    },
+    {
+      "id": "q8",
+      "stem": "A 'reduction by special-to-general' shows hardness by:",
+      "choices": [
+        "Embedding the known-hard problem as a special case of the target",
+        "Approximating the target",
+        "Using gadgets",
+        "Building a flow network"
+      ],
+      "correctIndex": 0,
+      "explanation": "VC <=_p Set Cover by treating edges as universe and vertex incidence-sets as cover sets — VC is a special case."
+    },
+    {
+      "id": "q9",
+      "stem": "Vertex Cover <=_p Set Cover maps:",
+      "choices": [
+        "Edges as universe; each vertex induces a covering set of its incident edges",
+        "Edges as covering sets",
+        "Vertices as universe and edges as covering sets",
+        "Adjacency matrix as universe"
+      ],
+      "correctIndex": 0,
+      "explanation": "Universe = E, sets = {S_v : v in V} where S_v contains the edges incident to v. k-vertex cover iff k-set cover."
+    },
+    {
+      "id": "q10",
+      "stem": "What must be proved in both directions in a reduction?",
+      "choices": [
+        "Polynomial time and integrality",
+        "Forward (yes -> yes) and backward (yes -> yes), and polynomial-time construction",
+        "Only forward direction",
+        "Only the construction"
+      ],
+      "correctIndex": 1,
+      "explanation": "Both directions of the iff plus polynomial construction time are required for a valid Karp reduction."
+    },
+    {
+      "id": "q11",
+      "stem": "Which is NOT one of the three reduction strategies?",
+      "choices": [
+        "Simple equivalence",
+        "Special-to-general",
+        "Gadget construction",
+        "Greedy refinement"
+      ],
+      "correctIndex": 3,
+      "explanation": "Greedy refinement isn't a reduction strategy. Lecture 9 lists simple equivalence, special-to-general, and gadgets."
+    },
+    {
+      "id": "q12",
+      "stem": "Why do we focus on decision problems for NP-hardness reductions?",
+      "choices": [
+        "Decision, search, and optimisation are polynomial-time inter-reducible, so deciding suffices technically",
+        "Decision problems are easier",
+        "They have unique answers",
+        "Optimisation has no algorithms"
+      ],
+      "correctIndex": 0,
+      "explanation": "Decision <=_p Search <=_p Optimisation (and reverse with binary search). Decision is the canonical framing."
+    },
+    {
+      "id": "q13",
+      "stem": "If 3-SAT <=_p X and X is in P, what follows?",
+      "choices": [
+        "3-SAT is in P (and consequently every problem in NP is in P -- contradicting common belief unless P = NP)",
+        "X = 3-SAT",
+        "X is NP-hard",
+        "Nothing"
+      ],
+      "correctIndex": 0,
+      "explanation": "3-SAT is NP-complete; placing it in P collapses P = NP."
+    },
+    {
+      "id": "q14",
+      "stem": "Conflict edges in the 3-SAT to IS gadget:",
+      "choices": [
+        "Connect a literal node to a same-clause literal",
+        "Connect every literal x to every literal not-x across triangles",
+        "Connect random pairs",
+        "Connect every node to every other"
+      ],
+      "correctIndex": 1,
+      "explanation": "Conflict edges prevent picking inconsistent literal assignments across clauses. They are the second crucial part of the gadget."
+    },
+    {
+      "id": "q15",
+      "stem": "What is true about a Karp reduction's runtime requirement?",
+      "choices": [
+        "It must be linear",
+        "It must be polynomial in the size of the X-instance",
+        "It must be sub-quadratic",
+        "It must be constant"
+      ],
+      "correctIndex": 1,
+      "explanation": "Polynomial-time = polynomial in the bit-length of the X-instance, by definition."
+    },
+    {
+      "id": "q16",
+      "stem": "Which problem is NOT one of the standard NP-complete problems chained from 3-SAT in this unit?",
+      "choices": [
+        "Independent Set",
+        "Vertex Cover",
+        "Bipartite Matching",
+        "Subset Sum"
+      ],
+      "correctIndex": 2,
+      "explanation": "Bipartite Matching is in P (solvable by max-flow). The others are NP-complete."
+    },
+    {
+      "id": "q17",
+      "stem": "In a 'gadget' reduction, what is a gadget?",
+      "choices": [
+        "An entire reduction",
+        "A small constructed structure encoding a single input element's constraints in the target problem",
+        "A random selection",
+        "An approximation"
+      ],
+      "correctIndex": 1,
+      "explanation": "Each variable, clause, or input element is realised as a small target-problem fragment whose local structure enforces the original semantics."
+    },
+    {
+      "id": "q18",
+      "stem": "Why is the 3-SAT to IS reduction's gadget set k = m (not n)?",
+      "choices": [
+        "n would be too large",
+        "k = m corresponds to 'one true literal per clause' = satisfying assignment",
+        "Random choice",
+        "k = n is also valid"
+      ],
+      "correctIndex": 1,
+      "explanation": "Satisfying assignment picks at least one true literal per clause; picking exactly one per triangle gives an IS of size m."
+    },
+    {
+      "id": "q19",
+      "stem": "Which combination of facts is needed to chain hardness from problem A to problem C via B?",
+      "choices": [
+        "A <=_p B and B <=_p C, both polynomial reductions",
+        "A in P and B in NP",
+        "A = B",
+        "A in NP-hard and C in NP-hard"
+      ],
+      "correctIndex": 0,
+      "explanation": "Transitivity: A <=_p B <=_p C gives A <=_p C. If A is hard, C inherits hardness."
+    },
+    {
+      "id": "q20",
+      "stem": "The independent-set form of the 3-SAT reduction outputs an IS of size m iff:",
+      "choices": [
+        "Phi has a satisfying assignment",
+        "Phi has no satisfying assignment",
+        "Phi is trivial",
+        "Phi has unit clauses"
+      ],
+      "correctIndex": 0,
+      "explanation": "By construction the IS of size m maps to a consistent literal choice (one per clause) that satisfies every clause."
+    },
+    {
+      "id": "q21",
+      "stem": "Suppose you found a polynomial algorithm for IS. What would follow?",
+      "choices": [
+        "Vertex Cover and 3-SAT would also be in P; eventually P = NP",
+        "IS is special",
+        "Nothing — these are unrelated",
+        "The reductions break"
+      ],
+      "correctIndex": 0,
+      "explanation": "IS is NP-complete. A polynomial algorithm collapses the entire NP class into P."
+    },
+    {
+      "id": "q22",
+      "stem": "In the reduction recipe, which step is OPTIONAL?",
+      "choices": [
+        "Construct the target instance",
+        "Prove forward direction",
+        "Prove backward direction",
+        "Implement the target algorithm in code"
+      ],
+      "correctIndex": 3,
+      "explanation": "The reduction is a mathematical translation; coding the target algorithm is not part of the proof."
+    },
+    {
+      "id": "q23",
+      "stem": "Karp reductions are also called:",
+      "choices": [
+        "Cook reductions",
+        "Many-one polynomial-time reductions",
+        "Turing reductions",
+        "Linear reductions"
+      ],
+      "correctIndex": 1,
+      "explanation": "Karp reductions are many-one (mapping) polynomial-time reductions. Cook (Turing) reductions are more general (multiple oracle calls)."
+    },
+    {
+      "id": "q24",
+      "stem": "Why does proving X <=_p Y certify that Y is 'at least as hard as' X?",
+      "choices": [
+        "Solving Y solves X with polynomial overhead — so if Y were easy, X would be too",
+        "It does not",
+        "Symmetric difficulty",
+        "Reductions decrease complexity"
+      ],
+      "correctIndex": 0,
+      "explanation": "Reductions inherit polynomial-time solvability from target to source — equivalently, they propagate hardness from source to target."
+    },
+    {
+      "id": "q25",
+      "stem": "Which of these is the BEST way to prove a new problem Y is NP-hard?",
+      "choices": [
+        "Solve Y in polynomial time",
+        "Pick a known NP-hard X and construct a polynomial-time reduction X <=_p Y, proving both directions",
+        "Show Y is in NP",
+        "Find an exponential algorithm for Y"
+      ],
+      "correctIndex": 1,
+      "explanation": "NP-hardness is established by reducing FROM a known NP-hard problem TO Y. Showing Y in NP is separate (used for NP-completeness)."
+    }
+  ]
+}

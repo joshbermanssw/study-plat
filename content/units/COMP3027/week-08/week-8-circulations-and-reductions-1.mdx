@@ -18,7 +18,7 @@ fileContentType: application/pdf
 Lecture 8 closes the network-flow block with further reductions to max-flow (notably image segmentation as a min-cut) and the circulation framework that adds lower bounds and node demands. Bridges into NP-hardness from W9.
 
 - **Reduction recipe (recap):** encode candidate solutions as flows; prove "optimal-for-X ↔ max-flow-in-G(I)" via two-way inequalities.
-- **Image segmentation:** pixels become nodes; capacities a_i / b_i to s / t encode foreground / background likelihoods, neighbour edges have capacity p_{ij} as separation penalty; minimum s-t cut realises the max-likelihood labelling. Converts a maximisation into a minimisation by constant offset.
+- **Image segmentation:** pixels become nodes; capacities a_i / b_i to s / t encode foreground / background likelihoods, neighbour edges have capacity p_&#123;ij&#125; as separation penalty; minimum s-t cut realises the max-likelihood labelling. Converts a maximisation into a minimisation by constant offset.
 - **Circulations with demands:** each node v has demand d_v (negative = supply); edges have lower bound ℓ(e) ≤ f(e) ≤ c(e). Feasibility reduces to max-flow on an auxiliary graph (saturate lower bounds, add super-source / super-sink for demands); circulation exists ⇔ aux max-flow saturates all super-source edges.
 - **Bipartite-matching / project-selection / survey-design** all admit similar flow models; integrality of max-flow ensures combinatorial solutions.
 - **Boundary with hardness:** once a problem cannot be modelled by polynomial-sized flow networks, suspect NP-hardness.

@@ -1,0 +1,429 @@
+---
+title: "Week 11 — Coping with Hardness: Approximation and Heuristics"
+unit: COMP3027
+week: 11
+type: overview
+status: done
+---
+
+## What to do when a problem is NP-hard
+
+Weeks 9 and 10 proved a huge family of problems — vertex cover, set cover, TSP, knapsack, 3-coloring — admits no polynomial-time exact algorithm unless P = NP.
+
+In practice you can't wait for P-vs-NP to resolve. Week 11 surveys the principled responses.
+
+**The toolkit:**
+
+| Tool | What you trade |
+|------|----------------|
+| **Approximation algorithm** | Polynomial time + provable ratio |
+| **PTAS / FPTAS** | Tunable accuracy, more time for better ratio |
+| **Local search** | No worst-case guarantee, often great empirically |
+| **Randomised algorithms** | Expected-time / expected-quality bounds |
+| **Heuristics / metaheuristics** | No guarantee at all, cheap and effective |
+
+**Key concept: approximation ratio.** A quantitative guarantee: "the algorithm's output is at most α times worse than OPT".
+
+## Defining approximation ratios
+
+Let A be a polynomial-time algorithm, I an instance, A(I) its output value, OPT(I) the optimum.
+
+A is an **α-approximation algorithm** if:
+
+- **Minimisation:** A(I) ≤ α · OPT(I), with α ≥ 1.
+- **Maximisation:** A(I) ≥ α · OPT(I), with α ∈ (0, 1].
+
+This is **worst-case** over all instances — the only setting where the guarantee holds without further assumptions.
+
+## Vertex Cover: a 2-approximation via matching
+
+**Problem.** Min-cardinality vertex cover of G. NP-hard.
+
+**Algorithm.** Greedily build a maximal matching M. Output C = endpoints of M.
+
+```text
+vc_2_approx(G):
+  M = []; covered = set()
+  for each edge (u, v) in E:
+    if u not in covered and v not in covered:
+      M.append((u, v))
+      covered.add(u); covered.add(v)
+  return covered
+```
+
+**Claim.** |C| ≤ 2 · OPT.
+
+### Proof — step by step
+
+We need two things: (1) C really is a vertex cover, and (2) C isn't too big.
+
+**Step 1: C is a valid cover.**
+
+Take any edge (x, y) ∈ E. We want to show x ∈ C or y ∈ C.
+
+Look at the moment the greedy considered (x, y). One of two things happened:
+
+- At least one of x, y was already in `covered`. Then it's in C, and (x, y) is covered. ✓
+- Neither x nor y was in `covered`. Then the greedy adds (x, y) to M, putting both x and y in C. Edge covered. ✓
+
+Either way, every edge has an endpoint in C.
+
+**Step 2: |C| ≤ 2 · OPT.**
+
+Substep 2a: |C| = 2|M|. Every edge in M contributes exactly 2 vertices to C, and M's edges are vertex-disjoint (the greedy only adds an edge when both endpoints are fresh). So no double-counting.
+
+Substep 2b: OPT ≥ |M|. Let C\* be the true minimum vertex cover. Every edge in M needs at least one endpoint in C\*. M's edges are vertex-disjoint, so they need **distinct** cover vertices. So |C\*| ≥ |M|.
+
+Substep 2c: chain.
+
+```text
+|C| = 2|M|        ← substep 2a
+    ≤ 2|C*|       ← substep 2b
+    = 2 · OPT
+```
+
+∎
+
+**Complexity.** O(V + E).
+
+### Worked example
+
+Path on 5 vertices: edges (1,2), (2,3), (3,4), (4,5).
+
+- Consider (1,2): add to M. Cover &#123;1, 2&#125;.
+- Consider (2,3): 2 covered, skip.
+- Consider (3,4): add to M. Cover &#123;3, 4&#125;.
+- Consider (4,5): 4 covered, skip.
+
+Output: C = &#123;1, 2, 3, 4&#125;, size 4.
+
+True min VC: &#123;2, 4&#125;, size 2.
+
+**Ratio = 4 / 2 = 2.** Tight against the bound.
+
+**Bigger picture.** Best known polynomial ratio for VC: 2 − Θ(1/√log n). Under the Unique Games Conjecture, 2 − ε is hard for any ε &gt; 0.
+
+## Set Cover: a ln(n)-approximation via greedy
+
+**Problem.** Universe U of n elements; sets S₁, ..., Sₘ with weights wᵢ. Pick a minimum-weight collection of sets covering U.
+
+**Greedy.** Repeatedly pick the set maximising (new elements covered) / weight.
+
+```text
+set_cover_greedy(U, sets, w):
+  remaining = U; chosen = []
+  while remaining not empty:
+    pick S = argmax of |S ∩ remaining| / w(S)
+    chosen.append(S); remaining = remaining \ S
+  return chosen
+```
+
+**Theorem.** Greedy is an H(n)-approximation, where H(n) = 1 + 1/2 + ... + 1/n ≈ ln(n).
+
+### Proof — where ln(n) comes from, step by step
+
+The plan: pay for each element x ∈ U a "price" p(x). Pick prices so that (1) total prices = greedy's total weight, and (2) for any set S, the total price of x's in S is bounded.
+
+**Pricing rule.** When the greedy picks a set Sₜ at iteration t, distribute Sₜ's weight evenly across the **newly covered** elements. That is, every newly covered element x gets price
+
+```text
+p(x) = w(S_t) / |S_t ∩ remaining at time t|.
+```
+
+**Fact 1: total greedy weight = Σ_x p(x).**
+
+Each set Sₜ the greedy picks contributes w(Sₜ) to the greedy's bill. We split w(Sₜ) across its newly covered elements. So summing prices over all elements recovers the total weight. ✓
+
+**Fact 2: for any single set S, Σ_(x ∈ S) p(x) ≤ H(|S|) · w(S).**
+
+This is the heart of the proof. Take any set S in the optimum cover. List its elements in the **order the greedy covered them**: x₁ (covered first), x₂, ..., x_(|S|).
+
+At the moment xₖ was about to be covered: how many of S's elements were still uncovered? At least |S| − k + 1 (namely xₖ, x_(k+1), ..., x_(|S|) plus possibly some earlier ones that got covered by another set, but we know xₖ onward are still uncovered).
+
+Now, the greedy picked the set with the **best ratio** of (new coverage / weight). The greedy could have picked S itself, which would cover at least |S| − k + 1 new elements at cost w(S), ratio = w(S) / (|S| − k + 1). So whatever the greedy actually picked has ratio **no worse than that**. Therefore:
+
+```text
+p(x_k) ≤ w(S) / (|S| − k + 1)
+```
+
+Sum over k = 1, ..., |S|:
+
+```text
+Σ_{x ∈ S} p(x) ≤ w(S) · (1/|S| + 1/(|S|−1) + ... + 1/1)
+              = w(S) · H(|S|)
+```
+
+That's where the harmonic numbers (and hence ln) come from — summing 1/(|S| − k + 1).
+
+**Combining the two facts.**
+
+```text
+greedy total = Σ_x p(x)                                  ← fact 1
+             = Σ over OPT sets S of Σ_{x ∈ S} p(x)        ← every x is in some OPT set
+             ≤ Σ over OPT sets S of H(|S|) · w(S)         ← fact 2
+             ≤ H(n) · Σ over OPT sets of w(S)             ← H(|S|) ≤ H(n)
+             = H(n) · OPT
+```
+
+∎
+
+**Complexity.** Naive O(nm); with priority queue O((n+m) log m).
+
+**Tight.** Under P ≠ NP, no polynomial algorithm achieves (1 − ε) ln(n) (Feige 1998, Dinur-Steurer 2014).
+
+### Worked Set Cover trace
+
+U = &#123;1..10&#125;. S₁ = &#123;1..5&#125;, S₂ = &#123;6..9&#125;, S₃ = &#123;1, 6, 10&#125;, S₄ = &#123;2, 7&#125;, S₅ = &#123;3, 8, 10&#125;, S₆ = &#123;4, 9&#125;, S₇ = &#123;5, 10&#125;.
+
+- **Iteration 1.** S₁ covers 5. Pick S₁. Remaining = &#123;6..10&#125;.
+- **Iteration 2.** S₂ covers 4 new. Pick S₂. Remaining = &#123;10&#125;.
+- **Iteration 3.** S₃, S₅, S₇ each cover &#123;10&#125;. Pick S₃ (tie). Done.
+
+Greedy: 3 sets. True optimum: &#123;S₁, S₂, S₅&#125; = 3 sets. **Greedy is optimal here.**
+
+H(10) ≈ 2.30, so the worst-case bound is 6.9. Specific instances beat this easily. The bound is *worst-case*.
+
+## TSP: inapproximability, and what metric saves
+
+**General TSP.** Minimise total tour weight on a complete graph. NP-hard.
+
+**Theorem.** Unless P = NP, **no constant-factor approximation** for general TSP exists.
+
+**Proof sketch.** Reduce from Hamiltonian Cycle. Given graph G, build TSP: edge weight 1 if (u, v) ∈ E(G), else (α·n + 1). If G has a Ham cycle: TSP optimum = n. Else: every TSP tour uses ≥ 1 heavy edge, cost ≥ α·n + 1.
+
+A polynomial α-approximation would distinguish, solving Ham Cycle. ∎
+
+So general TSP is hopeless. But:
+
+### Metric TSP (triangle inequality)
+
+Edge weights satisfy w(u, v) + w(v, w) ≥ w(u, w). Still NP-hard.
+
+**2-approximation via MST.**
+
+1. Compute MST T.
+2. Walk T twice (DFS traversal).
+3. Shortcut repeated vertices using the triangle inequality.
+
+The shortcut tour has weight ≤ 2 · w(T) ≤ 2 · OPT (since OPT − any edge is a spanning tree).
+
+**3/2-approximation (Christofides 1976).**
+
+1. Compute MST T.
+2. Find odd-degree vertices Vₒ in T. (There's an even number of them.)
+3. Compute a min-weight perfect matching M on Vₒ (Edmonds' algorithm, polynomial).
+4. T ∪ M is connected and every vertex has even degree. Has an Eulerian circuit.
+5. Shortcut as in the MST approach.
+
+3/2 stood from 1976 until Karlin-Klein-Oveis-Gharan 2020 improved by 10⁻³⁶. The barrier 4/3 (Held-Karp lower bound) hasn't been broken.
+
+## PTAS vs FPTAS
+
+**PTAS.** A family of algorithms &#123;Aₑ : ε &gt; 0&#125; where Aₑ is a (1+ε)-approximation in polynomial time *for each fixed ε*. The runtime in 1/ε may be exponential (e.g. n<sup>1/ε</sup>).
+
+**FPTAS.** A PTAS where the runtime is polynomial in *both* n and 1/ε.
+
+| Property | PTAS | FPTAS |
+|----------|------|-------|
+| Polynomial in n? | Yes (for fixed ε) | Yes |
+| Polynomial in 1/ε? | No (can be exp) | Yes |
+
+**Knapsack admits an FPTAS** (but no polynomial exact algorithm unless P = NP).
+
+**Bin Packing** has a PTAS but **no FPTAS** unless P = NP.
+
+The PTAS/FPTAS line tracks "strongly NP-hard vs weakly NP-hard" closely.
+
+## Knapsack FPTAS: full construction
+
+**Problem.** 0/1 knapsack. Items 1..n with values vᵢ ≥ 0, weights wᵢ, capacity W. Maximise total value.
+
+**Alternative DP keyed on value.** Let V = max vᵢ. K(i, v) = min weight subset of &#123;1..i&#125; with total value = v. Recurrence: K(i, v) = min(K(i−1, v), wᵢ + K(i−1, v−vᵢ)). Answer: max v with K(n, v) ≤ W. **Complexity O(n² V)** — exponential in bit-length.
+
+**FPTAS construction.** For ε &gt; 0:
+
+1. vₘₐₓ = max vᵢ.
+2. Scale factor s = ε · vₘₐₓ / n.
+3. Replace vᵢ with vᵢ' = ⌊vᵢ / s⌋.
+4. Run the value-keyed DP on vᵢ'. Output that subset.
+
+**Complexity.** vₘₐₓ' = ⌊vₘₐₓ / s⌋ = n/ε. DP runs in **O(n³ / ε)**. Polynomial in n and 1/ε.
+
+**Accuracy.** Let A = FPTAS output value (original units), Sₒₚₜ = true optimum subset, OPT = its value. The DP exactly optimises rounded values, so:
+
+```text
+sum of v_i' for i in A's subset >= sum of v_i' for i in S_opt
+```
+
+Multiplying by s and accounting for rounding (≤ s per item):
+
+```text
+A >= s * (sum of v_i') >= sum of (v_i - s) for i in S_opt
+   = OPT - n*s
+   = OPT - ε * v_max
+   >= OPT - ε * OPT
+   = (1 - ε) * OPT
+```
+
+(Using vₘₐₓ ≤ OPT for any non-trivial instance.) ∎
+
+**The cleanest example of "scale, then run pseudo-poly DP".** A template for many weakly NP-hard problems.
+
+## Local search
+
+**Idea.** Start somewhere feasible. Repeatedly move to a *neighbouring* better solution. Halt at a local optimum.
+
+### TSP 2-opt
+
+Neighbouring tours differ by reversing a contiguous segment — replace two edges (a, b), (c, d) with (a, c), (b, d).
+
+```text
+2-opt:
+  start with any tour
+  while some swap improves the tour:
+    apply the improving swap
+```
+
+Empirically: ~5% above OPT in seconds for n = 1000.
+
+**No worst-case guarantee.** Adversarial instances make 2-opt arbitrarily bad. But excellent empirically.
+
+### Local search trade-offs
+
+| Choice | Trade-off |
+|--------|-----------|
+| Larger neighbourhood | Escapes weaker local optima, slower per step |
+| Smaller neighbourhood | Fast per step, traps in poor optima |
+| Random start | No bias, multiple runs needed |
+| Greedy start | Good initial, may bias |
+| First-improvement | Fast |
+| Best-improvement | Smoother, slower |
+
+### Variants
+
+- **Simulated annealing.** Occasionally accept worse moves with probability decreasing over time.
+- **Tabu search.** Maintain a tabu list of recent solutions; avoid them.
+- **Genetic algorithms.** Maintain a population; recombine and mutate.
+
+All *metaheuristics* — frameworks, not algorithms. None come with worst-case guarantees.
+
+## Randomised algorithms
+
+Randomness can simplify algorithms and provide expected-time guarantees beating any deterministic method.
+
+### Karger's Min-Cut
+
+Repeatedly contract a random edge (merging endpoints) until 2 vertices remain. The remaining cut is your output.
+
+- Single run: O(V²).
+- Probability of returning a global min-cut: ≥ 2 / (V(V−1)).
+- Run O(V² log V) times → high-probability success.
+- **Total: O(V⁴ log V).**
+
+### MAX-CUT 1/2-approximation
+
+Assign each vertex independently to A or B with prob 1/2.
+
+```text
+E[cut edges] = m/2 >= OPT/2
+```
+
+Expected output is a 1/2-approximation. Derandomise by conditional expectations → deterministic 1/2-approx.
+
+(Best known: Goemans-Williamson at 0.878 via SDP.)
+
+### Randomised quicksort
+
+Expected O(n log n) instead of worst-case O(n²). Random pivot defeats any adversarial input.
+
+**The role of randomness:**
+
+1. *Against adversarial inputs* — an adversary can't anticipate random choices.
+2. *Breaking symmetry* — avoids bad structural cases.
+
+## Heuristics and "no free lunch"
+
+Heuristics are problem-specific rules of thumb without theoretical guarantees.
+
+- "TSP: always go to the nearest unvisited city" (nearest-neighbour).
+- "0/1 Knapsack: sort by value/weight density, take greedily."
+- "Graph colouring: process vertices in saturated-degree order" (DSATUR).
+
+Heuristics are **not** approximation algorithms — adversarial instances can ruin them. They're useful as:
+
+- Starting points for local search.
+- Quick upper/lower bounds.
+- Production solvers when correctness isn't required.
+
+**No free lunch theorem (Wolpert-Macready 1997).** Averaged over all possible objective functions, every black-box optimisation algorithm performs equally. Heuristics work because *real* instances have structure (locality, sparsity, distributions) — not because the heuristic is universally good.
+
+## Inapproximability
+
+For some problems, even constant-factor approximation is NP-hard.
+
+| Problem | Inapproximability |
+|---------|-------------------|
+| General TSP | No constant ratio (proven above) |
+| MAX-CLIQUE | No n<sup>1−ε</sup> (Håstad) |
+| Set Cover | No (1−ε) ln(n) (Feige; Dinur-Steurer) |
+| MAX-3-SAT | No 7/8 + ε (Håstad, tight against random) |
+
+These bounds come from the **PCP theorem** (Arora et al. 1992) and its descendants. For COMP3027 you only need to know inapproximability *exists* and recognise the names of the worst offenders.
+
+## LP relaxation: a unifying framework
+
+Most approximation algorithms can be re-derived via LP relaxation.
+
+1. Formulate the NP-hard problem as an **integer LP**.
+2. Relax integrality (allow [0, 1]) → polynomial LP.
+3. Solve in polynomial time.
+4. **Round** to an integer solution.
+5. Analyse the **integrality gap** (LP optimum / ILP optimum).
+
+### Vertex Cover LP
+
+```text
+minimise   sum of x_v
+subject to x_u + x_v >= 1  for each edge (u, v)
+           x_v ∈ [0, 1]
+```
+
+LP optimum ≤ ILP optimum = OPT.
+
+**Round.** Include v in cover iff xᵥ ≥ 1/2. Every edge has xᵤ + xᵥ ≥ 1, so at least one ≥ 1/2. Cover is valid.
+
+Cover size ≤ 2 · LP ≤ 2 · OPT. **2-approximation.**
+
+The integrality gap is exactly 2 (witness: triangle graph, LP = 3/2, ILP = 2).
+
+**Set Cover** has a similar LP rounding analysis: randomised rounding (each set with probability xₛ, repeat O(log n) times) gives the H(n) ≈ ln(n) ratio.
+
+## Designing an approximation algorithm: a checklist
+
+For any new NP-hard optimisation problem:
+
+1. **Is the problem in a nice subclass?** Bipartite, planar, metric, bounded treewidth — often admit better-than-general approximations.
+2. **Natural LP relaxation?** Solve, round, analyse the gap.
+3. **Structural lower bound on OPT?** (Maximal matching for VC; MST weight for TSP.) Pair with an upper bound from your algorithm.
+4. **Greedy with a charging argument?** (Set Cover.)
+5. **Pseudo-polynomial → FPTAS by scaling?** (Knapsack.)
+6. **Local search starting point?** (2-opt for TSP.)
+7. **Can you randomise?** (Karger Min-Cut.)
+
+Usual order: LP relaxation first, structural bound second, randomisation third. Practise on canonical examples until each becomes muscle memory.
+
+## What this week prepares for Week 12
+
+Week 12 extends "no perfect guarantee" from NP-hardness to *uncertainty about the future* — **online algorithms** where input arrives piece-by-piece and you commit irrevocably.
+
+The **competitive ratio** plays the same role as the approximation ratio. Design ideas — worst-case bounds, randomisation against adversaries, "1/2 of optimum is good enough" — carry over.
+
+## What to do this week
+
+1. Prove the 2-approximation for VC by writing the matching-bound argument on a 6-vertex graph.
+2. Trace greedy Set Cover on U = &#123;1..10&#125;, sets &#123;1..5&#125;, &#123;6..10&#125;, &#123;1..3, 6..8&#125;. Verify H(n) bound.
+3. Run Christofides on a 5-city metric instance. Confirm tour ≤ 3/2 · OPT.
+4. Verify the knapsack FPTAS on a 5-item instance with ε = 0.1. Check runtime O(n³/ε) and accuracy (1−ε)·OPT.
+5. Code 2-opt for TSP. Observe how often it gets stuck in local optima.
+6. Write the LP rounding analysis for Vertex Cover. Identify the integrality gap on a triangle.
+7. Skim the quiz: any approximation-vs-PTAS-vs-FPTAS distinction you can't articulate is a study target.

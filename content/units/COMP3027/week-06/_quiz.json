@@ -1,0 +1,307 @@
+{
+  "unit": "COMP3027",
+  "week": 6,
+  "topic": "Flow networks (intro)",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "Which conditions define a feasible s-t flow?",
+      "choices": [
+        "Capacity at each edge and conservation at every vertex including s and t",
+        "Capacity at each edge and conservation at every vertex except s and t",
+        "Each vertex has equal in-degree and out-degree",
+        "Flow value equals capacity"
+      ],
+      "correctIndex": 1,
+      "explanation": "Capacity (0 <= f(e) <= c(e)) on edges plus conservation at internal vertices only. s produces; t consumes."
+    },
+    {
+      "id": "q2",
+      "stem": "The capacity of an s-t cut (A, B) is:",
+      "choices": [
+        "Sum of capacities of all edges between A and B in either direction",
+        "Sum of capacities of edges from A to B only",
+        "Number of edges from A to B",
+        "Max capacity edge crossing the cut"
+      ],
+      "correctIndex": 1,
+      "explanation": "Only A->B edges count; B->A edges are ignored in cut capacity."
+    },
+    {
+      "id": "q3",
+      "stem": "The Max-Flow Min-Cut Theorem states:",
+      "choices": [
+        "Max flow value = min cut capacity",
+        "Max flow value <= min cut capacity",
+        "Max flow value > min cut capacity",
+        "They are unrelated"
+      ],
+      "correctIndex": 0,
+      "explanation": "Strong duality: the optimal flow value equals the optimal cut capacity."
+    },
+    {
+      "id": "q4",
+      "stem": "An augmenting path in the residual graph G_f is:",
+      "choices": [
+        "A simple s-t path along which flow can be increased",
+        "A cycle in G",
+        "The shortest path from s to t in G",
+        "Any walk in G"
+      ],
+      "correctIndex": 0,
+      "explanation": "Augmenting paths in G_f have positive residual capacity along the whole path and let you push more flow."
+    },
+    {
+      "id": "q5",
+      "stem": "Backward edges in the residual graph represent:",
+      "choices": [
+        "Edges with zero current flow",
+        "The ability to undo (cancel) existing flow along an edge",
+        "Negative capacities",
+        "Edges between s and t"
+      ],
+      "correctIndex": 1,
+      "explanation": "Each f(e) > 0 induces a residual backward edge (v, u) of capacity f(e), allowing the algorithm to reroute previously committed flow."
+    },
+    {
+      "id": "q6",
+      "stem": "What is the running time of Ford-Fulkerson with integer capacities and max flow value F?",
+      "choices": [
+        "O(m + n)",
+        "O(mF)",
+        "O(m^2 n)",
+        "O(n log F)"
+      ],
+      "correctIndex": 1,
+      "explanation": "Each augmentation increases the flow by >= 1; each takes O(m) to find. F augmentations give O(mF)."
+    },
+    {
+      "id": "q7",
+      "stem": "Why is Ford-Fulkerson's O(mF) bound NOT polynomial in input size?",
+      "choices": [
+        "Because F can be exponential in the bit-length of the capacities",
+        "Because the graph has many edges",
+        "Because m is large",
+        "It is polynomial — the question is wrong"
+      ],
+      "correctIndex": 0,
+      "explanation": "F is bounded by a value, but values take only O(log F) bits. O(mF) is pseudo-polynomial."
+    },
+    {
+      "id": "q8",
+      "stem": "Once max flow has been computed, how do you find the min cut?",
+      "choices": [
+        "Run the algorithm again with reversed edges",
+        "Set A = vertices reachable from s in G_f; B = V \\ A",
+        "Use BFS from t",
+        "Pick any cut at random"
+      ],
+      "correctIndex": 1,
+      "explanation": "On termination, the reachable-from-s set in the residual graph gives a saturated min cut with cap(A, B) = |f|."
+    },
+    {
+      "id": "q9",
+      "stem": "Integrality of max flow with integer capacities means:",
+      "choices": [
+        "All capacities equal 1",
+        "Ford-Fulkerson produces an integer flow",
+        "Max flow value is non-negative",
+        "Cuts are integer-valued"
+      ],
+      "correctIndex": 1,
+      "explanation": "With integer capacities, every augmentation pushes an integer bottleneck, so the final flow is integer. Essential for combinatorial reductions."
+    },
+    {
+      "id": "q10",
+      "stem": "Edmonds-Karp differs from Ford-Fulkerson by:",
+      "choices": [
+        "Using DFS instead of BFS",
+        "Always choosing the shortest augmenting path (BFS)",
+        "Allowing fractional flows",
+        "Avoiding the residual graph"
+      ],
+      "correctIndex": 1,
+      "explanation": "BFS gives the shortest augmenting path. Its analysis bounds the number of augmentations by O(mn), so total time O(m^2 n)."
+    },
+    {
+      "id": "q11",
+      "stem": "Weak duality for max flow / min cut says:",
+      "choices": [
+        "|f| <= cap(A, B) for every feasible flow f and every s-t cut (A, B)",
+        "Every cut equals every flow",
+        "|f| >= cap(A, B)",
+        "Cuts have negative capacity"
+      ],
+      "correctIndex": 0,
+      "explanation": "Weak duality: any feasible flow is bounded above by any feasible cut. Strong duality says optima coincide."
+    },
+    {
+      "id": "q12",
+      "stem": "Which three statements are equivalent for a flow f?",
+      "choices": [
+        "f is max | no augmenting path in G_f | exists cut with cap = |f|",
+        "f is min | f saturates s | t is unreachable",
+        "f integer | path exists | capacities positive",
+        "G is acyclic | f = 0 | min cut = 0"
+      ],
+      "correctIndex": 0,
+      "explanation": "The MFMC theorem proves these three are equivalent. (1->2 trivially, 2->3 via reachability, 3->1 by weak duality.)"
+    },
+    {
+      "id": "q13",
+      "stem": "Why does the flow-value lemma matter?",
+      "choices": [
+        "It defines what 'flow' means",
+        "It establishes that for ANY cut, the net flow across equals the source-side surplus, enabling weak duality and the min-cut characterisation",
+        "It is used to compute residual graphs",
+        "It guarantees integrality"
+      ],
+      "correctIndex": 1,
+      "explanation": "The lemma is the bridge: |f| can be measured at any cut. Together with capacity it gives |f| <= cap(A, B)."
+    },
+    {
+      "id": "q14",
+      "stem": "If c(e) = 0 for some edge e, what does it mean for the flow?",
+      "choices": [
+        "f(e) is unconstrained",
+        "f(e) must equal 0",
+        "e contributes to capacity of every cut",
+        "f(e) can be negative"
+      ],
+      "correctIndex": 1,
+      "explanation": "Capacity constraint 0 <= f(e) <= c(e) forces f(e) = 0 when c(e) = 0."
+    },
+    {
+      "id": "q15",
+      "stem": "The number of augmenting paths in Edmonds-Karp is bounded by:",
+      "choices": [
+        "O(F)",
+        "O(mn)",
+        "O(n)",
+        "O(m)"
+      ],
+      "correctIndex": 1,
+      "explanation": "Each augmenting-path length is monotone non-decreasing and bounded by n; careful counting gives O(mn) augmentations. Combined with O(m) BFS this gives O(m^2 n)."
+    },
+    {
+      "id": "q16",
+      "stem": "Why must Ford-Fulkerson use the residual graph rather than the original graph for path search?",
+      "choices": [
+        "Speed",
+        "To allow flow rerouting via backward edges, which is essential for optimality",
+        "It is convention",
+        "To avoid cycles"
+      ],
+      "correctIndex": 1,
+      "explanation": "Without backward edges some max flows are unreachable: a wrong early augmentation can block subsequent improvements. Backward edges let the algorithm undo."
+    },
+    {
+      "id": "q17",
+      "stem": "If a flow has |f| equal to the capacity of some s-t cut, the flow is:",
+      "choices": [
+        "Maximum",
+        "Minimum",
+        "Infeasible",
+        "Integer"
+      ],
+      "correctIndex": 0,
+      "explanation": "Weak duality bounds every flow by every cut capacity; equality is achievable only at optimum. So |f| = cap(A, B) certifies max-flow."
+    },
+    {
+      "id": "q18",
+      "stem": "A network where every edge has unit capacity 1 will have:",
+      "choices": [
+        "Max flow >= number of edges",
+        "Max flow at most min(n, m)",
+        "An integer max flow value bounded by the number of edge-disjoint s-t paths",
+        "No min cut"
+      ],
+      "correctIndex": 2,
+      "explanation": "With unit capacities the max-flow value equals the maximum number of edge-disjoint s-t paths (Menger). Foundation of Week 7's reductions."
+    },
+    {
+      "id": "q19",
+      "stem": "In Ford-Fulkerson, the bottleneck of an augmenting path P is:",
+      "choices": [
+        "The maximum residual capacity on P",
+        "The minimum residual capacity on P",
+        "The total residual capacity of P",
+        "The length of P"
+      ],
+      "correctIndex": 1,
+      "explanation": "Bottleneck is the smallest residual capacity along P; this is how much you can push without violating capacity."
+    },
+    {
+      "id": "q20",
+      "stem": "Why does s-t cut capacity exclude B->A edges?",
+      "choices": [
+        "By convention",
+        "Because flow from B to A reduces, not increases, |f|; including those edges would not bound it properly",
+        "Because such edges do not exist",
+        "Mathematical convenience"
+      ],
+      "correctIndex": 1,
+      "explanation": "Net flow out of A is the A->B flow minus the B->A flow. Counting A->B capacity alone gives the right upper bound on flow."
+    },
+    {
+      "id": "q21",
+      "stem": "If max flow value is 7 and min cut capacity is 7, what does this confirm?",
+      "choices": [
+        "Both are at their optima",
+        "The algorithm is buggy",
+        "Capacities are integers",
+        "Flow value is even"
+      ],
+      "correctIndex": 0,
+      "explanation": "Strong duality: equality of flow and cut certifies both at optimum. This is the standard way to verify a max-flow answer on an exam."
+    },
+    {
+      "id": "q22",
+      "stem": "Ford-Fulkerson with irrational capacities may:",
+      "choices": [
+        "Always terminate",
+        "Fail to terminate on adversarial examples",
+        "Be exponential always",
+        "Be optimal in O(m)"
+      ],
+      "correctIndex": 1,
+      "explanation": "Famous example: with bad augmenting-path choice and irrational capacities, FF can keep augmenting forever. Edmonds-Karp avoids this."
+    },
+    {
+      "id": "q23",
+      "stem": "What is the value of an s-t flow?",
+      "choices": [
+        "Sum of capacities of all edges",
+        "Net flow out of s (equivalently, net flow into t)",
+        "Sum of flow on all edges",
+        "Sum of f(e) on edges out of t"
+      ],
+      "correctIndex": 1,
+      "explanation": "|f| is measured at s (or equivalently at t by conservation)."
+    },
+    {
+      "id": "q24",
+      "stem": "Which is FALSE about residual graphs?",
+      "choices": [
+        "G_f has the same vertex set as G",
+        "G_f has at most twice as many edges as G",
+        "G_f has residual capacities derived from f and c",
+        "G_f is undirected"
+      ],
+      "correctIndex": 3,
+      "explanation": "G_f is directed: forward edges represent slack, backward edges represent cancellation, and they are distinct."
+    },
+    {
+      "id": "q25",
+      "stem": "Which best characterises why Ford-Fulkerson's correctness proof yields the Max-Flow Min-Cut theorem 'for free'?",
+      "choices": [
+        "The termination argument constructs a cut with capacity equal to the final flow value",
+        "It uses linear programming duality",
+        "It enumerates all cuts",
+        "It assumes the theorem"
+      ],
+      "correctIndex": 0,
+      "explanation": "On termination the reachable-from-s set yields a cut whose capacity matches the flow value, simultaneously certifying max flow and min cut."
+    }
+  ]
+}

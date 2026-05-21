@@ -1,0 +1,307 @@
+{
+  "unit": "COMP3027",
+  "week": 11,
+  "topic": "Coping with hardness",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "When facing an NP-hard problem, the three classical coping options are:",
+      "choices": [
+        "Approximation / exponential exact / restricted inputs",
+        "Greedy / DP / divide-and-conquer",
+        "Sort / scan / hash",
+        "BFS / DFS / IDDFS"
+      ],
+      "correctIndex": 0,
+      "explanation": "Give up optimality, polynomial time, or generality. Week 11 explores the last option in depth."
+    },
+    {
+      "id": "q2",
+      "stem": "Unweighted IS on a tree can be solved by which technique?",
+      "choices": [
+        "DP",
+        "Greedy: include leaves, delete them and their parents, recurse",
+        "Brute force",
+        "Reduction to flow"
+      ],
+      "correctIndex": 1,
+      "explanation": "Exchange argument: there is always a max IS containing every leaf. Greedy O(n)."
+    },
+    {
+      "id": "q3",
+      "stem": "Why does the leaf-greedy fail for WEIGHTED IS on trees?",
+      "choices": [
+        "Sorting is too slow",
+        "A heavy non-leaf vertex can outweigh several lighter leaves; the swap argument no longer preserves weight",
+        "Leaves are not well-defined",
+        "Weights cause cycles"
+      ],
+      "correctIndex": 1,
+      "explanation": "Without unit weights the exchange may strictly decrease total weight; need DP."
+    },
+    {
+      "id": "q4",
+      "stem": "What is OPT_in(v) in the weighted IS tree DP?",
+      "choices": [
+        "Max IS weight in subtree rooted at v, including v",
+        "Number of vertices in v's subtree",
+        "Max IS weight in subtree rooted at v, excluding v",
+        "Sum of weights in v's subtree"
+      ],
+      "correctIndex": 0,
+      "explanation": "OPT_in(v) commits to v being selected, so all v's children must be excluded."
+    },
+    {
+      "id": "q5",
+      "stem": "What is OPT_out(v) in the weighted IS tree DP?",
+      "choices": [
+        "Max IS weight in subtree rooted at v, excluding v (children free)",
+        "Same as OPT_in(v)",
+        "0 always",
+        "Number of leaves"
+      ],
+      "correctIndex": 0,
+      "explanation": "Without v, each child is independently free to be in or out — take the max."
+    },
+    {
+      "id": "q6",
+      "stem": "Weighted IS on a tree runs in:",
+      "choices": [
+        "O(n)",
+        "O(n log n)",
+        "O(n^2)",
+        "O(2^n)"
+      ],
+      "correctIndex": 0,
+      "explanation": "Post-order traversal computes the DP in O(n) total time."
+    },
+    {
+      "id": "q7",
+      "stem": "Which class of graphs admits polynomial Vertex Cover via Konig's theorem?",
+      "choices": [
+        "Planar",
+        "Bipartite",
+        "Bounded degree",
+        "Sparse"
+      ],
+      "correctIndex": 1,
+      "explanation": "Konig's theorem in bipartite graphs equates max matching with min vertex cover, both polynomial."
+    },
+    {
+      "id": "q8",
+      "stem": "An FPT algorithm has running time of the form:",
+      "choices": [
+        "f(k) * poly(n)",
+        "poly(k, n)",
+        "n^k",
+        "2^n"
+      ],
+      "correctIndex": 0,
+      "explanation": "Fixed-Parameter Tractable separates the exponential dependence from n: f(k) can be huge, but poly(n) keeps it tractable when k is small."
+    },
+    {
+      "id": "q9",
+      "stem": "Vertex Cover has an FPT algorithm of what running time?",
+      "choices": [
+        "O(2^k * n)",
+        "O(2^n)",
+        "O(n^2)",
+        "O(n log n)"
+      ],
+      "correctIndex": 0,
+      "explanation": "Branch on any uncovered edge: try each endpoint in the cover (k decreases by 1); depth k tree, leaves at depth 0; total O(2^k * n)."
+    },
+    {
+      "id": "q10",
+      "stem": "Which problem is NOT a candidate for tree-DP coping?",
+      "choices": [
+        "Weighted IS on trees",
+        "Dominating Set on trees",
+        "TSP on general graphs",
+        "Min Vertex Cover on trees"
+      ],
+      "correctIndex": 2,
+      "explanation": "TSP on general graphs is NP-hard; tree DP applies only when input is a tree. The others have polynomial tree DP."
+    },
+    {
+      "id": "q11",
+      "stem": "Bounded treewidth gives polynomial-time algorithms because:",
+      "choices": [
+        "DP on the tree decomposition has work f(k) * poly(n) where k is the width",
+        "It is bipartite",
+        "It removes cycles",
+        "It is planar"
+      ],
+      "correctIndex": 0,
+      "explanation": "Tree decompositions yield DP on a tree-like structure; many NP-hard problems become polynomial when k is constant."
+    },
+    {
+      "id": "q12",
+      "stem": "Which is NOT a standard exact exponential approach for hard problems?",
+      "choices": [
+        "Branch-and-bound",
+        "Integer Linear Programming",
+        "Subset Sum DP O(nT)",
+        "Greedy approximation"
+      ],
+      "correctIndex": 3,
+      "explanation": "Greedy approximation gives up optimality, not polynomial time. The others are exact approaches (though may take exponential time)."
+    },
+    {
+      "id": "q13",
+      "stem": "When is restricting to trees a useful coping strategy?",
+      "choices": [
+        "When the input is guaranteed to be tree-structured (file systems, parse trees, phylogenetic trees, dependency graphs)",
+        "Always",
+        "When the graph is dense",
+        "When edges have weights"
+      ],
+      "correctIndex": 0,
+      "explanation": "Many real-world graphs are tree-structured; exploiting that lets you bypass general-graph NP-hardness."
+    },
+    {
+      "id": "q14",
+      "stem": "Why does the recurrence OPT_in(v) = w(v) + Sum OPT_out(c) over children c look the way it does?",
+      "choices": [
+        "Children may be either in or out",
+        "Including v forbids including any child (adjacent in the tree), so children must use OPT_out",
+        "Symmetry",
+        "Random ordering"
+      ],
+      "correctIndex": 1,
+      "explanation": "v in S excludes v's neighbours (its children in the rooted tree). Hence each child contributes its OPT_out value."
+    },
+    {
+      "id": "q15",
+      "stem": "What is the base case of the weighted IS tree DP?",
+      "choices": [
+        "OPT_in(leaf) = w(leaf); OPT_out(leaf) = 0",
+        "Both are 0",
+        "Both are w(leaf)",
+        "Undefined for leaves"
+      ],
+      "correctIndex": 0,
+      "explanation": "A leaf has no children; including it gives w(leaf), excluding gives 0."
+    },
+    {
+      "id": "q16",
+      "stem": "Which restricted class makes 3-COLOURING polynomial?",
+      "choices": [
+        "Planar graphs",
+        "Bipartite graphs (2-colourable)",
+        "General graphs",
+        "Dense graphs"
+      ],
+      "correctIndex": 1,
+      "explanation": "Bipartite graphs are 2-colourable; hence trivially 3-colourable. Planar 3-COLOURING is still NP-hard."
+    },
+    {
+      "id": "q17",
+      "stem": "Which best describes 'branch-and-bound'?",
+      "choices": [
+        "Systematic search that prunes via upper/lower bounds",
+        "A greedy heuristic",
+        "A reduction to flow",
+        "Approximation"
+      ],
+      "correctIndex": 0,
+      "explanation": "Branch-and-bound explores the solution tree; pruning at nodes whose best-case bound is worse than the current incumbent makes it practical on many instances."
+    },
+    {
+      "id": "q18",
+      "stem": "FPT in parameter k differs from XP because:",
+      "choices": [
+        "FPT separates k's exponential cost from n; XP allows n^k (parameter in the exponent of n)",
+        "FPT is approximate",
+        "XP is non-polynomial",
+        "FPT requires bipartite graphs"
+      ],
+      "correctIndex": 0,
+      "explanation": "FPT: f(k) * poly(n). XP: poly(n) with k in the exponent. FPT is much faster in n for fixed k."
+    },
+    {
+      "id": "q19",
+      "stem": "Which is the right evaluation order for the tree DP?",
+      "choices": [
+        "Pre-order from the root",
+        "Post-order (compute children before parent)",
+        "BFS from root",
+        "Random"
+      ],
+      "correctIndex": 1,
+      "explanation": "Post-order ensures every child's in/out is available before computing the parent."
+    },
+    {
+      "id": "q20",
+      "stem": "If a problem is NP-hard, you can always:",
+      "choices": [
+        "Solve it in O(n log n) on average",
+        "Use approximation, restricted inputs, or exact exponential algorithms to mitigate (depending on the problem)",
+        "Find a polynomial algorithm",
+        "Reduce to bipartite matching"
+      ],
+      "correctIndex": 1,
+      "explanation": "NP-hardness eliminates only one option (polynomial exact algorithm on general inputs). The other three coping strategies remain."
+    },
+    {
+      "id": "q21",
+      "stem": "Planar 3-COLOURING is:",
+      "choices": [
+        "Always satisfiable (since planar graphs are 4-colourable)",
+        "NP-hard, despite the input being planar",
+        "In P",
+        "Equivalent to bipartite matching"
+      ],
+      "correctIndex": 1,
+      "explanation": "Planarity does not always help — 3-COLOURING stays NP-hard on planar graphs (despite 4-colourability)."
+    },
+    {
+      "id": "q22",
+      "stem": "Which is the size of an optimal IS in the worked tree example (A-B, A-C, B-D, B-E with weights 5, 4, 2, 3, 3)?",
+      "choices": [
+        "8",
+        "11",
+        "13",
+        "5"
+      ],
+      "correctIndex": 1,
+      "explanation": "Select A, D, E giving 5 + 3 + 3 = 11. Bigger than excluding A (gives at most 4 + 2 = 6 from B + C, no — actually 6 + 2 = 8 from out(B) + in(C))."
+    },
+    {
+      "id": "q23",
+      "stem": "Which is NOT a 'restricted-instance' algorithmic class mentioned in Week 11?",
+      "choices": [
+        "Trees",
+        "Bipartite graphs",
+        "Bounded treewidth",
+        "Sparse arrays"
+      ],
+      "correctIndex": 3,
+      "explanation": "Sparse arrays is not a graph class. Trees, bipartite, planar, and bounded-treewidth are the standard restricted classes."
+    },
+    {
+      "id": "q24",
+      "stem": "If a problem has a kernel of size poly(k), what does this imply for FPT?",
+      "choices": [
+        "It is FPT because once kernelised to poly(k) size, any algorithm finishes in f(k) time",
+        "It is NP-hard",
+        "It has no FPT algorithm",
+        "It is undecidable"
+      ],
+      "correctIndex": 0,
+      "explanation": "Kernelisation reduces the instance to size depending only on k; brute force on the kernel then gives FPT runtime."
+    },
+    {
+      "id": "q25",
+      "stem": "Which tradeoff does the W12 'approximation algorithms' topic give up that W11 'restricted instances' does NOT?",
+      "choices": [
+        "Polynomial time",
+        "Optimality (W12 gives bounded approximation)",
+        "Correctness",
+        "Generality"
+      ],
+      "correctIndex": 1,
+      "explanation": "Approximation gives up optimality (returns within factor c); restricted instances keep optimality but limit inputs."
+    }
+  ]
+}

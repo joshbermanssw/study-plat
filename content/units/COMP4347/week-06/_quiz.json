@@ -1,0 +1,287 @@
+{
+  "unit": "COMP4347",
+  "week": 6,
+  "topic": "Sessions, routes, MVC",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "Which cookie attribute prevents `document.cookie` from reading it in JavaScript?",
+      "choices": ["Secure", "SameSite", "HttpOnly", "Path"],
+      "correctIndex": 2,
+      "explanation": "HttpOnly hides the cookie from the DOM API, which mitigates most XSS-based token theft."
+    },
+    {
+      "id": "q2",
+      "stem": "SameSite=Lax means the cookie is sent:",
+      "choices": [
+        "Never cross-site",
+        "On top-level navigations from other sites (e.g. clicking a link) but not on cross-site subresource requests or POSTs",
+        "Only on POSTs",
+        "Always"
+      ],
+      "correctIndex": 1,
+      "explanation": "Lax is the modern default: top-level GET navigations get the cookie; cross-site POSTs and embedded resources do not."
+    },
+    {
+      "id": "q3",
+      "stem": "A JWT consists of:",
+      "choices": [
+        "Two encrypted segments",
+        "Three base64url segments: header, payload, signature",
+        "An XML envelope",
+        "A SQL row id"
+      ],
+      "correctIndex": 1,
+      "explanation": "JWT format is base64url(header).base64url(payload).base64url(signature). Signature lets servers verify integrity without DB lookup."
+    },
+    {
+      "id": "q4",
+      "stem": "Which is the biggest downside of JWT vs server-side sessions?",
+      "choices": [
+        "Slower to verify",
+        "Hard to revoke before expiration without extra infrastructure",
+        "Cannot carry user data",
+        "Not supported by browsers"
+      ],
+      "correctIndex": 1,
+      "explanation": "JWTs are self-contained and valid until exp. Forcing logout requires a server-side blocklist, defeating the stateless advantage."
+    },
+    {
+      "id": "q5",
+      "stem": "Putting a JWT in localStorage exposes it to:",
+      "choices": ["CSRF", "XSS", "DNS hijacking", "TLS downgrade"],
+      "correctIndex": 1,
+      "explanation": "localStorage is readable by any JS on the page. An XSS payload can exfiltrate the token. It is immune to CSRF because the browser doesn't auto-send it."
+    },
+    {
+      "id": "q6",
+      "stem": "Which scenario is a textbook CSRF attack?",
+      "choices": [
+        "An attacker injects <script> via a search field",
+        "An attacker's site causes the victim's browser to POST /transfer to the victim's bank while authenticated",
+        "An attacker reads cookies via XSS",
+        "An attacker brute-forces a password"
+      ],
+      "correctIndex": 1,
+      "explanation": "CSRF rides on the auto-sent cookie. The victim is authenticated; the attacker site forges the request."
+    },
+    {
+      "id": "q7",
+      "stem": "Which defense alone is sufficient against most CSRF in 2026 browsers?",
+      "choices": [
+        "HTTPS",
+        "Cookie with SameSite=Lax (or Strict)",
+        "CORS only",
+        "Captcha on login"
+      ],
+      "correctIndex": 1,
+      "explanation": "SameSite=Lax blocks cross-site cookie sending on state-changing methods. Many apps add CSRF tokens as defense-in-depth."
+    },
+    {
+      "id": "q8",
+      "stem": "In MVC, the controller is responsible for:",
+      "choices": [
+        "Rendering HTML",
+        "Receiving the request, orchestrating models and views, returning the response",
+        "Storing the database schema",
+        "Routing TCP packets"
+      ],
+      "correctIndex": 1,
+      "explanation": "Controllers are the glue. Models hold data/business logic, views render output, controllers orchestrate."
+    },
+    {
+      "id": "q9",
+      "stem": "An app uses cookie sessions and needs to scale horizontally across 5 servers. What is required?",
+      "choices": [
+        "Disable cookies",
+        "A shared session store (e.g. Redis) or sticky sessions",
+        "Use TLS",
+        "Always 200 OK"
+      ],
+      "correctIndex": 1,
+      "explanation": "Sessions are stateful. Either every server reads from the same store, or load balancing pins each user to a server (sticky sessions)."
+    },
+    {
+      "id": "q10",
+      "stem": "Why is Secure essential for a session cookie?",
+      "choices": [
+        "It encrypts the cookie at rest",
+        "It tells the browser to only send the cookie over HTTPS, preventing leakage over plain HTTP",
+        "It binds the cookie to one user",
+        "It makes the cookie smaller"
+      ],
+      "correctIndex": 1,
+      "explanation": "Secure prevents the cookie being attached to http:// requests where a network attacker could observe it."
+    },
+    {
+      "id": "q11",
+      "stem": "What does the JWT signature prove?",
+      "choices": [
+        "That the payload was created by someone with the secret and has not been modified since",
+        "That the user is human",
+        "That the browser supports HTTPS",
+        "Nothing — it's optional"
+      ],
+      "correctIndex": 0,
+      "explanation": "HMAC/RSA over header+payload ensures integrity and authentic origin if the secret/private key was used."
+    },
+    {
+      "id": "q12",
+      "stem": "Which is the recommended modern auth setup for browser apps?",
+      "choices": [
+        "JWT in localStorage",
+        "Short-lived access token + refresh token, with the refresh stored as HttpOnly+Secure+SameSite=Strict cookie",
+        "Basic auth on every request",
+        "Session id in URL"
+      ],
+      "correctIndex": 1,
+      "explanation": "This pattern minimises XSS exposure (refresh inaccessible to JS) and CSRF (SameSite=Strict) while keeping the access path stateless."
+    },
+    {
+      "id": "q13",
+      "stem": "What does `req.session` come from in Express?",
+      "choices": [
+        "Built-in",
+        "express-session middleware that reads/writes a session store keyed by a cookie session id",
+        "JWT decoder",
+        "The browser"
+      ],
+      "correctIndex": 1,
+      "explanation": "express-session provides the abstraction: cookie carries the id, store holds the data, req.session is the proxy object."
+    },
+    {
+      "id": "q14",
+      "stem": "Synchronizer CSRF token defense works because:",
+      "choices": [
+        "The token is encrypted",
+        "Cross-origin attackers cannot read the page to extract the token they need to include in their forged request",
+        "Tokens are random",
+        "Browsers reject all cross-origin POSTs"
+      ],
+      "correctIndex": 1,
+      "explanation": "Same-Origin Policy stops evil.com from reading bank.com's HTML to extract the token, so the forged request lacks the required token."
+    },
+    {
+      "id": "q15",
+      "stem": "Which DELETE /users/:id status code is best when the user did not exist?",
+      "choices": ["200 OK", "204 No Content", "404 Not Found", "409 Conflict"],
+      "correctIndex": 2,
+      "explanation": "404 is correct — the resource isn't there. 204 is for a successful delete with no body."
+    },
+    {
+      "id": "q16",
+      "stem": "Stateful (server-session) auth is preferable when:",
+      "choices": [
+        "You need fine-grained immediate revocation",
+        "You run thousands of stateless microservices",
+        "You don't have any backend storage",
+        "Tokens must be very large"
+      ],
+      "correctIndex": 0,
+      "explanation": "Deleting the session record kills access instantly across all servers reading the store."
+    },
+    {
+      "id": "q17",
+      "stem": "What's the purpose of separating routes/ and controllers/ files?",
+      "choices": [
+        "Performance",
+        "Routes wire verbs+paths to controllers; separation makes paths discoverable and controllers reusable/testable",
+        "It is required by Express",
+        "It avoids security issues"
+      ],
+      "correctIndex": 1,
+      "explanation": "The split lets you find every endpoint in one place and unit-test controllers without spinning up an HTTP server."
+    },
+    {
+      "id": "q18",
+      "stem": "Which HTTP method is appropriate for logging out?",
+      "choices": ["GET /logout", "POST /logout", "PUT /logout", "DELETE /session"],
+      "correctIndex": 1,
+      "explanation": "Logout is a state change. POST avoids GET prefetching/CSRF-via-image issues. DELETE /session is also acceptable RESTfully."
+    },
+    {
+      "id": "q19",
+      "stem": "An attacker steals the JWT signing secret. What is the impact?",
+      "choices": [
+        "They can read all data in transit",
+        "They can mint valid tokens for any user identity",
+        "Nothing — they need the user's password too",
+        "Only the next token is compromised"
+      ],
+      "correctIndex": 1,
+      "explanation": "HMAC secrets are symmetric: holder can sign arbitrary tokens. Rotate the secret immediately, invalidating all outstanding tokens."
+    },
+    {
+      "id": "q20",
+      "stem": "Why call `req.session.regenerate()` after login?",
+      "choices": [
+        "To refresh the timestamp",
+        "To rotate the session id, preventing session-fixation attacks",
+        "To save bandwidth",
+        "Required by Express"
+      ],
+      "correctIndex": 1,
+      "explanation": "If an attacker pre-set the victim's session id via fixation, regeneration after privilege change defeats them."
+    },
+    {
+      "id": "q21",
+      "stem": "Which is true about cookies and CORS?",
+      "choices": [
+        "Cookies are automatically sent on all cross-origin fetches",
+        "Cross-origin fetch sends cookies only if credentials: 'include' is set AND the server allows Access-Control-Allow-Credentials",
+        "CORS disables cookies",
+        "Cookies require a preflight"
+      ],
+      "correctIndex": 1,
+      "explanation": "Cross-origin fetches omit cookies by default. Both client opt-in and server allow header are required."
+    },
+    {
+      "id": "q22",
+      "stem": "The double-submit cookie pattern places the CSRF token in:",
+      "choices": [
+        "Only a cookie",
+        "Only a form field",
+        "Both a cookie and a request header/field; server checks they match",
+        "The URL"
+      ],
+      "correctIndex": 2,
+      "explanation": "Attackers can't read the cookie value cross-origin, so they can't replicate it in a header — match check defends without server state."
+    },
+    {
+      "id": "q23",
+      "stem": "Why test controllers separately from routes?",
+      "choices": [
+        "Routes have no logic; controllers contain decisions worth covering with unit tests",
+        "Routes can't be tested",
+        "Controllers can't be tested",
+        "Tests need a database"
+      ],
+      "correctIndex": 0,
+      "explanation": "Controllers carry validation, branching, and orchestration. Routes are wiring. Test the brains, not the wires."
+    },
+    {
+      "id": "q24",
+      "stem": "An app sets Set-Cookie: sid=abc; (no attributes). Why is this insecure?",
+      "choices": [
+        "It expires too soon",
+        "Missing Secure (sent over HTTP), HttpOnly (readable by JS), and SameSite (default may vary) — leaves all common attack paths open",
+        "Cookie name is too short",
+        "It cannot be parsed"
+      ],
+      "correctIndex": 1,
+      "explanation": "Production session cookies should always be HttpOnly, Secure, and SameSite-restricted at minimum."
+    },
+    {
+      "id": "q25",
+      "stem": "In a JWT, where should the user role/permissions live?",
+      "choices": [
+        "Header",
+        "Payload (claims)",
+        "Signature",
+        "Outside the token"
+      ],
+      "correctIndex": 1,
+      "explanation": "The payload (claims set) carries data like sub, role, exp. Header carries algorithm metadata; signature is opaque cryptographic output."
+    }
+  ]
+}

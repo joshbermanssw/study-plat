@@ -17,7 +17,7 @@ fileContentType: application/pdf
 
 Lecture 7 applies max-flow / min-cut as a reduction target: model a combinatorial problem as flow on a constructed graph, solve with Ford-Fulkerson / Edmonds-Karp, decode the solution.
 
-- **Bipartite Matching:** add super-source s → L, R → super-sink t, unit capacities; max matching = max integer flow. Integrality of FF + unit capacities ⇒ each f(e) ∈ {0,1} ⇒ matching encoding works. Runtime O(mn).
+- **Bipartite Matching:** add super-source s → L, R → super-sink t, unit capacities; max matching = max integer flow. Integrality of FF + unit capacities ⇒ each f(e) ∈ &#123;0,1&#125; ⇒ matching encoding works. Runtime O(mn).
 - **König's theorem / vertex cover:** in bipartite graphs, max matching = min vertex cover by min-cut duality.
 - **Reduction template:** (1) transform instance to flow network, (2) run max-flow, (3) decode flow into a feasible solution; prove correctness via two-way inequalities (any solution ≤ flow, any flow ≤ solution).
 - **Disjoint paths / network connectivity (Menger):** max edge-disjoint s-t paths = min edge cut, via unit-capacity reduction to max-flow.

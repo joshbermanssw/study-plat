@@ -1,0 +1,307 @@
+{
+  "unit": "COMP3027",
+  "week": 12,
+  "topic": "Approximation and online algorithms",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "An algorithm is a c-approximation for a minimisation problem iff:",
+      "choices": [
+        "ALG(I) <= c * OPT(I) for every instance I",
+        "ALG(I) >= c * OPT(I) for every I",
+        "ALG converges to OPT",
+        "ALG runs in O(c * n) time"
+      ],
+      "correctIndex": 0,
+      "explanation": "c-approximation: worst-case ratio bound. Smaller c is better; c >= 1 for minimisation."
+    },
+    {
+      "id": "q2",
+      "stem": "What is the approximation ratio of the matching-based VC algorithm (pick uncovered edge, add both endpoints)?",
+      "choices": [
+        "1",
+        "2",
+        "log n",
+        "sqrt(n)"
+      ],
+      "correctIndex": 1,
+      "explanation": "2-approx: |C| = 2|M|, and any VC has |S| >= |M|, so |C| <= 2|OPT|."
+    },
+    {
+      "id": "q3",
+      "stem": "What is the lower bound on OPT used in the VC 2-approximation proof?",
+      "choices": [
+        "Number of vertices",
+        "Number of edges",
+        "Size of the maximal matching produced by the algorithm",
+        "Number of triangles"
+      ],
+      "correctIndex": 2,
+      "explanation": "Any VC must include at least one endpoint per matched edge, so |OPT| >= |M|."
+    },
+    {
+      "id": "q4",
+      "stem": "Weighted Vertex Cover by pricing method achieves what ratio?",
+      "choices": [
+        "1.5",
+        "2",
+        "ln n",
+        "sqrt(n)"
+      ],
+      "correctIndex": 1,
+      "explanation": "Pricing / LP rounding: w(C) <= 2 * sum p_e <= 2 * w(OPT)."
+    },
+    {
+      "id": "q5",
+      "stem": "In the pricing method, a vertex is 'tight' when:",
+      "choices": [
+        "It has degree at least 2",
+        "Sum of p_e on incident edges equals its weight w_i",
+        "All adjacent edges have price 0",
+        "It is in the cover"
+      ],
+      "correctIndex": 1,
+      "explanation": "Tight = its weight budget is fully allocated to incident edge prices. The algorithm outputs all tight vertices."
+    },
+    {
+      "id": "q6",
+      "stem": "Greedy Set Cover's approximation ratio is:",
+      "choices": [
+        "2",
+        "ln n + O(1) = H_n",
+        "O(1)",
+        "log log n"
+      ],
+      "correctIndex": 1,
+      "explanation": "Greedy picks the most cost-effective set each step; charging gives an H_n approximation. Tight unless P = NP."
+    },
+    {
+      "id": "q7",
+      "stem": "Greedy Set Cover picks at each step the set with:",
+      "choices": [
+        "Lowest cost",
+        "Most elements",
+        "Lowest cost per newly-covered element",
+        "Random selection"
+      ],
+      "correctIndex": 2,
+      "explanation": "Cost-effectiveness = cost / |newly covered|. This local choice gives the H_n bound."
+    },
+    {
+      "id": "q8",
+      "stem": "Metric TSP has a 2-approximation via:",
+      "choices": [
+        "MST, doubling edges, Eulerian tour, shortcut by triangle inequality",
+        "Brute force",
+        "Random tour",
+        "Linear programming relaxation"
+      ],
+      "correctIndex": 0,
+      "explanation": "MST <= OPT; doubling gives Eulerian; shortcutting (triangle inequality) gives a Hamilton tour of weight <= 2 MST <= 2 OPT."
+    },
+    {
+      "id": "q9",
+      "stem": "List scheduling on identical machines yields what approximation ratio for makespan?",
+      "choices": [
+        "1",
+        "2",
+        "log m",
+        "3/2"
+      ],
+      "correctIndex": 1,
+      "explanation": "Assigning each job to the least-loaded machine gives a 2-approx; LPT improves to 4/3 (or 3/2 generally)."
+    },
+    {
+      "id": "q10",
+      "stem": "The competitive ratio of an online algorithm compares it to:",
+      "choices": [
+        "Its own average",
+        "The offline optimal",
+        "Brute force",
+        "Random guessing"
+      ],
+      "correctIndex": 1,
+      "explanation": "Competitive ratio = ALG(I) / OPT(I), where OPT has full input in advance."
+    },
+    {
+      "id": "q11",
+      "stem": "What is the competitive ratio of the optimal deterministic ski-rental algorithm?",
+      "choices": [
+        "1",
+        "2",
+        "B",
+        "log B"
+      ],
+      "correctIndex": 1,
+      "explanation": "Rent until you've spent B; then buy. Worst case ALG = 2B, OPT = B."
+    },
+    {
+      "id": "q12",
+      "stem": "Why is OPT not directly computable in an approximation analysis?",
+      "choices": [
+        "It is undefined",
+        "Computing OPT is the NP-hard problem we are trying to bypass",
+        "OPT is irrational",
+        "It is too small"
+      ],
+      "correctIndex": 1,
+      "explanation": "If OPT were computable in polynomial time we wouldn't need an approximation. The proof uses a structural lower bound instead."
+    },
+    {
+      "id": "q13",
+      "stem": "The 'fairness inequality' in the pricing method states:",
+      "choices": [
+        "sum of p_e >= w(S) for any vertex cover S",
+        "sum of p_e <= w(S) for any vertex cover S",
+        "Edges have equal prices",
+        "Every vertex is tight"
+      ],
+      "correctIndex": 1,
+      "explanation": "Each S must pay for every edge at least once via the tightness of its vertices, so w(S) >= sum p_e. This bounds OPT from below."
+    },
+    {
+      "id": "q14",
+      "stem": "Which algorithm achieves a 3/2-approximation for metric TSP?",
+      "choices": [
+        "Greedy nearest neighbour",
+        "Christofides (MST + min matching on odd-degree vertices)",
+        "Held-Karp DP",
+        "Random tour"
+      ],
+      "correctIndex": 1,
+      "explanation": "Christofides uses an MST plus a minimum-weight perfect matching on odd-degree vertices to obtain a 3/2-approx for metric TSP."
+    },
+    {
+      "id": "q15",
+      "stem": "Why is the VC 2-approximation considered 'tight'?",
+      "choices": [
+        "Algorithmic constant cannot be improved by any polynomial algorithm (under UGC)",
+        "It cannot be implemented",
+        "It runs in O(m)",
+        "Random"
+      ],
+      "correctIndex": 0,
+      "explanation": "Khot's Unique Games Conjecture implies no polynomial algorithm achieves ratio better than 2; a disjoint-edge family achieves the bound."
+    },
+    {
+      "id": "q16",
+      "stem": "Greedy Set Cover ratio H_n is tight in what sense?",
+      "choices": [
+        "There is an explicit instance family approaching H_n",
+        "Asymptotic only",
+        "Probabilistic only",
+        "Unique"
+      ],
+      "correctIndex": 0,
+      "explanation": "Classic instance families (e.g., 'geometrically nested sets') approach the H_n bound. Hardness results show no o(ln n) algorithm exists under P != NP."
+    },
+    {
+      "id": "q17",
+      "stem": "Which problem does NOT have a constant-factor approximation in this unit?",
+      "choices": [
+        "Vertex Cover",
+        "Metric TSP",
+        "Set Cover",
+        "Load Balancing"
+      ],
+      "correctIndex": 2,
+      "explanation": "Set Cover's best polynomial approximation is H_n = log n. The others have constant factor algorithms (2, 3/2, 2)."
+    },
+    {
+      "id": "q18",
+      "stem": "Which is a STRUCTURAL lower bound on OPT for VC?",
+      "choices": [
+        "Number of vertices",
+        "Size of any matching",
+        "Number of triangles",
+        "Diameter"
+      ],
+      "correctIndex": 1,
+      "explanation": "VC must hit every matching edge; any matching's size is a valid lower bound on |OPT|."
+    },
+    {
+      "id": "q19",
+      "stem": "An online algorithm 'commits irrevocably' means:",
+      "choices": [
+        "Decisions cannot be revoked once made",
+        "Decisions are random",
+        "The input is shuffled",
+        "There is no offline OPT"
+      ],
+      "correctIndex": 0,
+      "explanation": "Online's defining constraint: as input arrives, the algorithm chooses; later input cannot retroactively change earlier choices."
+    },
+    {
+      "id": "q20",
+      "stem": "Why is greedy Set Cover analysis a 'charging argument'?",
+      "choices": [
+        "Each element pays a share of its set's cost; summing charges gives ALG, and bounding charges by 1/(remaining covered) gives the H_n term",
+        "It uses LP duality",
+        "It is randomised",
+        "It uses inversions"
+      ],
+      "correctIndex": 0,
+      "explanation": "Charging elements with the per-element cost at the time they get covered totals ALG; the harmonic bound on per-element charges gives H_n * OPT."
+    },
+    {
+      "id": "q21",
+      "stem": "LPT (Longest Processing Time first) for makespan on identical machines:",
+      "choices": [
+        "Is optimal",
+        "Achieves 4/3-approximation (and 3/2 in some analyses)",
+        "Has ratio log n",
+        "Is exponential"
+      ],
+      "correctIndex": 1,
+      "explanation": "LPT sorts jobs longest-first, then list-schedules. Tighter analysis gives 4/3 (or 3/2 worst case)."
+    },
+    {
+      "id": "q22",
+      "stem": "The optimal competitive ratio for online paging with cache size k against arbitrary requests is:",
+      "choices": [
+        "1",
+        "k",
+        "log k",
+        "n"
+      ],
+      "correctIndex": 1,
+      "explanation": "LRU is k-competitive; no deterministic online algorithm does better against the worst-case request sequence."
+    },
+    {
+      "id": "q23",
+      "stem": "Why does a constant offset in the image-segmentation reduction not affect the ratio guarantee in Week 12-style approximation analysis?",
+      "choices": [
+        "Constants do not change",
+        "Constants do not appear here; image segmentation is solved exactly via min-cut",
+        "It is randomised",
+        "It uses LP relaxation"
+      ],
+      "correctIndex": 1,
+      "explanation": "Image segmentation has a polynomial exact algorithm via min-cut. No approximation needed."
+    },
+    {
+      "id": "q24",
+      "stem": "An algorithm with competitive ratio strictly greater than 1 means:",
+      "choices": [
+        "It always loses to OPT by a factor",
+        "It can be worse than OPT but by a bounded factor on any input",
+        "It does not run online",
+        "It is randomised"
+      ],
+      "correctIndex": 1,
+      "explanation": "Competitive ratio c > 1 says ALG <= c * OPT; on some inputs the gap is achieved, but it never exceeds c."
+    },
+    {
+      "id": "q25",
+      "stem": "Which is the cleanest way to PROVE tightness of a c-approximation?",
+      "choices": [
+        "Empirical testing",
+        "Construct an instance family where ALG / OPT approaches c",
+        "Use NP-hardness",
+        "Run experiments"
+      ],
+      "correctIndex": 1,
+      "explanation": "Tightness needs an adversarial input that matches the worst-case ratio; for VC's 2-approx, disjoint K_2's suffice."
+    }
+  ]
+}

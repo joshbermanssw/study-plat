@@ -1,0 +1,307 @@
+{
+  "unit": "COMP3027",
+  "week": 1,
+  "topic": "Algorithms and complexity",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "Which statement is the formal definition of T(n) = O(f(n))?",
+      "choices": [
+        "There exist c, n0 > 0 such that T(n) <= c f(n) for all n >= n0",
+        "There exist c, n0 > 0 such that T(n) >= c f(n) for all n >= n0",
+        "lim_{n->inf} T(n)/f(n) = 0",
+        "T(n) and f(n) differ by at most a constant for all n"
+      ],
+      "correctIndex": 0,
+      "explanation": "O is an asymptotic upper bound: a constant multiple of f eventually dominates T. Option 1 is the standard definition; option 2 is Omega; option 3 is little-o."
+    },
+    {
+      "id": "q2",
+      "stem": "Which of the following is a tight bound, not merely an upper bound?",
+      "choices": [
+        "O(n)",
+        "Omega(n)",
+        "Theta(n)",
+        "o(n)"
+      ],
+      "correctIndex": 2,
+      "explanation": "Theta gives matching upper and lower bounds. O is upper only, Omega is lower only, o is strict upper."
+    },
+    {
+      "id": "q3",
+      "stem": "What is the running time of the standard divide-and-conquer maximum subarray algorithm?",
+      "choices": [
+        "Theta(n)",
+        "Theta(n log n)",
+        "Theta(n^2)",
+        "Theta(n^3)"
+      ],
+      "correctIndex": 1,
+      "explanation": "Two recursive calls on halves plus a linear combine gives T(n) = 2T(n/2) + Theta(n), which solves to Theta(n log n) by the master theorem."
+    },
+    {
+      "id": "q4",
+      "stem": "Kadane's linear-time algorithm uses the recurrence OPT[i] = max(OPT[i-1] + A[i], A[i]). What is OPT[i] semantically?",
+      "choices": [
+        "Maximum subarray sum among all subarrays of A[1..i]",
+        "Maximum subarray sum ending exactly at index i",
+        "Sum of the prefix A[1..i]",
+        "Largest single element in A[1..i]"
+      ],
+      "correctIndex": 1,
+      "explanation": "OPT[i] is the best subarray sum that must end at position i. The global answer is max_i OPT[i]."
+    },
+    {
+      "id": "q5",
+      "stem": "Which is the correct ordering of growth rates from slowest to fastest?",
+      "choices": [
+        "log n, n, n log n, n^2, 2^n, n!",
+        "n, log n, n log n, n^2, n!, 2^n",
+        "log n, n log n, n, n^2, n!, 2^n",
+        "log n, n, n^2, n log n, 2^n, n!"
+      ],
+      "correctIndex": 0,
+      "explanation": "Standard ordering: log n < n < n log n < n^2 < 2^n < n! for sufficiently large n."
+    },
+    {
+      "id": "q6",
+      "stem": "An algorithm with running time O(nW) on 0/1 Knapsack (W = capacity) is called:",
+      "choices": [
+        "Polynomial",
+        "Pseudo-polynomial",
+        "Strongly polynomial",
+        "Logarithmic"
+      ],
+      "correctIndex": 1,
+      "explanation": "Input size for W is log W bits, so O(nW) is exponential in input size — pseudo-polynomial. This is why Knapsack is NP-complete despite an O(nW) DP."
+    },
+    {
+      "id": "q7",
+      "stem": "Which of the following statements about O-notation is FALSE?",
+      "choices": [
+        "If T = O(f) and f = O(g), then T = O(g)",
+        "O(f) + O(g) = O(max(f, g))",
+        "If T = O(n^2) then T = Theta(n^2)",
+        "O(f) * O(g) = O(f g)"
+      ],
+      "correctIndex": 2,
+      "explanation": "Big-O is only an upper bound; T = O(n^2) leaves room for T to be linear. Transitivity, sum, and product rules all hold."
+    },
+    {
+      "id": "q8",
+      "stem": "Why does Algorithm Design treat polynomial time as the threshold of 'efficient'?",
+      "choices": [
+        "Polynomial-time algorithms always run quickly in practice",
+        "Polynomial functions are closed under composition and the class P is machine-independent",
+        "Polynomials avoid floating-point error",
+        "Exponential algorithms cannot be implemented"
+      ],
+      "correctIndex": 1,
+      "explanation": "Closure under composition plus robustness across reasonable machine models (Cobham-Edmonds thesis) make P a stable notion of tractability."
+    },
+    {
+      "id": "q9",
+      "stem": "What is the running time of the naive O(n^3) maximum subarray algorithm?",
+      "choices": [
+        "Theta(n^2)",
+        "Theta(n^2 log n)",
+        "Theta(n^3)",
+        "Theta(n^4)"
+      ],
+      "correctIndex": 2,
+      "explanation": "Three nested loops over O(n) range each yield Theta(n^3) work."
+    },
+    {
+      "id": "q10",
+      "stem": "Which two pieces of analysis must accompany every algorithm in this unit?",
+      "choices": [
+        "Code listing and unit tests",
+        "Worst-case time bound and average-case time bound",
+        "Proof of correctness and worst-case resource bound",
+        "Big-O bound and big-Omega bound on space"
+      ],
+      "correctIndex": 2,
+      "explanation": "The unit is explicit: every algorithm is judged on correctness (proof) plus worst-case time (resource bound)."
+    },
+    {
+      "id": "q11",
+      "stem": "Suppose T(n) = 3n^2 + 100 n log n + 5n. Which is the tightest correct statement?",
+      "choices": [
+        "T(n) = O(n)",
+        "T(n) = Theta(n log n)",
+        "T(n) = Theta(n^2)",
+        "T(n) = Omega(n^3)"
+      ],
+      "correctIndex": 2,
+      "explanation": "The 3n^2 term dominates; lower-order terms drop and constants are absorbed."
+    },
+    {
+      "id": "q12",
+      "stem": "Which of the following best describes the difference between an 'algorithm' and an 'implementation'?",
+      "choices": [
+        "There is no difference",
+        "An algorithm is the mathematical recipe; an implementation is a particular realisation in code on a machine",
+        "An implementation always runs faster than the abstract algorithm",
+        "Algorithms only exist in pseudocode"
+      ],
+      "correctIndex": 1,
+      "explanation": "The abstraction barrier matters: correctness and complexity are stated about the algorithm; implementations vary by language, compiler and hardware."
+    },
+    {
+      "id": "q13",
+      "stem": "How many bits are required to encode an integer in the range [1, W]?",
+      "choices": [
+        "O(1)",
+        "O(log W)",
+        "O(W)",
+        "O(W log W)"
+      ],
+      "correctIndex": 1,
+      "explanation": "Binary encoding of a value W uses ceil(log2 W) + 1 bits, i.e. O(log W). This is the key input-size measure for pseudo-polynomial analyses."
+    },
+    {
+      "id": "q14",
+      "stem": "Which recurrence describes the divide-and-conquer maximum subarray algorithm?",
+      "choices": [
+        "T(n) = T(n/2) + O(1)",
+        "T(n) = 2 T(n/2) + O(1)",
+        "T(n) = 2 T(n/2) + O(n)",
+        "T(n) = T(n-1) + O(n)"
+      ],
+      "correctIndex": 2,
+      "explanation": "Two recursive halves plus a linear combine (best left-suffix + right-prefix) give T(n) = 2T(n/2) + O(n), solving to O(n log n)."
+    },
+    {
+      "id": "q15",
+      "stem": "If T(n) = O(n) and S(n) = O(n^2), what is the best bound on T(n) + S(n)?",
+      "choices": [
+        "O(n)",
+        "O(n^2)",
+        "O(n^3)",
+        "O(2^n)"
+      ],
+      "correctIndex": 1,
+      "explanation": "Sum rule: O(f) + O(g) = O(max(f, g)) = O(n^2)."
+    },
+    {
+      "id": "q16",
+      "stem": "Which of these is NOT a property of Big-Theta?",
+      "choices": [
+        "Reflexive",
+        "Symmetric",
+        "Transitive",
+        "Antisymmetric"
+      ],
+      "correctIndex": 3,
+      "explanation": "Big-Theta is an equivalence relation: reflexive, symmetric, transitive. It is not antisymmetric (many distinct functions are mutually Theta-equivalent)."
+    },
+    {
+      "id": "q17",
+      "stem": "What does it mean to say 'algorithm A is asymptotically faster than B'?",
+      "choices": [
+        "A's running time is smaller than B's on every input",
+        "A's running time grows slower than B's as n -> infinity (eventually)",
+        "A uses fewer instructions per iteration",
+        "A is implemented in a faster programming language"
+      ],
+      "correctIndex": 1,
+      "explanation": "Asymptotic comparison is about growth rate for large n, ignoring constants and small-n behaviour."
+    },
+    {
+      "id": "q18",
+      "stem": "Which is the correct minimum pass mark on the supervised final exam in COMP3027?",
+      "choices": [
+        "30%",
+        "40%",
+        "50%",
+        "60%"
+      ],
+      "correctIndex": 1,
+      "explanation": "School policy: at least 40% on the final exam is required to pass, regardless of total mark."
+    },
+    {
+      "id": "q19",
+      "stem": "For the cubic max-subarray algorithm, the innermost loop is recomputing what?",
+      "choices": [
+        "The sorted order of A",
+        "The sum A[i] + ... + A[j] from scratch",
+        "The maximum element of A[1..i]",
+        "The recursion tree"
+      ],
+      "correctIndex": 1,
+      "explanation": "Each iteration restarts the inner sum, doing O(n) work that the quadratic version absorbs by maintaining a running total."
+    },
+    {
+      "id": "q20",
+      "stem": "Which of the following is true about T(n) = n log n?",
+      "choices": [
+        "n log n = O(n)",
+        "n log n = Omega(n^2)",
+        "n log n = O(n^2)",
+        "n log n = Theta(n)"
+      ],
+      "correctIndex": 2,
+      "explanation": "n log n grows faster than n but slower than any n^{1+epsilon}, so it is O(n^2) but not O(n) or Omega(n^2)."
+    },
+    {
+      "id": "q21",
+      "stem": "Which problem framing pattern best fits 'three abstractions' from Lecture 1?",
+      "choices": [
+        "Greedy / DP / Divide-and-conquer",
+        "P / NP / NP-complete",
+        "Problem / Algorithm / Analysis",
+        "Input / Output / Side-effects"
+      ],
+      "correctIndex": 2,
+      "explanation": "Lecture 1 names the three abstractions as problem (input/output spec), algorithm (recipe), and analysis (proof + bound)."
+    },
+    {
+      "id": "q22",
+      "stem": "Which best characterises when log-factor differences matter in practice?",
+      "choices": [
+        "Never; constants dominate",
+        "Only for tiny inputs",
+        "When n is very large, e.g. n = 10^6 or more, factor of ~20 can be the difference between minutes and seconds",
+        "Only on parallel machines"
+      ],
+      "correctIndex": 2,
+      "explanation": "At n = 10^6 a log-factor is ~20x; combined with constants this swings real running time considerably."
+    },
+    {
+      "id": "q23",
+      "stem": "If an algorithm's runtime is T(n) = 2^{log n} * n, what is its asymptotic class?",
+      "choices": [
+        "Theta(n)",
+        "Theta(n log n)",
+        "Theta(n^2)",
+        "Theta(2^n)"
+      ],
+      "correctIndex": 2,
+      "explanation": "2^{log n} = n, so T(n) = n * n = Theta(n^2)."
+    },
+    {
+      "id": "q24",
+      "stem": "Which is NOT a standard step in stating a problem precisely?",
+      "choices": [
+        "Specify the input type and constraints",
+        "Specify the desired output and what counts as correct",
+        "Specify the running-time bound expected",
+        "Provide reference Python code"
+      ],
+      "correctIndex": 3,
+      "explanation": "A problem is a mathematical specification of inputs and outputs; code is part of an implementation, not the problem definition."
+    },
+    {
+      "id": "q25",
+      "stem": "Why is worst-case (rather than average-case) the default analysis lens in this unit?",
+      "choices": [
+        "Worst case is easier to compute",
+        "It gives guarantees that hold for every input, including adversarial ones",
+        "Average case is undefined",
+        "Worst case equals average case for most algorithms"
+      ],
+      "correctIndex": 1,
+      "explanation": "Worst-case bounds are robust: a worst-case bound holds for any input distribution, including adversarial workloads."
+    }
+  ]
+}

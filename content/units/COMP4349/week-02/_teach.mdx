@@ -1,0 +1,316 @@
+---
+title: "Week 2 — Cloud Storage"
+unit: COMP4349
+week: 2
+type: overview
+status: done
+---
+
+Week 2 zooms in on storage — the layer that everything else (compute, databases, serverless) relies on. The goal is to be able to pick the right storage *type* (object/block/file/archive) and the right storage *class* (Standard/IA/Glacier) for a workload, and to reason about durability, consistency, versioning, replication, and lifecycle behaviour. The exam loves storage-class trade-off questions and "what happens to the delete marker?" mechanics, so internalise the table at the end.
+
+## Cloud storage taxonomy — object vs block vs file vs archive
+
+Storage in AWS comes in four flavours, and each one is built for a different access pattern:
+
+- **Object storage** (Amazon S3): data is stored as immutable objects in a flat namespace. To change one byte you must rewrite the whole object. Accessed via HTTPS APIs (GET/PUT/POST/DELETE), not mounted. Unlimited capacity. Higher latency (tens of ms). Ideal for media files, backups, logs, data lakes.
+- **Block storage** (Amazon EBS, EC2 Instance Store): data is exposed as raw block devices the operating system formats and mounts. Updates change individual blocks (sectors). Attached to one instance at a time (EBS Multi-Attach is the exception). Low latency. Ideal for database files, OS root volumes, anything that needs `fsync()`.
+- **File storage** (Amazon EFS, FSx): data is exposed via NFSv4.1 (EFS), SMB (FSx for Windows), or Lustre (FSx for Lustre). Multiple clients can mount the same filesystem concurrently. Mid-latency. Ideal for content management systems, home directories, shared analytics scratch space.
+- **Archive storage** (S3 Glacier tiers): object storage with longer retrieval latency (minutes to hours) and dramatically lower price per GB. Ideal for compliance archives, long-term backups, anything you must keep but rarely read.
+
+Pitfall: students sometimes think "S3 is just a filesystem with extra steps." It is not — there is no atomic rename, no partial-file update, no POSIX semantics. If your application needs `fopen()/fwrite()/fclose()` you need EFS, EBS, or FSx, not S3.
+
+```text
+Service          Type     Mount?         Latency      Cost (rough)    Max size
+S3               Object   No (HTTPS)     High         Very low        Unlimited
+EBS (gp3)        Block    1 instance     Low          Low             16 TiB
+Instance Store   Block    Local          Very low     Free w/ instance Up to ~300 TB
+EFS              File     Many (NFSv4)   Medium       Medium          Unlimited
+```
+
+## Amazon S3 — the distributed object store
+
+S3 (Simple Storage Service) was launched with EC2 in 2006 and is the canonical AWS service. A few mental models you must hold:
+
+- **Buckets** are top-level containers. Names are **globally unique across all AWS accounts** (because the name appears in the URL). Buckets live in exactly one Region.
+- **Objects** consist of a unique key (the path), metadata (size, content-type, custom headers), and the content itself (0 bytes to 5 TB).
+- The namespace is **flat**, not hierarchical. `photos/2024/cat.jpg` looks like a folder structure but it is just a key — the `/` characters carry no special meaning. The console renders prefixes as folders, but `LIST` operations actually use `prefix=` filters on the key string.
+- The URL form is virtual-hosted style: `https://<bucket>.s3.<region>.amazonaws.com/<key>`. The older path style `https://s3.<region>.amazonaws.com/<bucket>/<key>` is deprecated for new buckets.
+
+Why does S3 use this flat-key model? Because there is no central directory tree to lock when a new object is added. Different objects with the same prefix can live on completely different storage nodes. That is what lets S3 scale to trillions of objects.
+
+```bash
+aws s3 mb s3://my-globally-unique-bucket
+aws s3 cp ./report.pdf s3://my-globally-unique-bucket/2026/may/report.pdf
+aws s3 ls s3://my-globally-unique-bucket/2026/ --recursive
+aws s3 presign s3://my-globally-unique-bucket/2026/may/report.pdf --expires-in 3600
+```
+
+### Durability, availability and the 11 nines
+
+S3 Standard is "designed for 99.999999999% (11 nines) durability and 99.99% availability" of objects over a year. The 11 nines come from replicating each object across at least three Availability Zones within the Region. Even if a whole AZ fails you do not lose data, and you keep read/write access from the other AZs.
+
+Pitfall: durability and availability are different metrics. 11 nines durability means losing an object is roughly a 1-in-100-billion event per year; 4 nines availability means there can be ~52 minutes per year where you cannot read or write. Replication does not give you HA against a Region-wide outage — for that you need cross-Region replication (CRR).
+
+### Strong consistency since December 2020
+
+Until December 2020, S3 gave read-after-write consistency for new objects but eventual consistency for overwrites and deletes. Since then **all S3 operations are strongly consistent**: a PUT followed immediately by a GET always returns the version you just wrote. This is a significant simplification for analytics workloads — Spark/Hive jobs that read what they just wrote no longer need workarounds.
+
+## S3 storage classes — the cost/access trade-off
+
+S3 exposes seven storage classes, varying in availability, retrieval latency and price:
+
+- **S3 Standard** — multi-AZ, low-latency reads, no retrieval fee. Default. Use for hot data.
+- **S3 Intelligent-Tiering** — S3 automatically moves objects between frequent and infrequent access tiers based on observed access patterns. Small monitoring fee per object. Use when you don't know the access pattern up front.
+- **S3 Standard-IA** (Infrequent Access) — multi-AZ, same latency as Standard, cheaper storage, but a per-GB retrieval fee and a 30-day minimum storage charge. Use for backups read a few times a month.
+- **S3 One Zone-IA** — like Standard-IA but stored in a single AZ. ~20% cheaper. Use only for re-creatable data — losing the AZ means losing the data.
+- **S3 Glacier Instant Retrieval** — millisecond retrieval, low storage cost, 90-day minimum. For archives accessed once a quarter.
+- **S3 Glacier Flexible Retrieval** — minutes to hours retrieval, very low storage cost, 90-day minimum. For tape-replacement workloads.
+- **S3 Glacier Deep Archive** — 12+ hour retrieval, lowest cost (~\$1/TB/month), 180-day minimum. For long-term compliance — think 7-year financial records.
+
+The minimum storage duration matters: storing a 1 GB object in Standard-IA for 5 days then deleting it bills you for 30 days. Pitfall: people pick Glacier Deep Archive to save money on data they actually need to access weekly — the retrieval fees and delays make it a disaster. Profile access patterns first.
+
+```text
+Class                       AZ  Min days  Retrieval fee  Latency
+Standard                    ≥3  None      None           ms
+Intelligent-Tiering         ≥3  None      None           ms
+Standard-IA                 ≥3  30        Per GB         ms
+One Zone-IA                  1  30        Per GB         ms
+Glacier Instant Retrieval   ≥3  90        Per GB         ms
+Glacier Flexible Retrieval  ≥3  90        Per GB         minutes-hours
+Glacier Deep Archive        ≥3  180       Per GB         12+ hours
+```
+
+## Lifecycle policies — automating the cold path
+
+You don't have to pick the right storage class up front for every object. **Lifecycle configurations** are JSON rules attached to a bucket that automatically transition objects between classes (or expire them) based on age, prefix, tags, or size.
+
+```json
+{
+  "Rules": [{
+    "ID": "tier-and-expire-logs",
+    "Status": "Enabled",
+    "Filter": { "Prefix": "logs/" },
+    "Transitions": [
+      { "Days": 30,  "StorageClass": "STANDARD_IA" },
+      { "Days": 90,  "StorageClass": "GLACIER" },
+      { "Days": 365, "StorageClass": "DEEP_ARCHIVE" }
+    ],
+    "Expiration": { "Days": 2555 }
+  }]
+}
+```
+
+Typical patterns:
+
+- **Frequent → IA → Glacier → Delete**: a log pipeline that needs 30 days of fast access, 60 more days of occasional access, archived for compliance, deleted at 7 years.
+- **Expire current versions, expire non-current versions after N days**: a versioned bucket that prevents accidental delete but cleans up old versions automatically.
+
+Pitfall: lifecycle policies operate at object granularity but evaluate once per day. They are not real-time. They also cannot transition objects *backwards* (Glacier → Standard) — for that you need a one-off restore.
+
+## Versioning — protecting against accidental delete/overwrite
+
+Versioning is a bucket-level toggle. When enabled, every PUT creates a new version (with its own version ID) instead of overwriting; every DELETE inserts a special "delete marker" instead of removing data.
+
+- **PUT with same key**: keeps old versions, adds a new one with a new version ID. A subsequent unqualified GET returns the latest version.
+- **DELETE without version ID**: adds a delete marker that becomes the "latest version." Subsequent unqualified GETs return 404 — but the previous versions are still there and recoverable.
+- **DELETE with version ID**: permanently removes that specific version. No delete marker is added.
+- **MFA Delete**: optional extra protection. Requires the root account credentials plus an MFA code to permanently delete a version. Useful for compliance buckets.
+
+```bash
+# Recover from an accidental delete
+aws s3api list-object-versions --bucket my-bucket --prefix payroll.xlsx
+aws s3api delete-object --bucket my-bucket --key payroll.xlsx --version-id <delete-marker-id>
+```
+
+Pitfall: enabling versioning does not save you from ransomware that overwrites every object — every overwritten version is still a billable storage object. Pair versioning with **Object Lock** in WORM (write-once-read-many) mode for compliance archives that even an admin should not be able to delete.
+
+## Object Lock and compliance archives
+
+**Object Lock** lets you mark an object version as immutable for a defined retention period. Two modes:
+
+- **Governance mode** — special IAM permissions can override the lock. Useful for "no accidents" protection.
+- **Compliance mode** — *no one*, not even the root user, can delete or modify the version until the retention period expires. Needed for SEC 17a-4, HIPAA, GDPR retention.
+
+You can also set a **Legal Hold** (boolean flag) independent of retention period — useful when a regulator demands you preserve evidence pending investigation.
+
+## Pre-signed URLs — temporary, scoped access
+
+A **pre-signed URL** is a long URL that embeds an HMAC signature giving anyone with the URL permission to perform one S3 operation (GET or PUT) for a limited time window (up to 7 days for signature v4). Used everywhere:
+
+- Letting a browser upload directly to S3 without proxying through your application server.
+- Sharing a private file with an external user for 1 hour.
+- Off-platform downloads from a paid content store.
+
+```python
+import boto3
+s3 = boto3.client("s3")
+url = s3.generate_presigned_url(
+    "get_object",
+    Params={"Bucket": "my-bucket", "Key": "report.pdf"},
+    ExpiresIn=3600,
+)
+```
+
+Pitfall: a pre-signed URL is bearer-only. Anyone who gets the link can act. Don't email them to public lists; don't log them; rotate IAM credentials immediately if one leaks.
+
+## Replication — CRR and SRR
+
+Replication copies new objects from a source bucket to a destination bucket. Two flavours:
+
+- **Cross-Region Replication (CRR)** — for compliance (data must live in EU), latency (Australian users hitting an `ap-southeast-2` copy), or DR.
+- **Same-Region Replication (SRR)** — for aggregating logs from multiple buckets, or replicating across AWS accounts within the same Region for isolation.
+
+Replication is asynchronous and requires versioning enabled on **both** source and destination. The replicated copy gets a new version ID matching what S3 assigned in the destination.
+
+The exam asks about delete behaviour specifically:
+
+- A DELETE without a version ID on the source adds a delete marker on the source. By default that delete marker is **not** replicated — meaning your destination still has the object, which creates a divergence. Enable "delete marker replication" to fix that.
+- A DELETE with a version ID on the source permanently deletes that version on the source only. The corresponding version on the destination remains — you must delete it manually if you want symmetry.
+
+## Server-side encryption — SSE-S3, SSE-KMS, SSE-C, plus DSSE
+
+S3 supports several encryption-at-rest options:
+
+- **SSE-S3** — S3 manages the keys. AES-256. Default since 2023 for all new objects. Free.
+- **SSE-KMS** — keys managed by AWS Key Management Service. You get an audit trail in CloudTrail of every decrypt, you can rotate keys, and you can use customer-managed CMKs. Small KMS fee per API call.
+- **SSE-C** — you bring the key on every request. AWS uses it to encrypt and then forgets it. Rarely used; the operational burden is high.
+- **Dual-layer SSE-KMS (DSSE-KMS)** — two independent layers for top-secret workloads.
+
+In transit, S3 endpoints support TLS only. You can enforce TLS-only via a bucket policy `aws:SecureTransport` condition.
+
+## Amazon EBS — block storage attached over the network
+
+EBS provides persistent block-level volumes attached to one EC2 instance over an internal AWS network. Volumes are automatically replicated within their AZ for durability. Snapshot backups are stored in S3 (managed by AWS, hidden from the user) and can be copied across Regions.
+
+Volume types:
+
+- **gp3** — general-purpose SSD. Default. 3,000 IOPS baseline, scale to 16,000 by paying for provisioned IOPS. The right choice for most workloads.
+- **gp2** — older general-purpose SSD; IOPS scales with size.
+- **io2 / io2 Block Express** — provisioned IOPS SSD for the most demanding databases. Up to 256,000 IOPS, durability 99.999%.
+- **st1** — throughput-optimised HDD. Big sequential workloads (log processing, Hadoop).
+- **sc1** — cold HDD. Cheapest. Infrequently accessed.
+
+EBS volumes are AZ-scoped. You cannot attach a `us-east-1a` volume to an `us-east-1b` instance. To move a volume across AZs you snapshot, copy, then restore.
+
+**Multi-Attach** (io1/io2 only) lets up to 16 instances in the same AZ attach the same volume. Used only by cluster-aware filesystems (OCFS2) — most filesystems will corrupt data if two instances mount the same block device. **Encryption** is a per-volume toggle; new snapshots inherit it. AWS recommends enabling encryption by default at the account level.
+
+## EC2 Instance Store — fast, ephemeral, free
+
+Instance store is local NVMe SSD physically attached to the host server. Latency is the lowest available on EC2 (single-digit microseconds). Throughput exceeds EBS. The catch: **data is lost on stop, terminate, or hardware failure**. It only survives reboot.
+
+Use it for scratch buffers, intermediate cache files, ephemeral databases (Cassandra/MongoDB clusters where replication provides durability). Never use it as the only home for production data.
+
+## Amazon EFS — multi-AZ NFSv4 shared filesystem
+
+EFS exposes a POSIX-compliant filesystem you mount via NFSv4.1 from many EC2 instances simultaneously, across multiple AZs. It scales automatically — no provisioned size — and you pay per GB-month stored.
+
+Two performance modes:
+
+- **General-purpose** — lowest latency. Default. Up to 35,000 IOPS.
+- **Max I/O** — higher latency per op but supports >100,000 IOPS. For massive parallel workloads.
+
+Two throughput modes:
+
+- **Bursting** — throughput scales with size, with burst credits.
+- **Provisioned** — pay for a fixed throughput regardless of size.
+
+Storage classes (within EFS): Standard (multi-AZ), One Zone (single-AZ, cheaper), and Infrequent-Access tiers.
+
+Pitfall: EFS feels like a giant shared disk, but it is NFSv4 — file locking semantics are weaker than a local filesystem, and small-file workloads can be slow due to per-op network latency. Use EBS for databases, EFS for shared content directories.
+
+## FSx variants — when EFS isn't right
+
+AWS sells four FSx flavours:
+
+- **FSx for Windows File Server** — SMB protocol, Active Directory-integrated, Windows ACLs. The default choice for migrating Windows file shares.
+- **FSx for Lustre** — high-performance parallel filesystem for HPC and ML training. Hundreds of GB/s.
+- **FSx for NetApp ONTAP** — full ONTAP feature set (SnapMirror, FlexClone, multi-protocol NFS+SMB). For lift-and-shift NetApp deployments.
+- **FSx for OpenZFS** — managed ZFS. Snapshots, cloning, compression.
+
+## AWS Storage Gateway — hybrid bridges
+
+Storage Gateway runs on-premises (as a VM or hardware appliance) and presents AWS storage as familiar protocols to your existing servers:
+
+- **File Gateway** — exposes S3 as NFS/SMB. Used to move file shares to S3 with caching on-prem.
+- **Volume Gateway** — exposes EBS-like iSCSI volumes backed by S3 (cached mode) or fully on-prem with snapshots to S3 (stored mode).
+- **Tape Gateway** — VTL that backup software writes to as if it were physical tape; tapes are virtual S3 + Glacier objects.
+
+Use Storage Gateway to bridge legacy on-prem apps to cloud storage without rewriting them.
+
+## Putting it together — choosing storage for a workload
+
+The exam pattern: "you have workload X with characteristics Y. Pick the storage." Drill the following heuristics:
+
+- "Single writer, low-latency, persistent" → EBS (gp3 unless you need more IOPS).
+- "Many readers/writers, POSIX, Linux" → EFS.
+- "Many readers/writers, SMB, Windows" → FSx for Windows.
+- "Static website assets, backups, data lake" → S3 Standard (or Intelligent-Tiering if access pattern is unknown).
+- "Logs older than 30 days, must keep 7 years" → S3 Standard lifecycle → IA → Glacier Deep Archive.
+- "On-prem app writes to NFS but we want AWS durability" → Storage Gateway (File Gateway).
+- "Scratch space for transcoding job" → instance store on the worker; output to S3.
+
+## Common exam traps
+
+- "Object updated in one byte" — whole object rewrite for S3; one block for EBS.
+- "Multi-AZ durability" — S3 Standard yes (≥3 AZs), S3 One Zone-IA no.
+- "Versioning behaviour with DELETE" — adds a delete marker; previous versions stay; specifying a version ID permanently deletes that version only.
+- "Replication delete-marker semantics" — by default the delete marker is *not* replicated.
+- "Strong consistency" — yes for all S3 operations since Dec 2020.
+- "Glacier Deep Archive retrieval time" — 12+ hours, with a 180-day minimum charge. Don't recommend it for "occasional access."
+- "Pre-signed URL" — anyone with the URL can use it; scope expiry tightly.
+- "EBS scope" — single AZ; snapshot to S3 to move across AZ/Region.
+- "Instance Store" — ephemeral, lost on stop or terminate. Never the primary home.
+
+## S3 access control — the layered model
+
+S3 has more access-control levers than any other AWS service. In order of evaluation precedence (highest priority first):
+
+- **Explicit deny in any policy** — IAM identity policy, bucket policy, ACL, SCP. Always wins.
+- **Bucket policy** — resource-based JSON policy on the bucket. Most common way to grant cross-account and public access.
+- **IAM identity policy** — attached to the user/role calling.
+- **Block Public Access** settings — account- and bucket-level kill switches that override any policy granting public access. Enable at the account level unless you have a real reason not to.
+- **Access Control Lists (ACLs)** — legacy per-object permissions. Disable for new buckets ("Object Ownership = Bucket owner enforced").
+
+A bucket policy granting `s3:GetObject` to `Principal:"*"` plus Block Public Access disabled is the configuration behind every "S3 bucket leak" headline.
+
+## S3 event notifications
+
+S3 can emit events (object created, removed, restored, replicated) to:
+
+- Amazon SQS queue
+- Amazon SNS topic
+- AWS Lambda function
+- Amazon EventBridge (richer routing — covered in Week 9)
+
+This is the foundation for event-driven serverless data pipelines: an upload triggers a Lambda that processes the file. Configure in the bucket's "Event notifications" or via EventBridge rules.
+
+## Multipart upload for large objects
+
+Objects over 100 MB should use **multipart upload**: split the file into parts (5 MB - 5 GB each), upload concurrently, S3 reassembles. Benefits: parallel uploads (faster on high-bandwidth links), resume on failure (only re-upload failed parts), upload up to 5 TB (single-PUT limit is 5 GB).
+
+```bash
+aws s3 cp big-file s3://my-bucket/big-file --storage-class STANDARD
+# AWS CLI auto-uses multipart for files >8 MB
+```
+
+Lifecycle policies should include `AbortIncompleteMultipartUpload` to clean up stranded parts (which still bill).
+
+## S3 Transfer Acceleration and S3 Select
+
+- **Transfer Acceleration** — uploads go through the nearest CloudFront edge location, then over AWS backbone to the bucket Region. Faster for global users uploading to a single Region. Enabled per-bucket; small per-GB cost.
+- **S3 Select / Glacier Select** — server-side SQL filtering on CSV/JSON/Parquet objects. Saves bandwidth by returning only matching rows from a large object. Used heavily by data-lake query engines like Athena.
+
+## EBS snapshots — incremental and cross-region
+
+EBS snapshots store only changed blocks since the last snapshot of the same volume — they're **incremental**. Snapshots live in S3 (managed by AWS, hidden) and can be:
+
+- **Copied across Regions** — for DR.
+- **Shared with other AWS accounts** — public or selectively.
+- **Encrypted** — copies of unencrypted snapshots can be encrypted on copy.
+- **Restored as a new volume** — in any AZ in the Region.
+
+Best practice: use **Amazon Data Lifecycle Manager** to schedule snapshot creation and deletion automatically.
+
+## EBS encryption defaults
+
+You can enable "encryption by default" at the account-and-Region level — every new EBS volume is encrypted with a KMS key. Strongly recommended; close to free; required by most compliance regimes.

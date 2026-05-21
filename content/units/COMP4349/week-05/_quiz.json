@@ -1,0 +1,182 @@
+{
+  "unit": "COMP4349",
+  "week": 5,
+  "topic": "Cloud Networking",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "A private subnet's route table directs 0.0.0.0/0 to which target for outbound internet?",
+      "choices": ["Internet Gateway (IGW)", "NAT Gateway", "VPC Peering connection", "Customer Gateway"],
+      "correctIndex": 1,
+      "explanation": "Private subnets reach the internet via a NAT Gateway in a public subnet. IGW would make the subnet public; peering is VPC-to-VPC."
+    },
+    {
+      "id": "q2",
+      "stem": "Security groups are:",
+      "choices": ["Stateless and have explicit Deny rules", "Stateful and allow-only", "Subnet-scoped firewalls", "Replaced by NACLs"],
+      "correctIndex": 1,
+      "explanation": "SGs are stateful (return traffic is auto-allowed) and only support allow rules. NACLs are stateless and subnet-scoped."
+    },
+    {
+      "id": "q3",
+      "stem": "How many IPs does AWS reserve in every subnet?",
+      "choices": ["2", "3", "5", "10"],
+      "correctIndex": 2,
+      "explanation": "AWS reserves the first 4 IPs and the last IP in each subnet, regardless of size."
+    },
+    {
+      "id": "q4",
+      "stem": "What is the scope of an Availability Zone?",
+      "choices": ["A single data centre", "One or more data centres with independent power and network, within a Region", "A multi-Region zone", "A subnet"],
+      "correctIndex": 1,
+      "explanation": "An AZ is a logically isolated group of one or more DCs in the same Region with independent failure domains."
+    },
+    {
+      "id": "q5",
+      "stem": "A NAT Gateway is:",
+      "choices": ["VPC-scoped, one per VPC", "AZ-scoped, deploy one per AZ for HA", "Region-scoped, free", "Replaced by an IGW"],
+      "correctIndex": 1,
+      "explanation": "NAT Gateways live in a specific AZ; HA requires one per AZ so a single-AZ failure doesn't cut off other AZs."
+    },
+    {
+      "id": "q6",
+      "stem": "An Internet Gateway differs from a NAT Gateway because:",
+      "choices": ["IGW is inbound+outbound and used by public subnets; NAT is outbound-only for private subnets", "IGW is cheaper than NAT", "NAT supports public IPs", "They are the same"],
+      "correctIndex": 0,
+      "explanation": "IGW enables full bidirectional internet access for resources with public IPs; NAT lets private-subnet resources egress while remaining unreachable from the internet."
+    },
+    {
+      "id": "q7",
+      "stem": "Which VPC endpoint type is free and only available for S3 and DynamoDB?",
+      "choices": ["Interface endpoint", "Gateway endpoint", "PrivateLink", "Transit Gateway"],
+      "correctIndex": 1,
+      "explanation": "Gateway endpoints are routed via the route table and free; interface endpoints (PrivateLink) cost per hour and per GB."
+    },
+    {
+      "id": "q8",
+      "stem": "VPC peering is:",
+      "choices": ["Transitive: A↔B and B↔C means A can talk to C", "Non-transitive: only the two peered VPCs can communicate", "A managed VPN", "A type of NAT"],
+      "correctIndex": 1,
+      "explanation": "Peering is non-transitive. Use Transit Gateway when you need many VPCs to interconnect."
+    },
+    {
+      "id": "q9",
+      "stem": "An NACL rule is evaluated:",
+      "choices": ["All rules combined; allow wins", "Numbered rules in order, first match wins", "Random order", "Only deny rules are evaluated"],
+      "correctIndex": 1,
+      "explanation": "NACLs evaluate rules by rule number, lowest first; the first match (allow or deny) wins."
+    },
+    {
+      "id": "q10",
+      "stem": "An ALB needs to be public-facing. Where should it sit?",
+      "choices": ["A private subnet", "An isolated subnet", "Public subnets in multiple AZs", "On a NAT Gateway"],
+      "correctIndex": 2,
+      "explanation": "A public ALB requires public subnets in multiple AZs (with a route to IGW) for HA."
+    },
+    {
+      "id": "q11",
+      "stem": "A 'local' route in a VPC route table:",
+      "choices": ["Can be deleted to isolate subnets", "Is implicit and cannot be removed; covers VPC CIDR traffic", "Targets the NAT Gateway", "Adds external internet access"],
+      "correctIndex": 1,
+      "explanation": "Every route table has an implicit local route for the VPC CIDR that you cannot delete."
+    },
+    {
+      "id": "q12",
+      "stem": "Which service is the AWS DNS and traffic-routing service?",
+      "choices": ["CloudFront", "Route 53", "Global Accelerator", "Direct Connect"],
+      "correctIndex": 1,
+      "explanation": "Route 53 is the authoritative DNS service with multiple routing policies."
+    },
+    {
+      "id": "q13",
+      "stem": "Which Route 53 routing policy routes users to the lowest-latency Region?",
+      "choices": ["Weighted", "Geolocation", "Latency-based", "Failover"],
+      "correctIndex": 2,
+      "explanation": "Latency-based routing selects the endpoint that gives the lowest measured latency to the client."
+    },
+    {
+      "id": "q14",
+      "stem": "Which AWS service replaces a mesh of VPC peerings with a hub-and-spoke topology?",
+      "choices": ["NAT Gateway", "Transit Gateway", "Internet Gateway", "VPN Gateway"],
+      "correctIndex": 1,
+      "explanation": "Transit Gateway is the hub for many VPCs and on-prem networks; it scales beyond what pairwise peerings can manage."
+    },
+    {
+      "id": "q15",
+      "stem": "Which connection option provides a dedicated fibre link from on-prem into AWS?",
+      "choices": ["Site-to-Site VPN", "Direct Connect", "Internet Gateway", "Transit Gateway"],
+      "correctIndex": 1,
+      "explanation": "Direct Connect provisions a physical cross-connect at a DX location for predictable high bandwidth."
+    },
+    {
+      "id": "q16",
+      "stem": "Which is the IPv6 equivalent of NAT for private subnet egress?",
+      "choices": ["NAT Gateway", "Egress-Only Internet Gateway", "VPN Gateway", "Transit Gateway"],
+      "correctIndex": 1,
+      "explanation": "Because IPv6 addresses are globally unique, AWS provides an Egress-Only IGW that allows outbound-only IPv6 traffic."
+    },
+    {
+      "id": "q17",
+      "stem": "A 3-tier VPC needs HA across 3 AZs. How many NAT Gateways are recommended?",
+      "choices": ["1", "2", "3 (one per AZ)", "0; NAT is not needed"],
+      "correctIndex": 2,
+      "explanation": "NAT Gateways are AZ-scoped; one per AZ prevents an AZ outage from cutting off another AZ's egress."
+    },
+    {
+      "id": "q18",
+      "stem": "Reaching S3 from a private subnet without going through the public internet is achieved by:",
+      "choices": ["NAT Gateway with S3 IP allow-list", "An S3 Gateway VPC endpoint", "A bastion host", "Internet Gateway"],
+      "correctIndex": 1,
+      "explanation": "An S3 Gateway endpoint adds a route to S3 prefix-list, keeping traffic on the AWS backbone and saving NAT cost."
+    },
+    {
+      "id": "q19",
+      "stem": "A security group rule references another security group as source. This means:",
+      "choices": ["Only resources with that other SG attached are allowed", "All traffic from the VPC is allowed", "Only the same SG self-reference is allowed", "Cross-account access is allowed"],
+      "correctIndex": 0,
+      "explanation": "Referencing an SG as source allows traffic from any ENI that has that SG attached — a clean way to chain tiers."
+    },
+    {
+      "id": "q20",
+      "stem": "PrivateLink (interface endpoints) is best used to:",
+      "choices": ["Replace IGWs", "Expose a VPC service privately to other VPCs/accounts", "Encrypt traffic at rest", "Replace Direct Connect"],
+      "correctIndex": 1,
+      "explanation": "PrivateLink lets a provider expose an NLB-backed service privately to consumer VPCs without peering or going via the internet."
+    },
+    {
+      "id": "q21",
+      "stem": "An NACL is stateless. What is the implication?",
+      "choices": ["You only need an inbound rule", "You must explicitly allow return traffic in the opposite direction", "It auto-tracks connections", "It only applies to UDP"],
+      "correctIndex": 1,
+      "explanation": "Stateless means the NACL doesn't remember outbound flows; you must add inbound rules for return traffic on ephemeral ports."
+    },
+    {
+      "id": "q22",
+      "stem": "Which CIDR is reserved by RFC 1918 and commonly used for VPCs?",
+      "choices": ["10.0.0.0/8", "200.0.0.0/8", "169.254.0.0/16", "1.1.1.0/24"],
+      "correctIndex": 0,
+      "explanation": "10.0.0.0/8, 172.16.0.0/12, and 192.168.0.0/16 are the private RFC 1918 ranges. 169.254/16 is link-local."
+    },
+    {
+      "id": "q23",
+      "stem": "What does the IP 169.254.169.254 refer to inside an EC2 instance?",
+      "choices": ["The default gateway", "The instance metadata service endpoint", "A peering target", "The NAT Gateway"],
+      "correctIndex": 1,
+      "explanation": "169.254.169.254 is the link-local address of the EC2 Instance Metadata Service (IMDS)."
+    },
+    {
+      "id": "q24",
+      "stem": "An RDS instance should typically be placed in:",
+      "choices": ["A public subnet with an IGW route", "A private/isolated subnet, reachable only from app SGs", "The default VPC", "Outside any VPC"],
+      "correctIndex": 1,
+      "explanation": "Databases should never be exposed to the internet; place them in private subnets with SG ingress only from the app tier."
+    },
+    {
+      "id": "q25",
+      "stem": "Which feature would you use to allow on-prem servers to communicate privately with multiple VPCs through a single attachment?",
+      "choices": ["VPC peering", "Transit Gateway with Direct Connect Gateway", "Internet Gateway", "NAT Instance"],
+      "correctIndex": 1,
+      "explanation": "TGW + Direct Connect Gateway lets one on-prem DX attachment reach many VPCs through the central hub."
+    }
+  ]
+}

@@ -1,0 +1,482 @@
+---
+title: "Week 3 — Divide and Conquer"
+unit: COMP3027
+week: 3
+type: overview
+status: done
+---
+
+## What divide-and-conquer is
+
+**Divide-and-conquer (D&C)** solves a size-n instance by three moves:
+
+1. **Divide** it into a small number of smaller instances of the same problem.
+2. **Conquer** each by recursion.
+3. **Combine** the results into the answer for the original.
+
+The art lives almost entirely in steps 1 and 3. When the partition and the combine are clever, you get surprising speedups — Karatsuba multiplies n-bit integers in Θ(n<sup>log₂ 3</sup>); Strassen multiplies n × n matrices in Θ(n<sup>log₂ 7</sup>). When they're mediocre, you collapse back to brute force.
+
+Every D&C analysis ends in a **recurrence relation** T(n) = a·T(n/b) + f(n). You need to be fluent in three solving methods.
+
+### How D&C differs from its cousins
+
+| Paradigm | Subproblems | Combine |
+|----------|-------------|---------|
+| **Divide-and-conquer** | Disjoint, solved once | Combine all recursive results |
+| **Dynamic programming** | *Overlapping*, memoise | Look up cached subproblem answers |
+| **Greedy** | One subproblem | Commit to local choice; never combine |
+
+## Mergesort: the canonical example
+
+**Algorithm.** Split the array in half, recursively sort each half, merge them in linear time.
+
+```text
+mergesort(A):
+  if |A| <= 1: return A
+  L = mergesort(A[0 .. n/2 - 1])
+  R = mergesort(A[n/2 .. n-1])
+  return merge(L, R)
+
+merge(L, R):
+  i = j = 0; out = []
+  while i < |L| and j < |R|:
+    if L[i] <= R[j]:
+      out.append(L[i]); i++
+    else:
+      out.append(R[j]); j++
+  append remainder of L or R
+  return out
+```
+
+### Three ways to solve T(n) = 2T(n/2) + Θ(n)
+
+First, what does the recurrence say in English? "To sort a size-n array, do two sorts on size-n/2 arrays, then do Θ(n) extra work to merge." That extra Θ(n) is the merge step.
+
+We want to find a closed-form for T(n). Three techniques.
+
+**1. Substitution — guess and verify.**
+
+Step 1: guess the answer. Try T(n) ≤ c·n·log₂ n for some constant c.
+
+Step 2: assume it holds for n/2. So T(n/2) ≤ c·(n/2)·log₂(n/2).
+
+Step 3: plug into the recurrence.
+
+```text
+T(n) ≤ 2 · c · (n/2) · log₂(n/2) + b·n     [b is the constant hiding in Θ(n)]
+     = c · n · log₂(n/2) + b·n
+     = c · n · (log₂ n − 1) + b · n         [log₂(n/2) = log₂ n − 1]
+     = c · n · log₂ n − c·n + b·n
+     = c · n · log₂ n + (b − c) · n
+```
+
+Step 4: we wanted this ≤ c·n·log₂ n. That holds when (b − c) ≤ 0, i.e. **c ≥ b**.
+
+So pick c = b. The induction goes through. ⇒ T(n) = O(n log n).
+
+**2. Recursion tree — draw the work.**
+
+```text
+level 0:                        n              ← root does n work
+level 1:               n/2            n/2     ← 2 nodes, n/2 work each → n total
+level 2:           n/4    n/4    n/4    n/4   ← 4 nodes, n/4 work each → n total
+   ...
+level k:           2^k nodes, n/2^k work each → n total
+   ...
+level log₂ n:      n leaves, Θ(1) each        → n total
+```
+
+At every level the total work is n. There are log₂ n + 1 levels. Total: **Θ(n log n)**.
+
+**3. Master theorem — pattern match.**
+
+Match T(n) = 2T(n/2) + Θ(n) against T(n) = a·T(n/b) + f(n):
+
+- a = 2 (number of subproblems)
+- b = 2 (shrink factor)
+- f(n) = Θ(n) (combine work)
+
+Compute p = log_b a = log₂ 2 = **1**.
+
+Compare f(n) to n^p = n¹. Here f(n) = Θ(n¹), which is exactly Θ(n^p · log⁰ n). That's case 2 with k = 0. Result: T(n) = Θ(n^p · log<sup>k+1</sup> n) = **Θ(n log n)**. ✓
+
+All three methods give the same answer.
+
+### Why mergesort is correct (the merge invariant)
+
+By strong induction on n. Base case |A| ≤ 1 is trivial.
+
+Inductive step: assume L and R are correctly sorted permutations of the input halves. The merge maintains the invariant: *"out is a sorted permutation of the prefixes consumed so far"*. Every iteration extends one prefix and appends one element ≥ everything already in out. ∎
+
+## Binary search
+
+The simplest D&C.
+
+**Algorithm.** Compare x with A[mid]; recurse into one half.
+
+**Recurrence.** T(n) = T(n/2) + Θ(1). Master case 2 ⇒ **Θ(log n)**.
+
+**Lower bound.** Any comparison-based algorithm distinguishing n+1 outcomes needs Ω(log n) comparisons. Binary search is optimal.
+
+**The bigger idea.** Binary search generalises to any *monotone* predicate P(k) on integers (false then true). "Find the smallest k with P(k)" inverts in O(log K) probes. The Week 4 Θ(n log n) LIS algorithm uses this.
+
+## Quicksort: average vs worst case
+
+```text
+quicksort(A):
+  if |A| <= 1: return
+  p = pivot(A)
+  L, M, R = partition by p
+  quicksort(L); quicksort(R)
+```
+
+**Worst case.** Bad pivot ⇒ T(n) = T(n−1) + Θ(n) = **Θ(n²)**. Triggered by sorted input with last-element pivot.
+
+**Average case (random pivot).** Expected number of comparisons satisfies T(n) = (n−1) + (1/n) Σᵢ₌₀^(n−1) (T(i) + T(n−1−i)). Solve by telescoping ⇒ **Θ(n log n)**.
+
+**Why?** With a random pivot, both sides are smaller than 3n/4 with probability ≥ 1/2. So in expectation, recursion depth is O(log n).
+
+**Why quicksort wins in practice.** Cache behaviour. Mergesort needs Θ(n) auxiliary memory; quicksort partitions in place with sequential scans, hitting cache predictably. Usually 2-3× faster than mergesort despite identical Θ(n log n).
+
+## Master theorem: three cases
+
+The master theorem is a shortcut for solving recurrences of the form T(n) = a·T(n/b) + f(n).
+
+The intuition: in the recursion tree, work is split between the **leaves** (Θ(n^p) of them where p = log_b a) and the **root + internal work** (driven by f(n)). Whichever dominates wins.
+
+Step 1: define p = log_b a. This is the "leaves growth rate".
+
+Step 2: compare f(n) to n^p:
+
+- If f(n) is **smaller** than n^p (polynomially) → **leaves dominate**. (Case 1)
+- If f(n) is **tied** with n^p (up to log factors) → **everyone matters equally**. (Case 2)
+- If f(n) is **bigger** than n^p (polynomially) → **root dominates**. (Case 3)
+
+| Case | Condition | Verdict | Result |
+|------|-----------|---------|--------|
+| 1 | f(n) = O(n<sup>p−ε</sup>) | leaves dominate | T(n) = Θ(n^p) |
+| 2 | f(n) = Θ(n^p · log^k n), k ≥ 0 | tied | T(n) = Θ(n^p · log<sup>k+1</sup> n) |
+| 3 | f(n) = Ω(n<sup>p+ε</sup>) **and** regularity | root dominates | T(n) = Θ(f(n)) |
+
+**Regularity condition (Case 3).** a·f(n/b) ≤ δ·f(n) for some δ &lt; 1 and large n. In plain English: the work at level 0 should be a constant factor larger than the work at level 1 — so the geometric series of work-per-level is dominated by its first term.
+
+### One worked example per case
+
+**Case 1 example: T(n) = 4T(n/2) + n.**
+
+Compute p = log_b a = log₂ 4 = 2. Compare f(n) = n to n^p = n². Since n is polynomially smaller than n² (it's O(n<sup>2−1</sup>), i.e. ε = 1 works), case 1 applies. Result: **T(n) = Θ(n²)**.
+
+Intuition: there are n² leaves and only n work at the root. The leaves drown out the root.
+
+**Case 2 example: T(n) = 2T(n/2) + n** (mergesort).
+
+p = log₂ 2 = 1. f(n) = n = Θ(n¹ · log⁰ n), so k = 0. Case 2. Result: **T(n) = Θ(n log n)**.
+
+Intuition: leaves give n total work, root gives n total work, and every level in between also gives n. Multiply by log n levels.
+
+**Case 3 example: T(n) = 2T(n/2) + n².**
+
+p = log₂ 2 = 1. f(n) = n² is polynomially bigger than n¹ (ε = 1 works). Check regularity: a·f(n/b) = 2·(n/2)² = n²/2 ≤ (1/2)·f(n). Yes. Case 3. Result: **T(n) = Θ(n²)**.
+
+Intuition: the root alone does n² work, dwarfing the n total work at the leaves.
+
+### More worked examples
+
+| Recurrence | a, b | p | f(n) | Case | Result |
+|------------|------|---|------|------|--------|
+| 2T(n/2) + n | 2, 2 | 1 | Θ(n) | 2, k=0 | Θ(n log n) |
+| 4T(n/2) + n | 4, 2 | 2 | O(n<sup>2−ε</sup>) | 1 | Θ(n²) |
+| T(n/2) + n | 1, 2 | 0 | Ω(n^ε) | 3 | Θ(n) |
+| 3T(n/2) + n | 3, 2 | log₂ 3 | O(n<sup>p−ε</sup>) | 1 | Θ(n<sup>log₂ 3</sup>) |
+| 7T(n/2) + n² | 7, 2 | log₂ 7 | O(n<sup>p−ε</sup>) | 1 | Θ(n<sup>log₂ 7</sup>) |
+| 2T(n/2) + n/log n | 2, 2 | 1 | gap | none | Θ(n log log n) — by recursion tree |
+
+The last row is famously not handled by master theorem. f sits in the gap between n<sup>p−ε</sup> and Θ(n^p). Use a recursion tree.
+
+## Closest pair of points
+
+**Problem.** Given n points in the plane, find the pair with minimum Euclidean distance.
+
+**Brute force.** Θ(n²).
+
+**D&C, Θ(n log n).** Sort by x once. Recursively solve left half and right half; let δ = min of the two answers. **Combine step:** check whether some pair straddling the split line has distance &lt; δ.
+
+**The 7-neighbours trick.** Only points within horizontal distance δ of the split matter. Among those, sort by y. Each point need only be compared to the next **7** points in y-order — by a packing argument, a 2δ × δ rectangle can hold at most 8 points pairwise at distance ≥ δ.
+
+**Recurrence.** T(n) = 2T(n/2) + Θ(n) ⇒ **Θ(n log n)** by master case 2.
+
+### Worked example
+
+Eight points: (1,2), (3,5), (4,1), (6,3), (7,7), (8,2), (10,4), (12,6).
+
+1. Split at x = 6.5. Left half: first 4 by x. Right half: last 4.
+2. Recursive answers: δ_L ≈ 2.828 (between (1,2) and (4,1) via further splits — work it out), δ_R ≈ 2.828.
+3. δ = 2.828. Strip: points with |x − 6.5| ≤ 2.828, i.e. x ∈ (3.67, 9.33). That's (4,1), (6,3), (7,7), (8,2).
+4. Sort by y: (4,1), (8,2), (6,3), (7,7). Check pairs within 7 y-positions.
+5. (8,2)-(6,3) distance = √5 ≈ 2.236. Smaller than δ. Update.
+6. Final: (8,2) and (6,3), distance √5.
+
+## Karatsuba: 3 multiplications instead of 4
+
+**Problem.** Multiply two n-bit integers x and y.
+
+**Schoolbook.** Θ(n²) bit operations.
+
+**Setup.** Split x = x_H · 2<sup>n/2</sup> + x_L; same for y.
+
+Naive: x·y has four cross-products ⇒ T(n) = 4T(n/2) + Θ(n) = Θ(n²). Master case 1, p = 2.
+
+**Karatsuba's trick — derivation step by step.**
+
+Setup: x and y are n-bit integers. Split each in half. The top half holds the upper n/2 bits; the bottom half holds the lower n/2 bits.
+
+- x = x_H · 2<sup>n/2</sup> + x_L
+- y = y_H · 2<sup>n/2</sup> + y_L
+
+Step 1: expand the full product algebraically.
+
+```text
+x · y = (x_H · 2^(n/2) + x_L) · (y_H · 2^(n/2) + y_L)
+      = x_H·y_H · 2^n
+      + (x_H·y_L + x_L·y_H) · 2^(n/2)
+      + x_L·y_L
+```
+
+So three "blocks" of bits — top, middle, bottom — built from four sub-products: x_H·y_H, x_H·y_L, x_L·y_H, x_L·y_L.
+
+Step 2: notice we need x_H·y_L + x_L·y_H (the **sum** of two cross-products), not each piece individually. That's the opening.
+
+Step 3: define three sub-products and watch what happens.
+
+```text
+A = x_H · y_H                       ← "top" product
+B = x_L · y_L                       ← "bottom" product
+C = (x_H + x_L) · (y_H + y_L)       ← "mixed" product
+```
+
+Step 4: expand C.
+
+```text
+C = x_H·y_H + x_H·y_L + x_L·y_H + x_L·y_L
+  = A + (x_H·y_L + x_L·y_H) + B
+```
+
+Step 5: subtract A and B from both sides.
+
+```text
+C − A − B = x_H·y_L + x_L·y_H       ← exactly the cross-product sum we needed!
+```
+
+Step 6: assemble.
+
+```text
+x · y = A · 2^n + (C − A − B) · 2^(n/2) + B
+```
+
+We used **3 multiplications** (A, B, C) instead of 4. Additions and shifts are linear-time, so the savings stick.
+
+**Recurrence.** T(n) = 3T(n/2) + Θ(n). Apply master theorem: a = 3, b = 2, p = log₂ 3 ≈ 1.585. f(n) = Θ(n) = O(n<sup>p−ε</sup>) with ε ≈ 0.585. Case 1. Result: **Θ(n^log₂ 3) ≈ Θ(n^1.585)**.
+
+### Numerical check
+
+x = 1234, y = 5678. Split: x_H = 12, x_L = 34, y_H = 56, y_L = 78.
+
+```text
+A = 12 · 56 = 672
+B = 34 · 78 = 2652
+C = 46 · 134 = 6164
+C − A − B = 2840
+
+x · y = 672 · 10⁴ + 2840 · 10² + 2652
+      = 6,720,000 + 284,000 + 2,652
+      = 7,006,652
+```
+
+Check: 1234 · 5678 = 7,006,652. ✓
+
+## Strassen: 7 multiplications instead of 8
+
+**Problem.** Multiply two n × n matrices.
+
+**Schoolbook.** Θ(n³).
+
+**Setup.** Block each matrix as 2 × 2 of (n/2) × (n/2) submatrices. Naively the product needs 8 sub-multiplications ⇒ T(n) = 8T(n/2) + Θ(n²) = Θ(n³).
+
+**Strassen's trick.** Seven sub-multiplications via clever sums and differences:
+
+```text
+M1 = (A11 + A22)(B11 + B22)
+M2 = (A21 + A22) B11
+M3 = A11 (B12 − B22)
+M4 = A22 (B21 − B11)
+M5 = (A11 + A12) B22
+M6 = (A21 − A11)(B11 + B12)
+M7 = (A12 − A22)(B21 + B22)
+```
+
+Recover the four output blocks by adding/subtracting the Mₖ's.
+
+**Recurrence.** T(n) = 7T(n/2) + Θ(n²). Master case 1 ⇒ **Θ(n<sup>log₂ 7</sup>) ≈ Θ(n<sup>2.807</sup>)**.
+
+State of the art for matrix multiplication: ω &lt; 2.372 (Coppersmith-Winograd and successors). Whether ω = 2 is the great open problem of algebraic complexity. Strassen kicks in around n ≈ 100 in production code; below that, hidden constants dominate.
+
+## Selection: median-of-medians
+
+**Problem.** Return the k-th smallest of n elements.
+
+**Sort then index.** Θ(n log n).
+
+**Quickselect (randomised).** Same partition as quicksort; recurse on the side containing rank k. *Expected* Θ(n), *worst case* Θ(n²).
+
+**Median-of-medians (deterministic Θ(n)).**
+
+```text
+select(A, k):
+  if |A| <= 5: return sorted(A)[k]
+  groups = partition A into chunks of 5
+  medians = [median(g) for g in groups]   # constant per group
+  p = select(medians, ⌈|medians|/2⌉)       # median of medians
+  L, E, R = partition(A, p)
+  if k < |L|:        return select(L, k)
+  if k < |L|+|E|:    return p
+  return select(R, k − |L| − |E|)
+```
+
+**Why pivot p is "good enough" — the 3/10 lemma, step by step.**
+
+Setup: we grouped A into n/5 groups of 5. From each group we picked its median; that gave us a list of n/5 medians. Then we recursively found the median of that list — call it **p**.
+
+We want to show: **at least 3n/10 elements are ≤ p, and at least 3n/10 are ≥ p.**
+
+Picture the n/5 groups, each shown sorted top-to-bottom (smallest at top), and arranged left-to-right by their median:
+
+```text
+group medians sorted left → right.  p is the median of medians.
+
+  small ───────────── p ───────────── large
+   ·    ·    ·    ·   ·   ·    ·    ·    ·
+   ·    ·    ·    ·   ·   ·    ·    ·    ·
+   m₁   m₂   m₃   m₄  p   m₆   m₇   m₈   m₉    ← median of each group
+   ·    ·    ·    ·   ·   ·    ·    ·    ·
+   ·    ·    ·    ·   ·   ·    ·    ·    ·
+```
+
+Step 1: at least half the group medians are ≤ p. That's n/10 medians on the left side.
+
+Step 2: in each of those n/10 groups, the elements **above the median** are also ≤ p (they're ≤ their own median ≤ p). That's 3 elements per group (the median itself + 2 above it).
+
+Step 3: 3 × n/10 = **3n/10 elements ≤ p**. By symmetry, **3n/10 elements ≥ p**.
+
+So when we partition by p, each side has at most n − 3n/10 = **7n/10** elements. The recursion shrinks by at least a factor of 7/10.
+
+**Recurrence.** T(n) = T(n/5) + T(7n/10) + Θ(n).
+
+- The T(n/5) is the recursive call that finds the median of medians.
+- The T(7n/10) is the recursive call on the "wrong side" after partitioning.
+- The Θ(n) is grouping + partitioning.
+
+This isn't master-theorem shape (two unequal subproblems). We solve by substitution.
+
+**Solve by substitution.**
+
+Step 1: notice the subproblem sizes sum to n/5 + 7n/10 = 2n/10 + 7n/10 = **9n/10**. They sum to **less than n**. That's the magic.
+
+Step 2: guess T(n) ≤ c·n for some constant c.
+
+Step 3: plug in.
+
+```text
+T(n) ≤ c·(n/5) + c·(7n/10) + b·n         [b is the constant in Θ(n)]
+     = c·(2n/10) + c·(7n/10) + b·n
+     = c·(9n/10) + b·n
+     = (9c/10 + b)·n
+```
+
+Step 4: we wanted this ≤ c·n. So we need 9c/10 + b ≤ c, i.e. b ≤ c/10, i.e. **c ≥ 10b**.
+
+Step 5: pick c = 10b. Induction goes through. ⇒ **T(n) = Θ(n)**.
+
+Worst-case linear, unconditionally. Constants are larger than quickselect's expected, but it's guaranteed.
+
+## FFT: the intuition (no derivation)
+
+The **Fast Fourier Transform** evaluates a degree-(n−1) polynomial at the n complex n-th roots of unity in Θ(n log n).
+
+**Key insight.** The n-th roots split into:
+
+- The (n/2)-th roots (even indices), plus
+- The (n/2)-th roots times a "twiddle" factor (odd indices).
+
+So a degree-(n−1) eval reduces to two degree-(n/2−1) evals. Recurrence T(n) = 2T(n/2) + Θ(n) ⇒ **Θ(n log n)**.
+
+**Headline application.** Polynomial multiplication via:
+
+1. Evaluate both polynomials at the roots of unity (FFT).
+2. Pointwise multiply the values.
+3. Interpolate (inverse FFT).
+
+Total: Θ(n log n). The same trick underlies integer multiplication (Schönhage-Strassen, Harvey-van der Hoeven 2019: O(n log n)).
+
+For COMP3027, the takeaway: "Θ(n log n) for convolution-type problems" is the right order, and the recurrence is the same shape as mergesort.
+
+## Correctness proofs: strong induction
+
+Every D&C correctness proof has the same skeleton.
+
+1. **Base case.** Algorithm returns the correct answer when n ≤ termination size.
+2. **Inductive hypothesis.** Assume recursive calls on *all* sizes &lt; n return correct answers.
+3. **Combine step.** Given correct recursive answers, the combine produces the correct answer for size n.
+4. **Conclude** by strong induction.
+
+**Where the work is.** Step 3. For mergesort it's the merge invariant; for closest pair it's the strip + 7-neighbours lemma; for Karatsuba it's the algebraic identity; for Strassen it's the 7-product identity. Make step 3 explicit before writing anything else.
+
+## Lower bounds: when to stop
+
+**Comparison-based sorting is Ω(n log n).** Any decision tree distinguishing n! permutations has depth ≥ log₂(n!) = Ω(n log n). Mergesort and heapsort are optimal up to constants.
+
+**Counting sort and radix sort** beat this, but only by leaving the comparison model — they exploit integer-key structure.
+
+**Lesson.** The *model* matters as much as the *algorithm*.
+
+For matrix multiplication, ω ∈ [2, 2.372...). For integer multiplication, we have O(n log n) (2019) but whether Ω(n log n) is tight is still open.
+
+## When master theorem doesn't apply: use recursion tree
+
+Steps:
+
+1. Draw the tree. Label each node with its work.
+2. Sum work at each level.
+3. Identify the dominant level:
+   - Geometric ratio &lt; 1 ⇒ root dominates ⇒ Θ(root work).
+   - Geometric ratio &gt; 1 ⇒ leaves dominate ⇒ Θ(leaf count × leaf work).
+   - Ratio = 1 ⇒ all levels matter equally ⇒ Θ(depth × per-level work).
+
+**Worked example.** T(n) = T(n/3) + T(2n/3) + n. Unbalanced.
+
+- Each level still does Θ(n) total work (the subproblem sizes partition n).
+- The deepest path follows the slow-shrinking branch (2/3 each step). Depth = log_&#123;3/2&#125; n.
+- Total: Θ(n · log_&#123;3/2&#125; n) = **Θ(n log n)**.
+
+This shape comes up in unbalanced quickselect variants and median-of-medians-style algorithms.
+
+## Asymptotically fast ≠ fast in practice
+
+Crossover thresholds:
+
+- **Strassen** beats schoolbook around n ≈ 100.
+- **Karatsuba** beats schoolbook around n ≈ 50 bits.
+- **FFT-based integer multiplication** needs n ≈ 10⁴ bits.
+
+Below those, hidden constants (memory allocation, branch mispredictions, cache misses) dominate. Production libraries like GMP and NumPy maintain *hybrid* implementations that switch by input size.
+
+**Real-world lesson:** "asymptotically optimal" is the starting point, not the final answer.
+
+## What to do this week
+
+1. Solve T(n) = 2T(n/2) + n log n by recursion tree. Answer: Θ(n log² n).
+2. Trace Karatsuba on x = 1234, y = 5678 by hand. Compare to the worked example.
+3. Verify the closest-pair 7-neighbours claim: draw a 2δ × δ rectangle and try to pack 8 points pairwise at distance ≥ δ. Prove it's impossible.
+4. Implement median-of-medians. Feed it adversarial input that triggers Θ(n²) in quickselect; confirm yours stays linear.
+5. Compare measured mergesort runtime at n = 10³, 10⁴, 10⁵. The ratio T(10n)/T(n) should approach 10 · log(10n)/log(n) ≈ 11.7, 12.5, 13.3.
+6. For each row of the master theorem worked-examples table: verify the case condition holds for the listed f.
+7. Skim the quiz: any master theorem case you can't apply in 10 seconds is a study target.

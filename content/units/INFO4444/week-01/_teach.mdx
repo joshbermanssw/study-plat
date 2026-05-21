@@ -1,0 +1,154 @@
+---
+title: "Week 1 — Introduction and emerging technology"
+unit: INFO4444
+week: 1
+type: overview
+status: done
+---
+
+## What this week is really about
+
+Week 1 of INFO4444 is the unit's *grammar lesson*. Everything that follows — dominant designs, disruption, open innovation, IP, lean startup, ecosystems — is a special case of three questions you must be able to state from memory: *what counts as an innovation*, *why do societies care about it*, and *who pays for the bits the market won't*. The lecture opens with the now-standard sequence — invention vs. innovation vs. discovery, the OECD's Oslo Manual taxonomy, Solow's growth-accounting result, and General Purpose Technologies — and closes with the role of the Australian state in funding what private capital won't touch. The tutorial reframes the same content as a pitch exercise: imagine you are launching an Australian IT startup; how would you justify a government grant? This pivot is the single most useful exam reflex in the entire unit, because almost every assessment item ends with "now apply this to a real or hypothetical case study". Read this week's overview slowly. By the end of it you should be able to (a) define seven core terms without looking, (b) name at least three GPTs and explain *why* they qualify, (c) cite three reasons governments fund basic research that markets do not, and (d) place an emerging technology on the Gartner hype cycle with a one-sentence justification. If you cannot do those four things, the rest of the unit will feel like a list of unrelated frameworks rather than the coherent argument it actually is.
+
+## Invention, innovation, discovery: drawing the lines
+
+The textbook distinction, formalised by Joseph Schumpeter in *The Theory of Economic Development* (1911) and tightened in *Capitalism, Socialism and Democracy* (1942), is this: **discovery** is the uncovering of pre-existing natural facts (Mendel's laws of inheritance, the structure of DNA, the existence of quasars); **invention** is the creation of a new device, process, or method that did not previously exist (the transistor, the laser, packet-switched networking); **innovation** is the *successful introduction* of an invention into economic or social use — i.e. invention plus diffusion plus value capture. The transistor was invented at Bell Labs in 1947, but transistor *innovation* did not arrive until Sony's TR-55 pocket radio (1955) and Fairchild's planar process (1959) gave it form factors and yields the market could absorb. Edison's bulb (1879) was not the first incandescent filament — Joseph Swan demonstrated one independently — but Edison's *innovation* combined bulb, fixture, generator, distribution, and metering into a system households would buy.
+
+Why does the distinction matter? Because policy, IP, and management interventions land differently on each. You patent inventions (Week 6), you commercialise innovations (Weeks 7–9), you fund discoveries with public money (this week), and you measure innovation — not discovery, not invention — when you compute productivity. A failure to keep these terms apart is the single most common cause of bad innovation arguments in undergraduate essays. When a politician says "Australia needs more innovation", they almost never mean more *invention* (Australians invent things at high per-capita rates) — they mean more *commercialisation*, the gap between lab and market. Keep this distinction sharpened: it will return in Week 10's ecosystem discussion and Week 12's reflection prompt.
+
+## The OECD Oslo Manual taxonomy
+
+The OECD Oslo Manual (4th edition, 2018, jointly with Eurostat) is the international reference for measuring innovation. It defines an innovation as "a new or improved product or process (or combination thereof) that differs significantly from the unit's previous products or processes and that has been made available to potential users (product) or brought into use by the unit (process)". The manual partitions innovation into four types that you should memorise.
+
+1. **Product innovation** — a new or significantly improved good or service. Examples: the iPhone (2007) collapsed phone, web browser, music player, camera, GPS into a single device; ChatGPT (2022) collapsed search, writing assistant, and tutor into a chat interface.
+2. **Process innovation** — a new or significantly improved production or delivery method. Examples: Toyota's Just-In-Time manufacturing (1970s); Amazon's Kiva robots in fulfilment centres (2012); CI/CD pipelines in software (continuous integration as a process innovation over nightly builds).
+3. **Marketing innovation** — a new method in product design/packaging, placement, promotion, or pricing. Examples: Spotify's freemium tiering; Dollar Shave Club's direct-to-consumer subscription; Apple's flagship retail stores.
+4. **Organisational innovation** — a new method in business practices, workplace organisation, or external relations. Examples: GitHub's distributed-by-default workforce; Spotify's "squad/tribe/chapter/guild" model; Holacracy at Zappos.
+
+The 2018 update notably collapsed *marketing* and *organisational* into a single "business process" category, but Australian degree teaching still uses the four-bucket version, so treat that as canonical for INFO4444. The taxonomy is not just a vocabulary lesson — it changes what you should *count*. A firm that hasn't released a new product in five years may still have run 200 process innovations and four organisational redesigns. R&D spend (an input) does not capture this; the Oslo Manual is the OECD's attempt to give a measurable *output* definition.
+
+## Types of innovation by architectural impact: Henderson-Clark
+
+The Oslo taxonomy classifies by *what changed*. A more useful frame for *how disruptive* a change is comes from Henderson and Clark's *"Architectural Innovation"* (Administrative Science Quarterly, 1990). They argued that any technology decomposes into **components** and the **architecture** that links them. Innovations can change one, the other, both, or neither. The 2×2 below is one of the most reused diagrams in the field — burn it in.
+
+```
+                       Component knowledge
+                    UNCHANGED        CHANGED
+                  ┌──────────────┬──────────────┐
+       UNCHANGED  │ Incremental  │  Modular     │
+Architecture      │ (light bulb  │  (digital   │
+ knowledge        │ filament     │   camera    │
+                  │ tweaks)      │   sensor    │
+                  │              │   for film) │
+                  ├──────────────┼──────────────┤
+       CHANGED    │ Architectural│  Radical    │
+                  │ (Sony Walkman│   (electric │
+                  │  rearranges  │   car vs    │
+                  │  tape parts) │   ICE car)  │
+                  └──────────────┴──────────────┘
+```
+
+- **Incremental innovation** improves a component within an existing architecture. Most R&D spend in mature firms goes here: a 3-nanometre process node over a 5-nanometre node; a faster sorting algorithm; a better camera sensor in next year's phone.
+- **Modular innovation** replaces a component but the architecture is unchanged. Swapping a film cartridge for a CCD sensor in an SLR body is modular: lens mount, shutter, mirror, viewfinder all stay.
+- **Architectural innovation** rearranges existing components into a new configuration — the components are familiar, the topology is not. Henderson-Clark's case study was the *desktop photolithography aligner*, where Canon beat incumbents by reconfiguring known optics differently. The Sony Walkman is another canonical case: tape head, batteries, amplifier, and headphones all existed; portability was an architectural recombination.
+- **Radical innovation** changes both architecture and components and renders the incumbent's competencies obsolete. The shift from vacuum tubes to transistors is the textbook case; from internal-combustion to battery-electric drivetrains is the contemporary one.
+
+The framework's punchline — and why it matters — is that **architectural innovation is the hardest for incumbents to see**, because the components look the same. They miss the topology change. Kodak made fine digital sensors (modular innovation, they could do that) but missed the architectural shift to "sharing photographs is the product, the camera is incidental". This is the Christensen story (Week 3) in seed form.
+
+## Why innovation matters: the Solow residual
+
+Robert Solow's growth-accounting paper (*"Technical Change and the Aggregate Production Function"*, Review of Economics and Statistics, 1957) won him the 1987 Nobel. The result is simple and devastating. Take a standard production function Y = A · F(K, L) where Y is output, K capital, L labour, and A "total factor productivity". Solow decomposed US growth 1909–1949 and found that **roughly 87% of growth in output per worker came not from more capital per worker but from the residual A** — i.e. from technological change broadly construed. The "Solow residual" is the part of growth you cannot explain by accumulating more inputs. It is the empirical case that innovation, not factor accumulation, is the engine of long-run living-standards growth.
+
+This is the single most important number in innovation policy. It is *why* every G20 country has a science ministry, *why* the Australian government runs the R&D Tax Incentive, *why* the OECD measures innovation in the first place. The implication is asymmetric: a country that gets innovation policy badly wrong does not get poorer in absolute terms — it falls behind countries that get it right. Argentina in 1900 had GDP per capita comparable to Australia's; by 2000 the gap was a factor of three. Almost all of that gap is in A, not K or L.
+
+A critique worth knowing: Solow's residual is *a measure of our ignorance*. It bundles together technology, institutions, education, organisation, and pure measurement error. Later "endogenous growth" theorists (Romer 1990, Aghion-Howitt 1992) tried to model A explicitly as the output of an R&D sector, and Paul Romer won the 2018 Nobel for it. For exam purposes: cite Solow for the *empirical* claim that innovation drives growth, cite Romer for the *theoretical* claim that R&D can be modelled inside the growth equation.
+
+## General Purpose Technologies (GPTs)
+
+Bresnahan and Trajtenberg's *"General Purpose Technologies: 'Engines of Growth'?"* (Journal of Econometrics, 1995) gave the modern definition. A GPT has three characteristics:
+
+1. **Pervasiveness** — used across many sectors of the economy, not just one.
+2. **Improvement** — gets better and cheaper over time (price-performance falls).
+3. **Innovation spawning** — enables and motivates complementary innovations in downstream sectors.
+
+The canonical GPT list:
+
+| GPT | Era | Spawned |
+|-----|-----|---------|
+| Steam power | 1780s–1850s | Railways, factories, steamships, mechanised mining |
+| Electricity | 1880s–1930s | Lighting, electric motors, refrigeration, radio, mass production |
+| Internal combustion | 1900s–1960s | Cars, trucks, aviation, suburbanisation, oil industry |
+| Information & Communication Technology (ICT) | 1970s–present | Spreadsheets, ERP, e-commerce, social media, mobile |
+| AI / machine learning | 2010s–present | Recommendation systems, autonomous systems, generative content, drug discovery |
+
+GPTs explain the long, irregular productivity cycles we see in macro data — the "Solow paradox" of the 1980s ("computers everywhere except the productivity statistics") was eventually resolved by recognising that ICT needed a 20-year complementary-innovation phase (web, broadband, ERP, supply-chain digitisation) before showing up in TFP. AI is in roughly the same place ICT was in 1990: clearly pervasive, clearly improving, but the complementary process and organisational innovations that translate it into measured productivity are still being invented.
+
+**Why this matters for IT.** Every framework in INFO4444 plays out faster and more brutally around GPTs. Dominant-design lock-in (Week 2) is more powerful when network effects compound. Disruption (Week 3) is more violent when GPT trajectories outrun incumbent improvement curves. Ecosystems (Week 10) cluster around GPTs (Silicon Valley around ICT, Boston around biotech, Shenzhen around hardware-electronics).
+
+## Categorising emerging technology: the Gartner Hype Cycle
+
+The Gartner Hype Cycle is not academic theory — it is a consulting product — but it has become the default vocabulary for talking about technology maturity. The five phases:
+
+1. **Innovation Trigger** — early proofs of concept, media noise, no usable products. (Quantum computing in 2017; brain-computer interfaces today.)
+2. **Peak of Inflated Expectations** — early publicity creates over-promise; some pilots succeed, many fail. (Generative AI in mid-2023.)
+3. **Trough of Disillusionment** — interest wanes as failures pile up; investment continues only if surviving vendors fix the products. (3D printing for consumers, ~2015.)
+4. **Slope of Enlightenment** — second- and third-generation products appear, real use cases settle. (Cloud computing in the early 2010s.)
+5. **Plateau of Productivity** — mainstream adoption, measurable returns. (Smartphones, ~2014 onwards.)
+
+The cycle is a useful classification *vocabulary* but a poor *predictor*: many technologies never make it past the trough (Segway, 3D TV, NFTs as a consumer product) and some skip the trough entirely (the iPhone). Treat it as a way to *describe* where a technology sits, not as a forecast that it will reach the plateau. For exam answers, place an emerging tech on the cycle, then *justify* with at least one piece of market evidence (analyst report, funding numbers, public failure).
+
+A useful overlay is **Carlota Perez's techno-economic paradigm cycle** (*Technological Revolutions and Financial Capital*, 2002), which embeds Gartner-like patterns in a 50-year wave: installation phase (irruption + frenzy) → turning point (often a financial bubble) → deployment phase (synergy + maturity). The dot-com crash (2000), framed by Perez, is not a failure of the internet — it is the *turning point* that cleared the way for its productive deployment 2001–2020. We may be in the analogous turning point for AI right now.
+
+## The Australian innovation context
+
+Australia spends roughly 1.7% of GDP on R&D (gross expenditure on R&D, GERD), well below the OECD average of ~2.7% and far below leaders like Israel (~5%) and Korea (~4.8%). Business sector R&D in particular has trended down since 2010. This is the empirical backdrop the unit returns to repeatedly: Australia has world-class universities (consistently 5–7 in QS top-200), high public R&D efficiency per dollar, but weak business R&D and a narrow industrial base (mining, agriculture, financial services dominate; advanced manufacturing thin).
+
+The current **National Science and Research Priorities** (updated 2024) name five themes: transitioning to a net-zero future; supporting healthy and thriving communities; elevating Aboriginal and Torres Strait Islander knowledge systems; protecting and restoring Australia's environment; building a secure and resilient nation. The tutorial exercise — pitch an IT startup for government funding — is asking you to do the mapping: pick a real or hypothetical company and *anchor* its value proposition to one of these themes. This is the same exercise a real CRC-P, ARC Industry Fellowship, or Modern Manufacturing Initiative grant requires.
+
+**Key Australian innovation institutions to name in essays.** ARC (Australian Research Council), NHMRC (National Health and Medical Research Council), CSIRO, Industry Innovation and Science Australia (IISA, advisory), the Cooperative Research Centres program (CRC and CRC-P), the R&D Tax Incentive (about $3 bn/year — the largest single innovation programme), Main Sequence Ventures (CSIRO's VC arm), the National Reconstruction Fund (2023).
+
+A critique you should be able to articulate. Australia's R&D Tax Incentive is regressive in design: it is non-discretionary and self-assessed, with weak additionality (much of it would have happened anyway). Productivity Commission (2017) and the Ferris-Finkel-Fraser review (2016) recommended tighter targeting. The political economy is hard because incumbents (mining, finance) lobby against directed industry policy.
+
+## The role of governments in innovation
+
+Why do governments fund innovation at all? Five canonical reasons, every one of which is examinable.
+
+1. **Market failure in basic research.** Basic research has high spillovers (you cannot capture the value you create — anyone can read your published paper) and long horizons (decades, not quarters). Private firms therefore under-invest. Arrow's *"Economic Welfare and the Allocation of Resources for Invention"* (1962) is the foundational reference. This is why almost all university research is publicly funded.
+
+2. **Public goods.** GPS, the internet, weather satellites, statistical agencies. These are non-rival and non-excludable; markets cannot price them.
+
+3. **Strategic / dual-use technology.** Nuclear, semiconductors, AI, hypersonics, quantum. National security creates a willingness to pay that markets do not capture. DARPA's funding of ARPANET, packet switching, GPS, autonomous vehicles, and CRISPR licensing is the canonical case.
+
+4. **Demand-side procurement.** Governments are large customers. The US Department of Defense bought the first integrated circuits when the unit price was thousands of dollars — without that procurement, the price-performance curve of Moore's Law would never have started. Mariana Mazzucato's *The Entrepreneurial State* (2013) catalogues many such cases (touchscreens, Siri, the iPhone's core component stack).
+
+5. **Coordination and standards.** Spectrum allocation, payment rails, digital identity, road rules for autonomous vehicles. Markets cannot coordinate around these without state convening.
+
+Mazzucato's claim — that almost every "private-sector" innovation has hidden state subsidy upstream — is contested but worth engaging with. The critique is that her case studies oversell counterfactuals (the state did *some* funding, not *all* funding) and ignore the executional risk private firms took. For a balanced view, pair Mazzucato with **Matt Ridley's *How Innovation Works*** (2020), which argues that incremental commercial experimentation, not state direction, does most of the work. The synthesis: state funds *upstream basic research and risky moonshots*; private capital funds *downstream commercialisation and incremental improvement*; neither does the other's job well.
+
+## How the unit's frameworks hang together
+
+A useful exercise as you finish Week 1: take a contemporary technology (say, large language models in 2024) and try to fit it into each of the concepts above.
+
+- *Invention vs innovation*: the transformer architecture (Vaswani et al. 2017) is the invention; ChatGPT (OpenAI, November 2022) is the innovation that turned it into a product millions used.
+- *Discovery*: the underlying observations about attention mechanisms and scaling laws (Kaplan et al. 2020) are closer to discoveries — empirical regularities about how neural networks behave at scale.
+- *Oslo taxonomy*: LLM deployment in customer support is a *product* innovation for vendors; the *process* innovation is the deployment pattern (RAG architectures, prompt-engineering pipelines); the *organisational* innovation is roles like "prompt engineer" and AI-ops teams.
+- *Henderson-Clark*: GPT-4 over GPT-3.5 is *incremental*; replacing search with chat is *architectural* (same components, different topology); training models on synthetic data could be *radical* (changes both component and architecture).
+- *Solow / Romer*: AI is the candidate next contributor to the Solow residual; productivity-statistics impact has not yet shown up at the macro level, mirroring the 1980s Solow paradox.
+- *GPT criteria*: pervasive (used across sectors), improving (price-performance falling fast), spawning (huge derivative-tool ecosystem). LLMs satisfy all three Bresnahan-Trajtenberg criteria.
+- *Gartner cycle*: arguably *Peak of Inflated Expectations* in mid-2023, sliding into early Trough in late 2024 as some pilots fail to scale.
+- *Australian context*: minimal Australian foundation-model players; significant local applied-AI startups; the National AI Centre and CSIRO Data61 are the public-sector anchors.
+- *Government role*: state funding of foundational AI research (DARPA, UKRI, EU Horizon, Australia's CSIRO) is the upstream layer; private VC and large-corp R&D dominate downstream commercialisation.
+
+Walking through this kind of mapping for any new technology is the *single most useful exam reflex* the unit will teach you. Every other week's frameworks layer on top of this Week 1 vocabulary.
+
+## What you should be able to do by next week
+
+- Recite the Schumpeterian definitions (invention/innovation/discovery) and apply them to a current news item.
+- Place a real or hypothetical product into the four-cell Henderson-Clark matrix with a one-sentence justification.
+- State the Solow result and cite the year, and explain why endogenous growth theory (Romer) refined it.
+- Define a GPT with the three Bresnahan-Trajtenberg criteria and apply them to AI.
+- Place a current emerging technology on the Gartner cycle with evidence.
+- List five reasons governments fund innovation, with one named example per reason.
+- Identify two Australian innovation programmes by name and explain who they target.
+
+Weeks 2 and 3 will assume all of this is in working memory. If any item is shaky, re-read the lecture deck and the tutorial questions before next session.

@@ -1,0 +1,221 @@
+---
+title: "Week 9 — Commercialisation III: Funding, Valuation, and Exit"
+unit: INFO4444
+week: 9
+type: overview
+status: done
+---
+
+## What this week is really about
+
+Week 9 is the *money* week — the most technical week in the unit and the one with the most numerical content. Every other framework you have learned operates in a financial context: lean experiments need capital to run; stage-gate decisions are made in dollars; open innovation requires deal-making; IP has acquisition and litigation costs. Week 9 asks the operational question every founder, board member, and corporate-innovation lead has to answer in concrete terms: *where does the money come from, what does each source want in return, and what is the company worth at each stage?* By the end of the overview you should be able to (a) trace the capital-source staircase from bootstrapping to IPO, (b) explain the difference between pre-money and post-money valuation, (c) calculate a simple dilution example end-to-end, (d) state five valuation methods and when each is used, (e) explain the main term-sheet protections (liquidation preference, anti-dilution, drag-along, tag-along, board composition), (f) compare convertible notes, SAFEs, and priced rounds, (g) place the Australian funding environment in context (R&D Tax Incentive, ESVCLP), and (h) state at least one serious critique of the venture-capital model.
+
+## The capital staircase
+
+A schematic of how a successful technology company raises capital through its life. Not every company hits every step — but knowing the shape lets you place a real company.
+
+```
+   Stage         Typical $       Source                     Equity given
+   ─────         ─────────       ──────                     ────────────
+   Bootstrap     $0-$50K         Founders' savings,         100% retained
+                                 friends/family
+   Pre-seed      $50K-$500K      Angels, accelerators       5-15%
+                                 (Y Combinator, Techstars)
+   Seed          $500K-$3M       Seed funds, super-angels,  15-25%
+                                 strategic investors
+   Series A      $3M-$15M        Early-stage VC             20-30%
+   Series B      $10M-$50M       Growth-stage VC            15-25%
+   Series C+     $30M-$500M+     Late-stage VC, sovereign   10-20% per round
+                                 wealth, crossover funds
+   Pre-IPO       $100M-$1B+      Crossover funds,           5-10%
+                                 institutional investors
+   IPO           $100M-$10B+     Public markets             20-40% of new shares
+   M&A exit      $variable       Strategic acquirer         100% of company
+```
+
+The staircase corresponds roughly to *stages of risk reduction* in the business. Bootstrapping funds the earliest founder hypothesis testing. Pre-seed funds team formation and a first MVP. Seed funds the search for product-market fit. Series A funds the establishment of *repeatable* growth. Series B+ funds scale-up. Pre-IPO funds the transition to a public-market-ready business. Each stage's investors have a *different mandate*, *different return targets*, and *different governance demands*.
+
+**Bootstrapping** means founder-funded with revenue or savings. The advantage: no dilution, no investor pressure, full control. The cost: limited capital, slow growth, founder financial risk. Many durable software businesses (Basecamp/37signals, GitHub pre-Series A, Mailchimp until its sale, Atlassian pre-IPO) bootstrapped for years before raising. The Australian SaaS company Atlassian is a famous bootstrapping case — founded 2002, did not raise external capital until 2010 (a secondary round, not primary), and IPO'd in 2015 at a ~$4.4B valuation.
+
+**Friends and family** capital is the next layer — often $25K to $250K from people who know the founders personally. Legally messy if not documented properly (a handshake "loan" can become a gift, a gift can become an unintentional equity claim). Good practice: use a structured instrument (a SAFE or simple convertible note) so the position converts cleanly at the first priced round.
+
+**Angel investors** are individual investors (often successful founders or executives) writing $25K to $250K checks in personal capacity. They often invest at the pre-seed stage when professional funds will not. Strong angels add network, advice, and credibility; weak angels add cap-table complexity and noise. *Super-angels* (Ron Conway, Naval Ravikant, Sahil Lavingia) write larger checks and operate as semi-institutional investors.
+
+**Accelerators and incubators**. Y Combinator (founded 2005), Techstars, 500 Startups, and Australia's Startmate are the canonical examples. They invest small amounts ($100K-$500K typically) for 5-10% equity plus 3-month programmes of mentoring, peer learning, and investor connections culminating in a "Demo Day". The accelerator's *real* value is the network and the *demo day brand* — a YC-stamped startup raises a seed round at a higher valuation than an otherwise identical company.
+
+**Venture capital** firms manage *fund vehicles* — typically 10-year limited partnerships — with investors (LPs: pension funds, endowments, family offices, sovereign wealth funds) committing capital to be invested by the *general partners* (GPs). VC firms make 20-40 investments per fund and aim for power-law returns: most investments fail or break even, a few generate moderate returns, and one or two "fund-returners" generate 50x or more and produce the entire fund's profit. The "2 and 20" fee structure (2% annual management fee on committed capital, 20% carry on profits above a hurdle) is the canonical compensation model.
+
+**Stage-specialised VCs.**
+- *Seed funds* (Initialized Capital, First Round Capital, Felicis): $500K-$3M, very early.
+- *Series A funds* (Sequoia, Benchmark, Andreessen Horowitz, Accel): $3M-$15M, looking for emerging product-market fit.
+- *Growth funds* (TCV, IVP, Coatue, Tiger Global): $10M-$200M, looking for repeatable growth at scale.
+- *Crossover funds* (Fidelity, T. Rowe Price): private/public boundary; bridge to IPO.
+
+## Pre-money and post-money valuation: the basic arithmetic
+
+The single most important calculation in startup finance. Definitions:
+
+- **Pre-money valuation** — the value of the company *immediately before* the new investment.
+- **Post-money valuation** — the value of the company *immediately after* the new investment.
+- **Post-money = Pre-money + investment**.
+- **Investor's ownership share = investment / post-money**.
+
+Worked example. The brief's mandatory case: founder owns 100%, raises $1M at $4M pre-money.
+
+- Pre-money: $4M.
+- Investment: $1M.
+- Post-money: $4M + $1M = $5M.
+- Investor ownership: $1M / $5M = 20%.
+- Founder ownership: 100% × (1 - 20%) = 80%.
+
+The founder's *percentage* dropped from 100% to 80%, but the *value of their stake* went from $4M (the pre-money) to $4M ($5M × 80%). Their dollar position is unchanged. The dilution is paid out of the *future* upside, not the current value — which is why it can rationally happen.
+
+**Cap-table evolution across multiple rounds.** Extend the example.
+
+| Round | Pre-$ | Inv.$ | Post-$ | Founder | Round inv. | Prior inv. |
+|-------|-------|-------|--------|---------|------------|------------|
+| Seed | $4M | $1M | $5M | 80% | 20% | — |
+| Series A | $20M | $5M | $25M | 64% | 20% | 16% |
+| Series B | $80M | $20M | $100M | 51.2% | 20% | 28.8% |
+
+Notice how the founder's share *compounds down* — each round multiplies the prior holding by (1 − new investor share). The founder's *dollar value* depends on the company's valuation rising faster than they are diluted. In the table above:
+
+- After Seed: founder's stake = 80% × $5M = $4M.
+- After A: founder's stake = 64% × $25M = $16M.
+- After B: founder's stake = 51.2% × $100M = $51.2M.
+
+So in dollar terms the founder is *gaining* even though the percentage falls. This is why early-stage founders accept dilution willingly: the alternative (no investment, growth limited to organic cash flow) usually means a smaller dollar outcome.
+
+**Employee Stock Option Pool (ESOP)** adds a wrinkle. Standard practice: before a new round closes, the company creates (or expands) an option pool sized to cover the next 18-24 months of hiring (typically 10-15% of post-money). Critical detail: the pool is *usually created from the pre-money*, which dilutes existing shareholders *before* the new investment. This is the "option-pool shuffle" — a common founder complaint, but standard in US-style term sheets.
+
+## Five valuation methods
+
+How do investors and founders set the valuation in the first place? Five methods you should know.
+
+**1. Discounted Cash Flow (DCF).** Project future free cash flows, discount them to present value at an appropriate discount rate, sum. The textbook finance method. Problem at early stage: free cash flows are speculative; even small changes in growth-rate assumptions swing valuation by orders of magnitude. *Not* useful for pre-revenue startups; *useful* for growth-stage and mature companies.
+
+**2. Comparable transactions (comps).** Find recently funded or acquired companies in the same space, divide by a metric (revenue, ARR, users), apply the multiple. Example: SaaS companies traded at 8-12× ARR in 2024; if your ARR is $5M, valuation = $40-$60M. Strengths: market-tested; readily available data. Weaknesses: multiples drift with market sentiment (2021's 25× SaaS multiples were not sustained); your comps may not really be comparable.
+
+**3. Berkus method (Dave Berkus, 1990s).** Pre-revenue valuation using up to $500K credit for each of five elements: sound idea, prototype, quality management team, strategic relationships, product rollout/early sales. Maximum valuation $2.5M pre-money. Useful as a checklist; widely treated as obsolete because the dollar amounts have not been updated.
+
+**4. Scorecard method (Bill Payne).** Multiply the average pre-money valuation in your region/sector by a weighted score reflecting how your startup compares to that average on management team, opportunity size, product/technology, competitive environment, marketing/sales/partnerships, need for additional investment. Used at the angel/pre-seed stage. Better than Berkus because it floats with the market.
+
+**5. Venture Capital method (Bill Sahlman, HBS).** Work *backwards* from a target exit valuation. Steps:
+- Estimate exit value (e.g. $100M acquisition in 5 years).
+- Apply target multiple (e.g. 10× — VCs target 10x on early-stage bets to compensate for portfolio failures).
+- Required post-money at investment: $100M / 10 = $10M.
+- Subtract dilution from future rounds (assume 30% additional dilution before exit). Adjusted post-money = $10M / 0.7 = $14.3M.
+- Subtract investment to get pre-money: pre-money = $14.3M - investment.
+
+The VC method is *honest about its assumptions* (target return, exit value, future dilution) in a way DCF and comps are not. It is the most-used method for early-stage VC pricing in practice.
+
+For early-stage startups, all five methods are *bounds, not facts*. Valuation is ultimately negotiated. The methods provide vocabulary and anchors; the deal is what the market clears at on the day.
+
+## Term sheets and the deal terms that matter
+
+A *term sheet* is a non-binding summary of the principal terms of an investment deal, typically 5-15 pages. Once signed, it leads to definitive documents (share purchase agreement, shareholders' agreement, articles of association). The terms that matter most:
+
+**1. Liquidation preference.** On an exit, preferred shareholders get paid out *before* common shareholders. The standard form is *1× non-participating* — investors get either their money back (1×) or convert to common and share pro-rata, whichever is more. Worse for founders is *participating* preferred (investors get their money back *and* share pro-rata on top — double-dipping) or *>1× preference* (2×, 3× — investors get multiples of their money back before common sees anything). In a "good" exit (high price) liquidation preferences don't matter much because everyone converts. In a "bad" exit (acquisition below the post-money of the latest round), preferences can mean founders and employees see nothing.
+
+Worked example: $20M post-money, 1× participating preferred, exit at $25M. Investors put in $5M. Under participating: they get $5M back + 25% of remaining $20M = $5M + $5M = $10M. Founders/employees split the rest: $15M. Under non-participating: they get max($5M, 25% of $25M = $6.25M) = $6.25M. Founders/employees split $18.75M. The difference is $3.75M — paid by founders.
+
+**2. Anti-dilution.** Protects investors if a future *down round* (round at lower valuation) occurs. The mechanism adjusts the conversion ratio of preferred shares so investors are partially compensated for the valuation drop. Three variants:
+- *Full ratchet*: most punitive — conversion ratio adjusts as if the prior investment had been made at the new lower price. Painful for founders.
+- *Broad-based weighted average* (most common): adjusts the conversion price using a formula that weights the new lower price by the relative size of the down round vs the prior cap table.
+- *Narrow-based weighted average*: less common, more punitive than broad-based but less than full ratchet.
+
+**3. Board composition.** Who controls the board? Typical seed: founder-friendly (2 founders, 1 investor, 1 independent). Typical Series A: 5-7 seats with the lead investor taking 1-2. By Series C, founders are often a minority on their own board. Board control matters more than equity percentage in many decisions (CEO replacement, sale, financing terms).
+
+**4. Drag-along and tag-along rights.**
+- *Drag-along*: if a supermajority of shareholders approves a sale, the minority must sell their shares on the same terms. Prevents one holdout from blocking a deal.
+- *Tag-along*: if a majority shareholder sells their stake, the minority can require the buyer to purchase their shares on the same terms. Prevents the majority from privately exiting and leaving the minority stranded.
+
+**5. Pre-emption / pro-rata rights.** Existing investors have the right to participate in future rounds proportionally to their current ownership, to avoid involuntary dilution. Almost universal in priced VC rounds.
+
+**6. Information and inspection rights.** Investors have rights to financial reports, board observation, audit access, etc.
+
+**7. Vesting.** Founder shares are typically subject to *reverse vesting* — they "vest" over 4 years, with a *1-year cliff* (no shares vest until 1-year anniversary). If a founder leaves before the cliff, they keep nothing; if they leave after 2 years, they keep 50%. Same for employee options. Vesting protects investors and other co-founders from a co-founder walking away with unearned equity. *Acceleration on change of control* (single-trigger or double-trigger acceleration) is a sometimes-negotiated founder protection.
+
+## Convertible notes vs SAFEs vs priced rounds
+
+Three instruments for raising early-stage capital.
+
+**Convertible notes** are debt instruments that *convert* to equity at the next priced round (the "qualified financing"), usually with a *discount* (the noteholder gets the same shares as the new round investors at, say, 80% of the price) and/or a *valuation cap* (the noteholder's share price is calculated against a cap on the round's pre-money). Interest accrues but is usually capitalised into the converting shares. If no priced round happens, the note becomes due — though in practice most notes are restructured rather than defaulted.
+
+**SAFEs** (Simple Agreement for Future Equity) were invented at Y Combinator (2013) as a *simpler* alternative to convertible notes. Key differences: no interest accrues, no maturity date, no debt — it is a contractual right to future equity that converts under specified terms. The 2018 update (post-money SAFE) clarified that the cap is on the post-money valuation, simplifying dilution math. The dominant pre-seed and seed instrument in the US in the 2020s.
+
+**Priced rounds** are equity purchases at a defined per-share price with a full set of preferred-share rights. More legal overhead (term sheet, definitive documents, board updates) than notes/SAFEs but produces a "clean" cap table with known ownership percentages from the start.
+
+Which to use when?
+- *Pre-seed and friends-and-family*: SAFE is fastest and lightest.
+- *Seed*: SAFE or convertible note for small rounds, priced round once the company has multiple sophisticated investors.
+- *Series A onward*: always priced.
+
+A risk to flag: *SAFE accumulation*. A startup that raises three rounds of SAFEs at different caps may not realise how diluted they will be when those SAFEs convert at the next priced round. Modelling the conversion *before* signing each SAFE is essential. The post-money SAFE update mitigated this but did not eliminate it.
+
+## The cap table
+
+A *capitalisation table* lists all owners of equity and equity-equivalents (options, warrants, SAFEs, convertible notes) with their share counts and percentages. The cap table evolves with every round, hire (option grants), and exit. By Series C, a startup cap table can have 50+ entries; managing it requires dedicated software (Carta, Pulley, AngelList Equity).
+
+**Why the cap table matters.** Founders sometimes underestimate dilution. A founder who raises $50K from each of 20 angels on 20 separate notes, then $5M Series A, then $20M Series B may find themselves with under 20% of their own company by Series B — usually too little to motivate continued effort and politically fragile inside the board. Tools and conventional wisdom on dilution help, but founders should *model* the cap table forward through multiple rounds before signing each instrument.
+
+## Australian funding context
+
+Three things that matter specifically for Australia.
+
+**1. R&D Tax Incentive (RDTI).** Administered jointly by ATO and AusIndustry. Two tiers:
+- *Refundable tax offset* (43.5% for small entities with turnover under $20M) — for unprofitable startups, this is a *cash rebate* on eligible R&D expenditure. A startup spending $1M on engineering can get ~$435K cash back the following year. This is the single largest non-equity funding source for Australian software startups and effectively a 43% wage subsidy on R&D engineers.
+- *Non-refundable tax offset* (38.5% for larger entities) — reduces tax payable, doesn't refund cash.
+
+Eligibility requires the activity to be *experimental* — generating new knowledge through systematic, observation-based, hypothesis-driven work — and to be conducted in Australia. The RDTI is the most important Australian-specific factor in startup financial modelling.
+
+**2. Early Stage Venture Capital Limited Partnership (ESVCLP).** A tax structure for VC funds investing in eligible Australian early-stage companies. Investors in ESVCLPs receive a 10% non-refundable tax offset on contributions and a CGT exemption on returns. Designed to channel domestic capital to early-stage tech. Combined with the RDTI, the ESVCLP makes Australian seed and Series A capital cheaper than it would otherwise be.
+
+**3. Early Stage Innovation Company (ESIC) status.** A separate regime for *individual* investors backing eligible Australian innovation companies. Investors get a 20% tax offset (capped at $200K per year) and CGT relief on shares held for 1+ years. Designed to mobilise angel capital.
+
+Other Australian programs to know in one sentence each:
+
+- *Industry Growth Program* (replacing the older Entrepreneurs' Programme) — grants and advisory for SMEs.
+- *CSIRO Main Sequence Ventures* — CSIRO's VC arm investing in deep-tech spinouts.
+- *Cooperative Research Centres (CRC and CRC-P)* — matched funding for industry-university research partnerships.
+- *National Reconstruction Fund (NRF)* — $15B fund (2023) backing seven priority areas including renewables, medical science, and value-add agriculture/mining.
+- *Modern Manufacturing Initiative* — sector-specific manufacturing capability grants.
+- *Industry-research collaboration tax offsets* — additional R&D incentive layer for spending with universities.
+
+Compared to the US, Australia has a *thinner VC market* (smaller funds, fewer deals, less specialisation by stage), a *stronger tax-incentive layer* (RDTI is more generous than the equivalent in most countries), and a *smaller exit market* (the ASX is a smaller IPO venue than NASDAQ; large strategic acquirers are mostly offshore). The structural result: Australian founders often must raise from offshore VCs to access large later-stage rounds, and many successful Australian startups eventually relocate (Canva is a famous counter-example that did not).
+
+## IPO and M&A as exits
+
+Investors invest because they want a *return* — a way to convert their equity stake back into cash. Two main exit paths.
+
+**IPO (Initial Public Offering).** The company lists shares on a public exchange (ASX, NASDAQ, NYSE). Pros: large pool of capital, employees can sell, founder retains operating control. Cons: extensive disclosure obligations, quarterly earnings pressure, public-market volatility. A typical IPO sequence: file initial registration (S-1 in US, prospectus in Australia), road-show to institutional investors, set price, allocate shares, list, lock-up period (6 months) before insiders can sell. Atlassian (NASDAQ, 2015), Canva (private as of 2024, ~$32B), Block (formerly Square, 2015), Zoom (2019), Snowflake (2020), Doordash (2020) are well-known cases.
+
+**M&A (Mergers and Acquisitions).** The company is acquired by a larger firm. Pros: simpler than IPO, founders can fully exit, strategic acquirers can pay premiums for synergy. Cons: integration risk, often loss of founder autonomy post-deal, smaller exits than the rarer IPO outcomes. Most successful startups exit via M&A, not IPO — the IPO is a rare and high-profile path. Famous M&A exits: WhatsApp (acquired by Facebook 2014 for $19B), Instagram (FB 2012 for $1B), GitHub (Microsoft 2018 for $7.5B), Slack (Salesforce 2020 for $27B), LinkedIn (Microsoft 2016 for $26B).
+
+**Secondary sales** are an emerging third path: instead of waiting for an IPO or M&A, founders and employees sell some of their shares to specialised funds during late-stage rounds. This gives partial liquidity without forcing a full exit. Increasingly common in 2020s as companies stay private longer.
+
+## A critique of the venture-capital model
+
+Three serious critiques you should be able to engage with.
+
+**1. Power-law selection distorts founder behaviour.** VCs need *one* fund-returner in 20 investments. They therefore prefer big-swing, all-or-nothing strategies over reliable mid-sized outcomes. A startup that could be a profitable $50M-revenue business is pushed by its VC backers to either *swing for the fences* (chase $1B+ outcomes with growth at all costs) or shut down. This destroys real businesses that don't fit the power-law model. The "growth or die" pressure is a feature of the *fund structure*, not of innovation economics.
+
+**2. Concentrated VC capital warps the innovation landscape.** A few large VCs (Sequoia, a16z, Tiger, SoftBank Vision Fund) deploying enormous amounts of capital can over-fund specific categories (consumer social in 2014, crypto in 2021, AI in 2024), driving valuations and competitive intensity above what the underlying market supports. The result is wasteful capital deployment in funded categories and *under-funding* in unfashionable but commercially viable categories.
+
+**3. Misaligned incentives between founders, VCs, and employees.** Liquidation preferences (above) can mean a *good outcome for VCs* (they get their money back) is a *bad outcome for founders and employees* (they get nothing). Founder vesting and acceleration clauses can mean founders are pushed out before their shares vest. The legal sophistication of professional VC contracts can disadvantage first-time founders. The empirical literature (Ewens-Marx-Klingebiel 2021; Hellmann-Puri 2002) finds both real benefits of VC (founders with VC backing build larger and more successful businesses on average) and real costs (significant founder displacement, especially as a company scales).
+
+A counter-position you should also be able to articulate: despite the critiques, VC has funded a huge share of the most consequential technology of the last 50 years (Apple, Microsoft, Cisco, Google, Facebook, Tesla, Amazon, Genentech, Moderna). Without it, the US tech industry would be dramatically smaller. The model has flaws and externalities, but the *aggregate* output is genuinely impressive.
+
+A more nuanced position: VC is the right capital structure for *some* kinds of innovation — high-growth software with network effects, deep biotech with binary outcomes, hardware with long capital cycles — and the wrong structure for many others — services businesses, cash-generative SaaS that doesn't need to be huge, family-owned manufacturing, regional businesses. The mistake is treating VC as *the* funding model rather than *a* funding model.
+
+## What you should be able to do by next week
+
+- Recite the capital staircase (bootstrap → angel → seed → Series A/B/C → exit) with rough dollar amounts.
+- Calculate pre-money/post-money/founder dilution from a simple worked problem.
+- Name five valuation methods and explain when each is used.
+- Explain four term-sheet protections (liquidation preference, anti-dilution, drag-along, vesting).
+- Compare convertible notes, SAFEs, and priced rounds.
+- Name three Australian-specific funding mechanisms.
+- State at least one critique of the VC model with engagement.
+
+Week 10 zooms out from individual firms to the *ecosystem* level: what makes Silicon Valley work? Why do clusters cluster? What does the triple-helix of industry-university-government look like, and how does Australia compare?

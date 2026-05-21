@@ -1,0 +1,323 @@
+---
+title: "Week 6 — Flow Networks I"
+unit: COMP3027
+week: 6
+type: overview
+status: done
+---
+
+## Why we spend three weeks on flow
+
+A **flow network** is a directed graph with edge capacities, a source s, and a sink t. The maximum-flow problem: push as much "stuff" from s to t as possible without exceeding any capacity.
+
+Sounds like an industrial problem (pipelines, road traffic). But it turns out to be the **combinatorial-optimisation hub** of the whole unit. By the end of Week 8, a long list of problems will reduce to flow:
+
+- Bipartite matching.
+- Edge- and vertex-disjoint paths.
+- Image segmentation.
+- Project selection.
+- Baseball elimination.
+- Survey design.
+- Airline scheduling.
+
+By Week 8, the question "can I reduce this to s-t flow?" will be one of your most important reflexes.
+
+This week builds the theory plus two algorithms: **Ford-Fulkerson** (generic) and **Edmonds-Karp** (BFS-based, polynomial-time). The intellectual centerpiece is the **max-flow min-cut theorem** — beautiful strong duality connecting a max problem to a min problem.
+
+## Definitions
+
+A **flow network** N = (G, c, s, t) has:
+
+- A directed graph G = (V, E).
+- A capacity c : E → ℝ_&#123;≥0&#125;.
+- A source s and sink t (≠ s). No edges into s; no edges out of t (or add artificial ones with capacity 0).
+
+A **flow** is a function f : E → ℝ_&#123;≥0&#125; satisfying:
+
+- **Capacity.** For every edge e: 0 ≤ f(e) ≤ c(e).
+- **Conservation.** For every v ∉ &#123;s, t&#125;: total flow in = total flow out.
+
+The **value** |f| = total flow out of s (= total flow into t).
+
+**Max-flow problem:** find a flow with maximum value.
+
+**Easy lemmas.**
+
+- The zero function is a flow.
+- |f| ≤ total capacity out of s.
+- For any partition (S, V\S) with s ∈ S, t ∈ V\S: net flow from S to V\S equals |f|.
+
+## The residual graph and augmenting paths
+
+Given flow f, the **residual graph** G_f has the same vertices and these edges:
+
+- For each (u, v) ∈ E with f(u, v) &lt; c(u, v): a **forward residual edge** (u, v) with capacity c(u, v) − f(u, v). (Room to push more.)
+- For each (u, v) ∈ E with f(u, v) &gt; 0: a **backward residual edge** (v, u) with capacity f(u, v). (Room to cancel.)
+
+**Why backward edges matter.** They let the algorithm *undo* an earlier commitment. Without them, Ford-Fulkerson gets stuck on simple examples.
+
+An **augmenting path** is any simple s→t path in G_f. Its **bottleneck capacity** = minimum residual capacity along it. Augmenting: add the bottleneck to every forward edge and subtract from every backward edge.
+
+```text
+augment(f, path):
+  b = min residual capacity along path
+  for each (u, v) on path:
+    if (u, v) is forward in G: f[u, v] += b
+    else:                       f[v, u] -= b    # cancel
+  return b
+```
+
+Each augmentation increases |f| by exactly the bottleneck capacity.
+
+## Ford-Fulkerson
+
+```text
+ford_fulkerson(G, s, t, c):
+  f = 0 everywhere
+  while G_f has an s-t path P:
+    augment(f, P)
+  return f
+```
+
+### Termination on integer capacities
+
+The argument has three steps.
+
+Step 1: each augmentation **increases |f| by the bottleneck**, which is positive (else we wouldn't augment).
+
+Step 2: if all capacities are integers, the bottleneck is a positive integer ≥ 1. So |f| jumps by at least 1 per iteration.
+
+Step 3: |f| can never exceed **C = total capacity of edges leaving s** (an upper bound from weak duality).
+
+So we get at most C iterations. Each iteration runs a BFS/DFS plus a path-augment in O(m). Total: **O(m · C)**.
+
+**Catch.** C is encoded in log C bits, so O(m · C) is *not* polynomial in input bit-length — it's pseudo-polynomial. On irrational capacities with a bad path-selection rule, Ford-Fulkerson can even fail to terminate at all.
+
+### Correctness (deferred)
+
+When Ford-Fulkerson halts, G_f has no s→t path. We'll show next that this implies f is maximum. ∎
+
+## Cuts and the max-flow min-cut theorem
+
+An **s-t cut** is a partition (S, T) of V with s ∈ S, t ∈ T. Its **capacity** is the total capacity of edges from S to T:
+
+```text
+cap(S, T) = sum of c(u, v) for (u, v) in E with u in S, v in T
+```
+
+(Only forward-crossing edges. Reverse edges don't count.)
+
+### Weak duality: |f| ≤ cap(S, T)
+
+By conservation: |f| = (flow S→T) − (flow T→S) ≤ (capacity S→T) − 0 = cap(S, T). ∎
+
+So if you can find a flow value equal to some cut's capacity, you've proven *both* extremal.
+
+### Strong duality (max-flow min-cut theorem)
+
+**Theorem (Ford-Fulkerson, 1956).** For any flow network, **max flow value = min cut capacity**.
+
+**The intuition first.** We've already seen weak duality: every flow is ≤ every cut. The theorem says equality is achievable — at the optimum the two numbers literally meet.
+
+**Proof outline.** We prove three things are equivalent for any flow f:
+
+1. f is a maximum flow.
+2. The residual graph G_f has no s→t path.
+3. There exists some s-t cut (S, T) with cap(S, T) = |f|.
+
+If we prove (1 ⇒ 2 ⇒ 3 ⇒ 1), all three are equivalent. Then condition 3 forces max flow = min cut (since for *some* cut they're equal, and by weak duality no cut can be smaller than any flow).
+
+**(1 ⇒ 2).** Suppose f is maximum. If G_f had an s→t path, we could augment along it and strictly increase |f| — contradicting "maximum". So G_f has no s→t path.
+
+**(2 ⇒ 3).** This is the heart of the proof. Suppose G_f has no s→t path.
+
+Step 1: define S = &#123;v : v is reachable from s in G_f&#125;. So s ∈ S. And t ∉ S (no path from s to t in G_f). Let T = V \ S.
+
+Step 2: look at every edge (u, v) ∈ E with **u ∈ S, v ∈ T** (a "forward-crossing" edge).
+
+- If f(u, v) &lt; c(u, v), then there's spare capacity, so (u, v) is a forward residual edge in G_f. But then v would be reachable from s (through u). Contradiction with v ∈ T.
+- So **f(u, v) = c(u, v)**. Forward-crossing edges are saturated.
+
+Step 3: look at every edge (v, u) ∈ E with **v ∈ T, u ∈ S** (a "backward-crossing" edge).
+
+- If f(v, u) &gt; 0, then there's flow to cancel, so (u, v) appears as a backward residual edge in G_f. But then v would again be reachable from s. Contradiction.
+- So **f(v, u) = 0**. Backward-crossing edges carry no flow.
+
+Step 4: compute |f| using a fact about flows: |f| = (flow leaving S) − (flow entering S).
+
+```text
+|f| = (sum of f(u,v) over forward-crossing edges)
+    − (sum of f(v,u) over backward-crossing edges)
+    = (sum of c(u,v) over forward-crossing edges)   ← step 2
+    − 0                                              ← step 3
+    = cap(S, T)
+```
+
+So this cut (S, T) has capacity exactly |f|.
+
+**(3 ⇒ 1).** Suppose some cut (S, T) has cap(S, T) = |f|. By weak duality (every flow ≤ every cut), every flow f' satisfies |f'| ≤ cap(S, T) = |f|. So f is maximum.
+
+All three are equivalent. ∎
+
+**Corollary.** Ford-Fulkerson terminates (on integer inputs) with a maximum flow, *and* it hands you a witnessing min cut for free — just compute S = reachable-from-s in the final G_f.
+
+**The big idea.** This is genuine strong duality. The LP relaxation of max-flow has integer optima (Week 7's *integrality*), and its LP dual is min-cut. Strong LP duality generalises this.
+
+## Edmonds-Karp: pick shortest paths, get polynomial time
+
+Ford-Fulkerson's runtime depends on path selection. The clever choice: **always pick the shortest augmenting path (by edge count).** This is **Edmonds-Karp**.
+
+```text
+edmonds_karp(G, s, t, c):
+  f = 0
+  while BFS in G_f finds an s-t path P:
+    augment(f, P)
+  return f
+```
+
+**Theorem.** Edmonds-Karp performs O(V · E) augmentations and runs in **O(V · E²)** total.
+
+### Why? Two key lemmas
+
+**Lemma 1 (BFS distance is monotone non-decreasing).** Let δ_f(s, v) = BFS distance from s to v in G_f. Augmenting along a shortest path only adds backward edges, which can only make distances longer.
+
+*Proof sketch.* Suppose some v has its distance shrink. Take the smallest such. The shrinking distance must come from a new edge (u, v), which was created by augmentation. Then (v, u) was on the shortest augmenting path, meaning δ_f(s, u) = δ_f(s, v) + 1. After augmentation, δ(s, v) ≥ δ(s, u) + 1 ≥ δ_f(s, v) + 2 — contradiction. ∎
+
+**Lemma 2 (each edge is bottleneck at most V/2 times).** Between two saturations of the same edge (u, v), δ_f(s, u) must increase by at least 2. Since δ is bounded by V, each edge is bottleneck ≤ V/2 times.
+
+Total augmentations ≤ |E| · V/2 = O(V · E). Each BFS + augment is O(E). **Total: O(V · E²).** ∎
+
+This is the **headline number to remember for COMP3027**.
+
+## Capacity scaling
+
+A different polynomial improvement. Instead of shortest paths: augment along any path whose bottleneck is at least Δ, halving Δ when no such path exists.
+
+Start Δ at the largest power of 2 ≤ C. Each phase has O(m) augmentations.
+
+**Total: O(m² log C)** — polynomial in input bits including log C. Preferred when C is huge.
+
+## A worked example
+
+4-vertex network. Edges (capacity):
+
+- s → a (3)
+- s → b (2)
+- a → b (1)
+- a → t (2)
+- b → t (3)
+
+Ford-Fulkerson trace:
+
+1. Augment s → a → t, bottleneck min(3, 2) = 2. f = 2.
+2. Augment s → b → t, bottleneck min(2, 3) = 2. f = 4.
+3. Augment s → a → b → t, bottleneck min(1, 1, 1) = 1. f = 5.
+4. No more augmenting paths. Halt.
+
+**Verify with min-cut.** S = &#123;s, a&#125;, T = &#123;b, t&#125;. Crossing edges: s→b (2), a→b (1), a→t (2). cap = 5.
+
+**Max flow = min cut = 5.** ✓
+
+## Why backward edges are essential (small example)
+
+4-vertex network: s → a (10), s → b (10), a → b (1), a → t (10), b → t (10). True max flow = 20.
+
+Run naive DFS Ford-Fulkerson:
+
+**Iteration 1.** DFS finds s → a → b → t. Bottleneck = 1 (the a→b edge). Push 1.
+
+**Iteration 2, without backward edges.** Residual: s→a (9), a→t (10), s→b (10), b→t (9), and a→b is gone. DFS finds s → b → t, bottleneck 9. Push 9. Total flow = 10.
+
+We're stuck. We can't get to 20 because the early commitment to a → b is locked in.
+
+**Iteration 2, with backward edges.** G_f also contains the backward edge b → a (capacity 1). DFS finds s → b → a → t, bottleneck = min(10, 1, 9) = 1. Push 1. The "flow on a → b" becomes 0 — effectively undoing the early commitment.
+
+Continue: more augmentations push the flow up to 20.
+
+**Without backward edges, Ford-Fulkerson is just wrong.**
+
+## Lemmas you'll use constantly
+
+**Integrality theorem.** If all capacities are integers, there exists an integer-valued max flow, and Ford-Fulkerson finds one. (Augmenting by integer bottlenecks preserves integrality.)
+
+This is indispensable for Week 7's bipartite matching — 0/1 flows correspond directly to "matched/unmatched".
+
+**Flow decomposition.** Any flow can be decomposed into at most m s-t paths plus cycles.
+
+*Constructive proof:* while support is non-empty, trace either an s-t path or a cycle in the support; subtract its min flow; this removes at least one edge. Terminates in ≤ m iterations. ∎
+
+This justifies the "think of flow as packets along paths" mental model.
+
+**Augmenting-path optimality certificate.** f is maximum ⇔ G_f has no s-t path. This is the *certificate* of optimality.
+
+## Where this all leads (Week 7 preview)
+
+You'll use max-flow as a *black box* to solve:
+
+| Problem | Reduction |
+|---------|-----------|
+| Bipartite matching | Source → left side, right side → sink, capacities 1 |
+| König's theorem | Vertex cover = min cut |
+| Hall's theorem | Saturation condition for perfect matching |
+| Edge-disjoint paths (Menger's) | All capacities 1; max-flow = max #disjoint paths |
+| Vertex-disjoint paths | Split each v into vᵢₙ → vₒᵤₜ, capacity 1 |
+| Image segmentation | Foreground/background = s-t cut on grid |
+| Project selection | Profitable subset with prerequisites = min cut |
+
+Every reduction follows the same pattern: identify states as vertices, transitions as edges, constraints as capacities. Read off the answer as max flow or min cut.
+
+## Common pitfalls
+
+- **Forgetting backward edges.** Algorithm is wrong on basic examples.
+- **Mixing |f| with edge flow.** |f| is global (net out of s); edge flow is local.
+- **Wrong cut direction.** Only forward edges (S → T) count toward cap; backward (T → S) edges *don't*.
+- **Assuming integer capacities when they aren't.** Irrational + bad path selection ⇒ non-termination.
+- **Reusing a stale BFS.** Each augmentation needs a *fresh* BFS in the updated residual graph.
+
+## Complexity hierarchy
+
+| Algorithm | Time | Notes |
+|-----------|------|-------|
+| Ford-Fulkerson (generic) | O(m · \|f*\|) | not polynomial in input bits |
+| **Edmonds-Karp** (shortest path) | **O(V · E²)** | the headline number |
+| Capacity scaling | O(m² log C) | best for huge C |
+| Dinic's algorithm | O(V² · E) | not assessed |
+| Push-relabel | O(V² √E) or O(V³) | beyond scope |
+
+**Remember Edmonds-Karp's bound.** Whenever a Week 7/8 reduction lands in a network, this is your budget.
+
+## Flow decomposition: a worked sketch
+
+Take a flow f with value 5 in some graph. Suppose f puts 3 units on s → a → t and 2 units on s → b → c → t plus 2 units on a → c (with appropriate conservation).
+
+The decomposition: find any s-t path in the support, peel off its min flow, repeat. Then any leftover support must form cycles; peel those off too.
+
+Each peel removes ≥ 1 edge from the support. ≤ m iterations.
+
+**Why this matters.** Max-flow algorithms find a flow *value*; flow decomposition extracts *the paths*. In bipartite matching, each unit-flow path corresponds to one matched edge. In edge-disjoint paths, each path is the answer itself.
+
+## Detailed Edmonds-Karp proof (for completeness)
+
+**Lemma (distance monotone).** δ_&#123;f'&#125;(s, v) ≥ δ_f(s, v) after a single augmentation.
+
+*Proof.* Suppose for contradiction some v has δ_&#123;f'&#125;(s, v) &lt; δ_f(s, v); take such v with smallest δ_&#123;f'&#125; value. Let u be its predecessor on the shortest path in G_&#123;f'&#125;. So (u, v) ∈ G_&#123;f'&#125;.
+
+Case A: (u, v) was already in G_f. By minimality of v: δ_f(s, u) ≤ δ_&#123;f'&#125;(s, u). So δ_f(s, v) ≤ δ_f(s, u) + 1 ≤ δ_&#123;f'&#125;(s, u) + 1 = δ_&#123;f'&#125;(s, v). Contradiction.
+
+Case B: (u, v) was created by augmentation. Then (v, u) was on the augmenting path. Since that path was a shortest path in G_f: δ_f(s, u) = δ_f(s, v) + 1. Then δ_&#123;f'&#125;(s, v) = δ_&#123;f'&#125;(s, u) + 1 ≥ δ_f(s, u) + 1 (by minimality) = δ_f(s, v) + 2. Contradiction. ∎
+
+**Lemma (saturation bound).** Each edge is bottleneck ≤ V/2 times.
+
+*Proof.* Say (u, v) is bottleneck at iteration t₁ (saturated, then removed from G_f). To be bottleneck again at iteration t₂, (v, u) must first be on some augmenting path (re-introducing (u, v) into G_f). When that happens, δₜ₂(s, v) = δₜ₂(s, u) − 1 ≥ δₜ₁(s, u) + 1 (distance grows by 2 between, by monotonicity and the path structure). So distance grew by ≥ 2 between saturations. δ ≤ V ⇒ ≤ V/2 saturations per edge. ∎
+
+Total augmentations: V/2 × E = O(V · E). Each is O(E). **Total O(V · E²).** ∎
+
+## What to do this week
+
+1. Re-derive max-flow min-cut on the 4-vertex worked example. Write S, T explicitly.
+2. Implement Ford-Fulkerson with DFS. Try the classic "zigzag" graph where 2C augmentations occur.
+3. Swap DFS for BFS (Edmonds-Karp). Observe the augmentation count drop dramatically.
+4. Prove the integrality theorem from the augment update rule.
+5. Run the backward-edges example by hand both ways. Confirm "without" gets stuck at 10 and "with" reaches 20.
+6. Decompose a small flow into paths + cycles using the constructive proof.
+7. Skim the quiz: any cut-vs-flow distinction you can't articulate is a study target.

@@ -1,0 +1,362 @@
+---
+title: "Week 13 — Review and Exam Strategy"
+unit: COMP3027
+week: 13
+type: overview
+status: done
+---
+
+## What Week 13 is for
+
+Consolidation. You're not learning anything new — you're *connecting* the twelve weeks into a single coherent toolkit, identifying the small set of recurring exam patterns, and developing a triage strategy.
+
+**The unit's core idea:** a handful of design paradigms plus a handful of analysis techniques. Mastery for the exam means:
+
+1. Classify a problem by paradigm in under a minute.
+2. Execute the standard analysis for that paradigm fluently.
+3. Write a proof in the unit's expected style.
+
+## The unit on one page
+
+| Paradigm | Identification cue | Standard analysis | Key theorems |
+|----------|--------------------|-----------------------|--------------|
+| **Greedy** (W2) | Choose one at a time, never reconsider | Exchange / invariant induction | — |
+| **D&C** (W3) | Split into independent subproblems | Master theorem; recursion tree | Master theorem |
+| **DP** (W4-5) | Optimal substructure + overlapping subproblems | #subproblems × per-transition work | Bellman-Held-Karp |
+| **Flow** (W6-8) | Source/sink/capacities; matching; demands | Max-flow algorithms; reduce to standard flow | Max-flow min-cut, König, Hall, Menger |
+| **NP-completeness** (W9-10) | Decision problem; no polynomial in sight | Karp reduction from known-hard | Cook-Levin |
+| **Approximation** (W11) | NP-hard optimisation; need polynomial near-optimum | Ratio; LP rounding; FPTAS | — |
+| **Online** (W12) | Input piece by piece; irrevocable | Competitive ratio; adversarial lower bound | Yao's principle |
+
+**Memorise this table.** When a new problem appears, locate it within 30 seconds, then run the standard analysis.
+
+## Pattern 1: prove correctness by exchange
+
+A greedy algorithm is given. Prove it's optimal.
+
+**Template.**
+
+1. State the greedy criterion.
+2. Let G = greedy output, O = arbitrary optimum.
+3. Define an invariant comparing G and O after r iterations.
+4. Inductively prove the invariant — base case, step.
+5. Conclude at final r: G and O agree on objective.
+6. State the running time.
+
+**Covers:** interval scheduling, scheduling for lateness, Huffman, Kruskal, Prim, Dijkstra. Practise each by re-deriving the proof in 4 minutes.
+
+## Pattern 2: derive a recurrence
+
+A recursive algorithm or DP is given. Write the recurrence; solve it; verify by base cases.
+
+**Template.**
+
+1. Identify subproblem(s). Parameterise carefully.
+2. Write the recurrence by considering the *last decision*.
+3. State base cases.
+4. Solve via substitution, recursion tree, or master theorem.
+5. State time and space complexity.
+6. Reconstruct the optimum via back-pointers.
+
+**Most common mistake:** poorly parameterised subproblem. When stuck, ask *what minimum information must the subproblem remember about the past?*
+
+## Pattern 3: design a flow reduction
+
+A new problem in plain English. Reduce to s-t flow or circulation; verify both directions.
+
+**Template.**
+
+1. Decision variables → edges.
+2. Capacity / lower-bound constraints → edge capacities.
+3. Balance / quantity constraints → vertex demands.
+4. Objective → max-flow or min-cut.
+5. State construction precisely (vertices, edges, capacities, demands).
+6. Prove BOTH directions: original solution → flow of equal value; integer flow → original solution.
+7. State complexity: Edmonds-Karp O(V · E²) in terms of original input.
+
+**Achilles' heel:** forgetting one direction, or building a wrong gadget.
+
+## Pattern 4: NP-hardness reduction
+
+A new problem X. Prove X is NP-hard.
+
+**Template.**
+
+1. Pick a known NP-hard source Y. (Usually 3-SAT, IS, VC, Subset Sum.)
+2. Construction: instance I_Y → instance I_X.
+3. Polynomial time + polynomial size.
+4. Forward (⇒): YES of Y → YES of X. Certificate translation.
+5. Backward (⇐): YES of X → YES of Y. Reverse translation.
+6. Conclude NP-hard. If X ∈ NP, NP-complete.
+
+**Most common mistake:** wrong reduction direction. **To prove X hard, reduce from a known-hard problem to X.**
+
+## Pattern 5: approximation ratio
+
+An algorithm A for an NP-hard optimisation problem. Prove A is α-approximate.
+
+**Template.**
+
+1. Define OPT precisely.
+2. Bound A's output value.
+3. **Establish a lower bound on OPT** — via a structural invariant the algorithm certifies (matching for VC; MST for TSP; charging for Set Cover).
+4. Combine: A ≤ α · OPT (minimisation) or A ≥ α · OPT (maximisation).
+5. State complexity.
+6. Verify tightness on an extremal instance.
+
+**Key insight:** the lower bound on OPT is the engine. Typically a *structure that every optimum must respect*, not a guess.
+
+## Pattern 6: competitive ratio
+
+An online algorithm A. Compute or bound its competitive ratio.
+
+**Template.**
+
+1. Define OPT (offline) and A (online) precisely.
+2. Identify the adversarial worst-case input.
+3. Deterministic: case-analyse worst-case adversary; show A(σ) ≤ c · OPT(σ).
+4. Randomised: show E[A(σ)] ≤ c · OPT(σ).
+5. State the lower bound from the adversary's construction.
+6. Conclude c-competitive (tight if upper = lower).
+
+## Highest-yield topics to revise
+
+Based on past COMP3027 exam patterns:
+
+1. **Greedy exchange arguments.** (Interval scheduling, MST, Dijkstra.)
+2. **DP recurrences + complexity.** (Knapsack, edit distance, weighted interval scheduling, matrix chain.)
+3. **Master theorem.** All three cases. Know when none applies (recursion tree).
+4. **Max-flow reductions.** (Bipartite matching, project selection, image segmentation, baseball elimination.) Highest-leverage.
+5. **NP-hardness reductions.** (3-SAT ≤ IS, IS ≤ VC, VC ≤ Set Cover, 3-SAT ≤ Subset Sum.) Both directions.
+6. **Approximation analyses.** (Vertex Cover 2-approx, Set Cover ln n, Christofides 3/2.) Structural lower bound.
+7. **Competitive ratios.** Ski rental + LRU paging.
+
+**Lower-yield but in scope:**
+
+- FFT intuition.
+- Median-of-medians.
+- Bellman-Ford with negative-cycle detection.
+- Circulations with lower bounds.
+- co-NP and the polynomial hierarchy.
+- PTAS vs FPTAS distinction.
+
+## Time management on the exam
+
+**Read every question before starting.** Allocate proportionally.
+
+For each question:
+
+- **First minute:** identify the *paradigm* and the *template*. Write guesses on scratch paper if unsure.
+- **Next minutes:** execute the template. Most questions fit a template above.
+- **Last 5-10 minutes:** revisit hardest questions; check answers.
+
+**Common pitfall:** spending 25 minutes on a hard question and running out of time on easier ones.
+
+**Triage.** Answer the easy ones first. Return to hard ones with leftover time.
+
+## When you see X, think Y
+
+| You see... | Suspect... |
+|------------|------------|
+| "Choose a subset of X subject to..." | DP if overlap; greedy if exchange works; else NP-hard |
+| "Find a sequence / path / cycle visiting..." | DP on graphs, or NP-hard (Hamiltonian) |
+| "Assign X to Y to optimise..." | Bipartite matching (flow) or assignment (min-cost flow) |
+| "Decide whether..." with no obvious polynomial | NP-hard; try Karp reduction |
+| "Input arrives one piece at a time..." | Online algorithm; competitive ratio |
+| "Approximate the optimum of NP-hard..." | Approximation; structural lower bound |
+
+By the exam, "what category is this?" should take under a minute.
+
+## Self-test: classify these in 30 seconds each
+
+(Paradigm + standard tool.)
+
+1. Schedule n jobs on a single machine minimising max lateness.
+   → **Greedy (EDF) — exchange.**
+2. Find a contiguous subarray of max sum.
+   → **DP (Kadane) — O(n).**
+3. Find longest common subsequence of two strings.
+   → **DP on prefixes — O(mn).**
+4. Decide whether a graph has a Hamiltonian cycle.
+   → **NP-complete — Karp reduction.**
+5. Maximum independent set with forbidden vertex pairs.
+   → **NP-hard (subsumes IS).**
+6. Online jobs on m identical machines, minimise makespan.
+   → **Online — Graham's rule, (2 − 1/m)-competitive.**
+7. Bin packing: do items fit in k bins?
+   → **NP-hard; has a PTAS.**
+8. Metric TSP within 1.5 × OPT.
+   → **Christofides — MST + matching + Eulerian.**
+9. 3-CNF satisfiability.
+   → **3-SAT — NP-complete by Cook-Levin.**
+10. SSSP with non-negative weights.
+    → **Dijkstra — greedy, O(m + n log n).**
+
+If you can answer each in 30 seconds, you're solid.
+
+## The bigger picture: reductions
+
+COMP3027 is, more than any other unit, about **reductions**.
+
+Every paradigm reduces hard-looking problems to a familiar canonical form:
+
+- **Greedy.** Reduce to an exchange between greedy and any optimum.
+- **DP.** Reduce to shortest path in an implicit DAG.
+- **Max-flow.** Reduce to s-t flow (which reduces to LP).
+- **NP-hardness.** Reduce from a known-hard problem.
+- **Approximation.** Reduce to LP rounding, charging, or scaling.
+- **Online.** Reduce to competitive analysis vs offline adversary.
+
+**The deep skill is recognising the right reduction.** Practise that recognition.
+
+## Two pieces of final advice
+
+**1. Write proofs in the unit's expected style.**
+
+- State invariants explicitly.
+- Use bold headers (Claim, Proof, Base, Step).
+- Define notation before using it.
+- Be exhaustive in case analyses.
+- Mark conclusions (∎).
+
+Markers reward visible structure.
+
+**2. Master the standard templates cold.**
+
+The unit has ~6 templates. Don't over-prepare obscure corners (FFT details, Christofides constants). Master the high-leverage techniques cold.
+
+## A meta-strategy: read the problem three times
+
+Before writing anything, read the statement three times. Each pass asks a different question.
+
+**Pass 1: What's the input and output?** Data structures. Output type (number, boolean, subset, permutation). This pins down parameter space.
+
+**Pass 2: What's the objective?** Maximise, minimise, decide. If max/min, what's the formula? If decide, what's the predicate?
+
+**Pass 3: Which paradigm fits?** Use the table above. Within 30 seconds you should have a candidate. If multiple might apply (e.g., greedy or DP), try the simplest first (greedy), pivot to DP if exchange fails.
+
+This three-pass discipline turns one-minute panic into structured approach.
+
+## Complexity bounds you must know cold
+
+| Problem | Algorithm | Complexity |
+|---------|-----------|------------|
+| Sorting (comparison) | Mergesort, heapsort | Θ(n log n) |
+| Sorting (small integer keys) | Radix sort | O(n · log U) |
+| Closest pair | D&C | Θ(n log n) |
+| Integer multiplication (n bits) | Harvey-vdH 2019 | O(n log n) |
+| Matrix multiplication | Strassen + | O(n²·³⁷²···) |
+| Binary search | Binary search | Θ(log n) |
+| Dictionary ops | Hash table | O(1) expected |
+| MST | Kruskal / Prim | O(m α(n)) / O(m + n log n) |
+| SSSP non-neg | Dijkstra | O(m + n log n) |
+| SSSP general | Bellman-Ford | O(V · E) |
+| All-pairs SP | Floyd-Warshall | O(V³) |
+| Max-flow | Edmonds-Karp | O(V · E²) |
+| Bipartite matching | Hopcroft-Karp | O(E √V) |
+| Edit distance | DP | O(mn) |
+| LCS | DP | O(mn) |
+| 0/1 knapsack | DP | O(nW) (pseudo-poly) |
+| TSP exact | Held-Karp | O(n² · 2ⁿ) |
+| TSP metric (3/2 approx) | Christofides | O(n³) |
+| SAT exact | Brute force | 2ⁿ |
+
+**If a problem has no polynomial algorithm in this table, suspect NP-hardness.**
+
+## Named theorems cheat sheet
+
+- **Master theorem.** T(n) = a T(n/b) + f(n). Three cases by comparing f to n<sup>logᵦ a</sup>.
+- **Bellman-Held-Karp.** TSP in O(n² · 2ⁿ).
+- **Cook-Levin.** SAT is NP-complete.
+- **Hall's marriage.** Bipartite matching saturates L iff |N(A)| ≥ |A| for all A ⊆ L.
+- **König.** In bipartite graphs, max matching = min vertex cover.
+- **Menger.** Max edge-disjoint s-t paths = min s-t cut (edges); vertex version analogous.
+- **Max-flow min-cut.** Max flow = min cut. Strong duality.
+- **Strong LP duality.** Primal optimum = dual optimum.
+- **Ladner.** If P ≠ NP, there are NP-intermediate problems.
+- **PCP theorem.** NP = PCP(O(log n), O(1)). Underlies modern inapproximability.
+
+Be prepared to *state* and *apply*. Sketch a proof only for max-flow min-cut.
+
+## Diagnostic flowchart
+
+When you face a new problem on the exam, run this decision tree:
+
+```text
+1. Is input revealed all at once, or piece by piece?
+   piece by piece -> ONLINE; competitive ratio.
+   all at once    -> continue.
+
+2. Decide or optimise?
+   decide, no polynomial in sight -> NP-COMPLETE; Karp reduction.
+   optimise                      -> continue.
+
+3. Assignments, flows, matchings, bipartite structure?
+   yes -> FLOW or min-cost flow.
+   no  -> continue.
+
+4. Optimal substructure?
+   with overlap    -> DP.
+   without overlap -> D&C.
+   continue.
+
+5. One-shot locally optimal choice with exchange?
+   yes -> GREEDY.
+   no  -> continue.
+
+6. Provably NP-hard but need polynomial?
+   yes -> APPROXIMATION; structural lower bound.
+
+7. No paradigm fits?
+   - Reconsider NP-hardness in disguise.
+   - Look for hidden bipartite or DAG structure.
+   - Recall tutorial examples of similar shape.
+```
+
+## Common student errors (forewarned is forearmed)
+
+- **Wrong reduction direction.** Reducing new problem TO known-hard proves easy, not hard.
+- **Missing backward direction.** (⇒) without (⇐) is incomplete.
+- **Off-by-one base case.** Verify n = 0 or 1.
+- **Loose Big-O.** Claiming O(n²) when Θ(n log n) is right.
+- **Forgetting reconstruction.** The DP value alone doesn't certify the witnessing decisions.
+- **Ignoring integrality.** Fractional LP optimum ≠ integer answer.
+- **Misapplying master theorem.** Forgetting regularity in Case 3; using it for non-D&C recurrences.
+
+Reread your draft answers with this checklist.
+
+## The named structural lower bounds for approximation
+
+Pair these with the algorithms:
+
+| Algorithm | Structural lower bound on OPT |
+|-----------|-------------------------------|
+| VC 2-approx (matching) | |OPT| ≥ |M| (each edge of M needs a distinct cover vertex) |
+| Set Cover ln n (greedy) | Charging argument: prices p(x), greedy total ≤ H(n) · OPT |
+| Christofides 3/2 (TSP) | OPT ≥ MST weight (deleting an edge from OPT gives a spanning tree) |
+| Knapsack FPTAS | OPT ≥ vₘₐₓ (single best item) |
+
+The lower bound is the *engine* of every approximation proof.
+
+## Final preparation checklist
+
+Tick these the day before the exam:
+
+- [ ] Re-derive interval scheduling exchange proof from scratch.
+- [ ] Re-derive max-flow min-cut proof.
+- [ ] Re-derive 3-SAT ≤ₚ Independent Set with both directions.
+- [ ] Re-derive Vertex Cover 2-approximation with the matching lower bound.
+- [ ] Re-derive ski rental 2-competitive bound.
+- [ ] Memorise the complexity-bounds table above.
+- [ ] Memorise the named-theorems list.
+- [ ] Practise the "classify in 30 seconds" test on a fresh problem.
+
+## What to do this week
+
+1. Re-derive one canonical proof from each paradigm without notes: interval scheduling; mergesort's master-theorem application; weighted interval scheduling recurrence; max-flow min-cut proof; 3-SAT ≤ IS reduction; VC 2-approximation; ski-rental competitive analysis.
+2. For each canonical problem, recite the runtime and complexity class verbatim.
+3. Practise "classify in 30 seconds" on a fresh problem from a past tutorial.
+4. Time yourself on a past exam paper under exam conditions. Review where you spent too long.
+5. Sleep well the night before. Fatigue costs marks more reliably than any specific knowledge gap.
+6. Build flashcards for the named theorems if you don't have them yet.
+7. Calm down, breathe, and remember: most exam questions fit a template you've seen ten times.

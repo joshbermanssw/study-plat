@@ -1,0 +1,587 @@
+---
+title: "Week 5 — Server-side development with Node.js and Express"
+unit: COMP4347
+week: 5
+type: overview
+status: done
+---
+
+## What changes this week, in one sentence
+
+**Week 5 is the pivot from client to server: JavaScript stops being the language that paints buttons and starts being the language that answers HTTP requests.**
+
+The lecture frames a web server as a function. It takes a request — URL, method, headers, query string, body — and returns a response — status code, headers, body. Everything else is bookkeeping.
+
+The toolkit you're learning:
+
+- **Node.js**, a JavaScript runtime that lets `.js` files execute outside a browser.
+- **Express.js**, a minimal HTTP framework that turns Node into something you can ship.
+- **EJS** and **Pug**, two template engines that interpolate data into HTML on the server.
+- **npm**, the package manager that installs everything else.
+
+The lecture sells this through MVC. The tutorial sells it through `npm init`, `npm install express`, and a survey app. By the end you should be able to do both — explain *why* the architecture exists, and *type* the commands that build it.
+
+There are two questions every server-side framework eventually has to answer:
+
+1. **How do I route a URL to a function?** Express's answer is `app.get(path, handler)`.
+2. **How do I share work across requests?** Express's answer is middleware — a chain of functions, each with the chance to read, modify, or terminate the request.
+
+Hold those two questions in mind while you read the rest. Everything below is a special case of one or both.
+
+## Why Node.js exists at all
+
+**The browser shipped JavaScript. Node.js extracted the JS engine and gave it a standard library.**
+
+Concretely, Node = V8 (Chrome's JS engine) + libuv (an async I/O library in C) + a built-in module set: `fs`, `http`, `net`, `crypto`, `path`, `stream`, and so on. V8 reads your source code. libuv hands disk and network work to the operating system without blocking. The standard library exposes the OS to your JS.
+
+The design goal the lecture emphasises is **performance under concurrency**. A traditional server forks a process per request, or assigns a thread per request, or uses a thread pool. Each thread eats memory and a fraction of CPU. The server runs out of threads long before it runs out of useful work.
+
+**Node.js runs your JavaScript on a single thread.** That sounds catastrophic until you notice that "running" mostly means "waiting" — waiting on a database, waiting on a file, waiting on the network. While the main thread waits, it could be answering other requests instead. So Node's design is: never wait. Every I/O call returns immediately and gets a callback (or a Promise) that fires when the I/O finishes.
+
+This single-thread, never-block model is why **one Node process handles thousands of concurrent connections**. It is also why **any CPU-bound code freezes the server** — there is no other thread to take over.
+
+```js
+const fs = require("node:fs/promises");
+console.log("A");
+fs.readFile("./big.txt", "utf8").then(d => console.log("C", d.length));
+console.log("B");
+// prints A, B, then later C 12345
+```
+
+The order of `A`, `B`, `C` is the whole lecture in four lines: the disk read was deferred, the main thread kept running, and the callback fired later.
+
+## The event loop, phase by phase
+
+**The event loop is the function that keeps Node alive.** While there is unfinished work, it loops; when there is none, the process exits.
+
+Every tick of the loop visits these phases in order:
+
+1. **Timers.** Run callbacks whose `setTimeout` / `setInterval` deadline has elapsed.
+2. **Pending callbacks.** Run deferred OS-level callbacks (TCP errors, etc).
+3. **Idle, prepare.** Internal libuv bookkeeping.
+4. **Poll.** Block here, asking the OS for new I/O events; then run their callbacks. This is where most of your work lives.
+5. **Check.** Run `setImmediate` callbacks.
+6. **Close callbacks.** Run `socket.on("close")`, etc.
+
+Between every callback (not just every phase), the **microtask queue** is drained. Microtasks are `Promise.then` callbacks and `process.nextTick` callbacks. `nextTick` has higher priority than promise microtasks.
+
+```js
+setImmediate(() => console.log("immediate"));
+setTimeout(() => console.log("timeout"), 0);
+process.nextTick(() => console.log("nextTick"));
+Promise.resolve().then(() => console.log("promise"));
+// nextTick, promise, timeout, immediate
+```
+
+A subtle point: **the relative order of `setTimeout(0)` and `setImmediate` from the main module is not guaranteed**, because the loop might enter the timers phase a millisecond too early. From *inside* an I/O callback, `setImmediate` always runs first — the loop is already past timers.
+
+The mental shorthand: **microtasks are tiny and urgent, macrotasks are full phase entries, nextTick beats everything.**
+
+Why does this matter outside the exam? Because **anything you put on the main thread blocks every other request**. A `JSON.parse` of a 30 MB blob is hundreds of milliseconds during which no other request can be answered. The fix is to move CPU-bound work off the main thread — either with `worker_threads`, or by sharding the work across multiple Node processes behind a load balancer.
+
+The other reason to know the phases is debugging. If you see a `setTimeout(fn, 0)` callback firing seconds late, the explanation is almost always **a long synchronous handler is blocking the poll phase**. Add a `console.time` around your handlers; whichever one takes 800 ms is your culprit.
+
+## Modules: CommonJS vs ESM
+
+**Modules let you split your code into files that share variables on purpose, not by accident.**
+
+Node has two module systems. They mostly do the same thing in different syntax.
+
+**CommonJS** — the older one, the default if `package.json` has no `"type"` field, file extension `.cjs` or `.js`:
+
+```js
+// math.js
+function add(a, b) { return a + b; }
+module.exports = { add };
+
+// app.js
+const { add } = require("./math");
+console.log(add(2, 3));
+```
+
+**ES Modules (ESM)** — JS-standard, the default with `"type": "module"` in `package.json`, file extension `.mjs` or `.js`:
+
+```js
+// math.mjs
+export function add(a, b) { return a + b; }
+
+// app.mjs
+import { add } from "./math.mjs";
+```
+
+Five differences that bite you in exams and in real life:
+
+1. **CommonJS is synchronous.** `require()` blocks until the module loads. ESM is asynchronous and supports `import()` for dynamic loads.
+2. **ESM supports top-level `await`.** CommonJS does not.
+3. **CommonJS gives you `__dirname` and `__filename` for free.** In ESM you derive them from `import.meta.url` (or use `import.meta.dirname` on Node 20.11+).
+4. **ESM is strict about file extensions** — you must write `./foo.js`, not `./foo`.
+5. **ESM is the JS standard.** New projects should use it.
+
+The lecture shows the `const fs = require("fs")` form because it is shorter to demonstrate. The tutorial code base ships either form; check `package.json` for `"type": "module"` to know which you're in.
+
+**Interop has rough edges.** ESM can import CommonJS modules — the whole `module.exports` becomes the default export. CommonJS *cannot* synchronously `require()` an ESM module, because ESM loading is asynchronous; you have to use `await import(...)`. If your `require("./foo")` suddenly errors with `Cannot use import statement outside a module`, it means `./foo.js` was authored as ESM and you're in a CommonJS context.
+
+## npm, pnpm, yarn — package managers
+
+**npm is the registry; the rest are alternative clients.**
+
+`npm` ships inside Node.js. Its job is to download libraries from `registry.npmjs.org` and write them into `node_modules`. Two files do all the work:
+
+- `package.json` — the manifest. Lists dependencies and version ranges, plus scripts.
+- `package-lock.json` — the lockfile. Pins every transitive dependency to an exact version, so two machines running `npm install` get byte-identical trees.
+
+**Commit the lockfile.** Without it, two developers can produce different builds from the same `package.json`.
+
+The lecture and tutorial use `npm install express ejs pug` for project-local installs. "Local" matters: Express is a library you import, not an application you launch, so it lives inside the project's `node_modules` rather than on `PATH`. Compare with `npm install -g nodemon`, which installs a CLI globally.
+
+Alternatives you'll encounter:
+
+- **pnpm** stores each package version once on disk and hard-links it into every project's `node_modules`. Huge disk savings, faster installs, strict about phantom dependencies.
+- **yarn** (Facebook) was the first popular lockfile-based alternative. Still common in older projects.
+- **bun** is a runtime *and* a package manager — drop-in faster `npm install`, partial Node compatibility.
+
+Semver in `package.json`:
+
+```json
+{ "dependencies": { "express": "^4.19.0", "ejs": "~3.1.10" } }
+```
+
+The caret `^4.19.0` allows any `4.x.y` with `y ≥ 0` and `x ≥ 19`. The tilde `~3.1.10` allows only `3.1.z` with `z ≥ 10`. The lockfile makes both deterministic for `npm install`; the manifest controls what `npm update` accepts later.
+
+Two `package.json` fields you'll meet constantly:
+
+- **`"scripts"`** — short aliases for commands. `npm run dev` looks up `"dev"`. Two scripts are special: `npm start` (calls `"start"`) and `npm test` (calls `"test"`).
+- **`"dependencies"` vs `"devDependencies"`** — `express` is a dependency (needed at runtime). `nodemon`, `eslint`, `vitest` are devDependencies (needed only during development). Install with `npm install --save-dev <name>` for the latter.
+
+## Express: app, middleware, route handlers
+
+Before reaching for Express, here is what Node alone can do:
+
+```js
+import http from "node:http";
+
+const server = http.createServer((req, res) => {
+  if (req.url === "/" && req.method === "GET") {
+    res.writeHead(200, { "Content-Type": "text/plain" });
+    res.end("hello\n");
+    return;
+  }
+  res.writeHead(404).end("not found\n");
+});
+
+server.listen(3000, () => console.log("listening on :3000"));
+```
+
+This is enough for one route. By the time you have ten — and you want query parsing, body parsing, parametric paths, cookies, sessions, and templating — you want a router. That router is Express.
+
+**An Express app is a chain of middleware functions.** Each function gets `(req, res, next)`. They run in the order they were registered. The chain stops when a function ends the response with `res.send()`, `res.json()`, `res.end()`, `res.render()`, or similar.
+
+```js
+import express from "express";
+const app = express();
+
+app.use(express.json());                          // body parser
+
+app.use((req, res, next) => {                     // logger
+  console.log(`${req.method} ${req.url}`);
+  next();
+});
+
+app.get("/items/:id", (req, res) => {             // route handler
+  res.json({ id: req.params.id, name: "Widget" });
+});
+
+app.use((req, res) => res.status(404).json({ error: "Not Found" }));  // 404
+
+app.use((err, req, res, next) => {                // error handler
+  console.error(err);
+  res.status(err.status ?? 500).json({ error: err.message });
+});
+
+app.listen(3000);
+```
+
+Three rules that explain everything:
+
+1. **Order matters.** The first middleware registered is the first to run.
+2. **`next()` advances the chain.** If a middleware neither sends a response nor calls `next()`, the request hangs forever.
+3. **Error middleware has four arguments.** Express identifies it by arity — `(err, req, res, next)` is recognised as the error handler. It must be registered last.
+
+The lecture frames middleware as **a function that sits between the low-level request and your route handler**. The route handler is itself the final middleware in the chain — Express treats `app.get("/path", handler)` as a middleware that only runs when the method and path match.
+
+A common exam trap, straight from the slides: registering middleware *after* the route handler that terminates the response. The route handler runs, sends the response, and never calls `next()` — so the middleware never executes. **"LOGGED" never prints** if `app.use(myLogger)` follows `app.get("/", handler)`.
+
+### The request / response lifecycle
+
+**Picture every request as a six-step pipeline.**
+
+1. **TCP connection accepted** by Node's `http` server.
+2. **HTTP parsed.** Node produces `req` (an `IncomingMessage`) and `res` (a `ServerResponse`).
+3. **Express decorates** `req` and `res` — adding `req.params`, `req.query`, helpers like `res.json()`.
+4. **Body parser runs** (if registered). It reads the request body stream, decodes it according to `Content-Type`, and assigns to `req.body`.
+5. **Middleware and route handlers run** in registration order until one sends a response.
+6. **Response is written** back over the same TCP socket. The socket is kept alive for the next request.
+
+Three things hang the request forever and look like "the server is slow":
+
+- A middleware forgot to call `next()` and didn't send a response.
+- An `async` handler awaited a promise that never resolves.
+- A handler called `res.send()` and then `next()` without `return` — a downstream middleware tries `res.send()` again and throws `Cannot set headers after they are sent`.
+
+## Parsing query strings, JSON, and form data
+
+**`req.query` arrives free, but `req.body` requires a middleware.**
+
+Query strings come from the URL after `?` — Express parses them automatically:
+
+```js
+// GET /search?q=node&page=2
+app.get("/search", (req, res) => {
+  console.log(req.query);   // { q: "node", page: "2" }
+});
+```
+
+Note that all query-string values are **strings**. Coerce them with `Number(...)` if you need a number.
+
+JSON bodies arrive in `POST` and `PUT` requests with `Content-Type: application/json`. Until you opt in, `req.body` is `undefined`:
+
+```js
+app.use(express.json());
+
+app.post("/echo", (req, res) => {
+  res.json({ received: req.body });
+});
+```
+
+HTML form posts arrive with `Content-Type: application/x-www-form-urlencoded`. The tutorial's survey form uses this — a `<form action="/survey" method="POST">` with `<input name="gender">` and `<input name="vote">`:
+
+```js
+app.use(express.urlencoded({ extended: true }));
+
+app.post("/survey", (req, res) => {
+  const { gender, vote } = req.body;          // both strings
+  surveyresults[gender === "f" ? "fp" : "mp"][Number(vote)]++;
+  res.render("surveyresult.ejs", { products, surveyresults });
+});
+```
+
+Three classic status codes the lecture quizzes you on:
+
+- **400 Bad Request** — the body claims `application/json` but is malformed (missing closing brace).
+- **404 Not Found** — no route is registered for the given method + path.
+- **405 Method Not Allowed** — a route is registered for `GET /greet` but the client sent `POST /greet`.
+
+The lecture frames this through `body-parser`, the historically-separate package that Express used to require. As of Express 4.16, the same functionality is built in as `express.json()` and `express.urlencoded()`. If you read older tutorials that import `body-parser`, mentally translate to the built-in — same API, same behaviour.
+
+## MVC: Model, View, Controller
+
+**MVC is the architectural pattern this unit organises everything around.**
+
+The lecture pitches MVC as separation of concerns. Three layers:
+
+- **Model.** Owns the data and the business rules. Reads and writes the database. Knows nothing about HTML or HTTP.
+- **View.** Owns presentation. Turns data into HTML (or JSON). Knows nothing about how the data was fetched.
+- **Controller.** The glue. Receives an HTTP request, asks the Model for data or to mutate state, hands the data to the View to render, and returns the result.
+
+The point is **swap-ability**. Replace MongoDB with Postgres — only the Model changes. Replace EJS with React — only the View changes. Replace Express with Fastify — only the Controller layer changes.
+
+In an Express + EJS app, the typical layout maps cleanly:
+
+```text
+/models       — schemas + DB access (Mongoose, Prisma, raw SQL)
+/views        — .ejs / .pug template files
+/controllers  — functions that handle routes
+/routes       — wires URLs to controllers (could be inline)
+app.js        — wires it all together
+```
+
+```js
+// controllers/items.js
+export async function listItems(req, res) {
+  const items = await Item.find();                 // Model
+  res.render("items/index.ejs", { items });        // View
+}
+```
+
+The Week 5 tutorial's `app.js` deliberately *doesn't* separate these — `products`, `surveyresults`, and the route handlers all live in one file. That's deliberate so you can see the parts before the pattern. Real apps separate them.
+
+A common exam question: **given a code snippet, classify it as M, V, or C.** Database queries are M. HTML strings or `.ejs` templates are V. Functions that read `req` and call `res.render()` are C.
+
+## Template engines: EJS and Pug
+
+**A template engine turns "HTML with holes" into a string of HTML.**
+
+EJS — Embedded JavaScript Templates — looks like HTML with `<% %>` tags:
+
+```ejs
+<!-- views/greeting.ejs -->
+<% if (name) { %>
+  <h1>Hello, <%= name %>!</h1>
+<% } else { %>
+  <h1>Hello, stranger.</h1>
+<% } %>
+```
+
+Three EJS tag forms:
+
+- `<%= expr %>` — evaluate expression, HTML-escape, insert.
+- `<%- expr %>` — evaluate, insert *without* escaping (use carefully — XSS risk).
+- `<% stmt %>` — execute statement, no output. Used for `if`, `for`, `let`.
+
+Pug is the same idea with indentation instead of brackets:
+
+```pug
+//- views/greeting.pug
+if name
+  h1 Hello, #{name}!
+else
+  h1 Hello, stranger.
+```
+
+Wiring it into Express:
+
+```js
+app.set("views", path.join(__dirname, "views"));
+// no app.set("view engine", ...) needed if we pass the extension explicitly
+
+app.get("/greeting", (req, res) => {
+  res.render("greeting.ejs", { name: req.query.name });
+});
+```
+
+Express picks the engine from the file extension. The same app can mix `.ejs` and `.pug` views — the tutorial deliberately demonstrates this in Part 5.
+
+The lecture frames templating as **the View layer of MVC** and as the precursor to React/Vue. The split is server-rendered HTML (EJS, Pug, Jinja2, ERB) versus client-rendered HTML (React, Vue, Svelte). Server-rendering is making a comeback under names like HTMX, Astro server islands, and Next.js Server Components.
+
+**Always HTML-escape user data.** The default `<%= %>` does this for you. The "unescaped" form `<%- %>` is for when you *know* the input is already safe HTML (rendered Markdown, sanitised rich text). Putting user-supplied text through `<%- %>` is the classic XSS hole: a username like `<script>steal()</script>` becomes a working attack.
+
+## A complete CRUD REST API
+
+**This is the canonical "shape" of an Express service.**
+
+```js
+import express from "express";
+const app = express();
+app.use(express.json());
+
+const items = new Map();      // id -> item
+let nextId = 1;
+
+// LIST
+app.get("/items", (req, res) => {
+  res.json([...items.values()]);
+});
+
+// READ
+app.get("/items/:id", (req, res) => {
+  const item = items.get(Number(req.params.id));
+  if (!item) return res.status(404).json({ error: "not found" });
+  res.json(item);
+});
+
+// CREATE
+app.post("/items", (req, res) => {
+  const { name, price } = req.body ?? {};
+  if (!name) return res.status(422).json({ error: "name required" });
+  const item = { id: nextId++, name, price: Number(price) || 0 };
+  items.set(item.id, item);
+  res.status(201).location(`/items/${item.id}`).json(item);
+});
+
+// UPDATE
+app.put("/items/:id", (req, res) => {
+  const id = Number(req.params.id);
+  if (!items.has(id)) return res.status(404).json({ error: "not found" });
+  const updated = { id, name: req.body.name, price: Number(req.body.price) || 0 };
+  items.set(id, updated);
+  res.json(updated);
+});
+
+// DELETE
+app.delete("/items/:id", (req, res) => {
+  const id = Number(req.params.id);
+  if (!items.delete(id)) return res.status(404).json({ error: "not found" });
+  res.status(204).end();
+});
+
+app.listen(3000, () => console.log("api on :3000"));
+```
+
+Six things to notice:
+
+1. **One Map, five routes, full CRUD.** Replace `Map` with a database in Week 7.
+2. **`:id` is a parametric path segment** — accessible as `req.params.id`. It is always a string.
+3. **`201 Created` + `Location` header** is the conventional response to a successful POST.
+4. **`204 No Content`** is the conventional response to a successful DELETE.
+5. **`422 Unprocessable Entity`** signals "the request was well-formed but logically invalid" (missing required field).
+6. **Every handler that branches returns early** — otherwise you'd send the response twice and crash.
+
+## Environment variables and dotenv
+
+**Never hardcode secrets, ports, or hostnames.**
+
+The pattern is `process.env.VAR_NAME`, loaded from a `.env` file in development:
+
+```bash
+# .env (gitignored)
+PORT=3000
+DATABASE_URL=postgres://user:pw@localhost:5432/app
+JWT_SECRET=changeme
+```
+
+```js
+import "dotenv/config";   // populates process.env
+
+const port = Number(process.env.PORT ?? 3000);
+const dbUrl = process.env.DATABASE_URL;
+if (!dbUrl) throw new Error("DATABASE_URL not set");
+
+app.listen(port);
+```
+
+Three rules:
+
+1. **`.env` goes in `.gitignore`.** Never commit secrets.
+2. **Ship a `.env.example`** listing the variable names with placeholder values. Other developers copy it to `.env`.
+3. **In production, set env vars via the platform** — systemd, Docker, your PaaS. Don't ship a `.env` file to production.
+
+A centralised, schema-validated config pays off as the app grows:
+
+```js
+import "dotenv/config";
+import { z } from "zod";
+
+export const config = z.object({
+  NODE_ENV: z.enum(["development", "test", "production"]).default("development"),
+  PORT: z.coerce.number().int().min(1).default(3000),
+  DATABASE_URL: z.string().url(),
+  JWT_SECRET: z.string().min(32),
+}).parse(process.env);
+```
+
+Misconfiguration now fails **at startup** with a clear message, instead of mysteriously hours later.
+
+Three rules of thumb:
+
+1. **Read env vars once, at startup.** Don't sprinkle `process.env.X` reads through your code; cache them in a `config` object.
+2. **Default sensibly in development, fail loudly in production.** A missing `PORT` can default to 3000. A missing `DATABASE_URL` must crash the process.
+3. **Never log the resolved config.** It contains secrets. Log a redacted summary instead — `{ PORT: 3000, DATABASE_URL: "[set]", JWT_SECRET: "[set]" }`.
+
+The `dotenv` package is **for development convenience**. It reads `.env` and assigns to `process.env` *only if the key isn't already set*. So in production, where the platform injects env vars directly, `dotenv` is a no-op. There is no harm in calling `import "dotenv/config"` everywhere — but you can also gate it behind `NODE_ENV !== "production"` if you want to keep the production startup absolutely free of file I/O.
+
+## Dev workflow: nodemon and structured logging
+
+**Restarting the server by hand every save is unbearable.**
+
+`nodemon` watches your source files and restarts Node on every change:
+
+```json
+{
+  "scripts": {
+    "dev": "nodemon --watch src --ext js,mjs,json src/server.js",
+    "start": "node src/server.js"
+  },
+  "devDependencies": { "nodemon": "^3.1.0" }
+}
+```
+
+Run `npm run dev`. Edit a file. Watch the terminal say `[nodemon] restarting due to changes...`. **Never use nodemon in production** — it adds startup overhead and a process layer you don't need.
+
+The lecture's first Express app uses `node app.js` because it's pedagogically clean. Your assignments should use `nodemon` for the dev loop.
+
+### Structured logging
+
+**`console.log` is fine for development. In production you want JSON.**
+
+Log aggregators (ELK, Datadog, CloudWatch) ingest JSON natively. Free-text logs require fragile regex parsers.
+
+```js
+import pino from "pino";
+const log = pino({ level: process.env.LOG_LEVEL ?? "info" });
+
+app.use((req, res, next) => {
+  const start = Date.now();
+  res.on("finish", () => {
+    log.info({
+      method: req.method,
+      url: req.url,
+      status: res.statusCode,
+      ms: Date.now() - start,
+    });
+  });
+  next();
+});
+```
+
+Output: `{"level":30,"time":1715000000000,"method":"GET","url":"/items","status":200,"ms":4}` — one line per request, grep-friendly, ship-ready.
+
+Three logging rules:
+
+1. **One event = one log line.** Don't spread a request's information across five `console.log` calls.
+2. **Use levels.** `debug` &lt; `info` &lt; `warn` &lt; `error`. Production runs at `info`; development at `debug`.
+3. **Never log secrets.** Filter out `password`, `Authorization`, `cookie`, `Set-Cookie`.
+
+### Async errors and the error middleware
+
+**Express 4 does not auto-catch errors thrown by async route handlers.**
+
+A naive async handler that throws will hang the request:
+
+```js
+app.get("/users/:id", async (req, res) => {
+  const user = await db.user.findById(req.params.id);   // throws? request hangs
+  res.json(user);
+});
+```
+
+Either wrap with try/catch and call `next(err)`:
+
+```js
+app.get("/users/:id", async (req, res, next) => {
+  try {
+    const user = await db.user.findById(req.params.id);
+    if (!user) return res.status(404).json({ error: "not found" });
+    res.json(user);
+  } catch (err) {
+    next(err);
+  }
+});
+```
+
+Or write a wrapper helper once:
+
+```js
+const wrap = fn => (req, res, next) =>
+  Promise.resolve(fn(req, res, next)).catch(next);
+
+app.get("/users/:id", wrap(async (req, res) => {
+  const user = await db.user.findById(req.params.id);
+  if (!user) return res.status(404).json({ error: "not found" });
+  res.json(user);
+}));
+```
+
+Then a single error-handling middleware at the bottom of the chain catches everything:
+
+```js
+app.use((err, req, res, next) => {
+  log.error({ err: err.message, stack: err.stack });
+  res.status(err.status ?? 500).json({ error: err.message });
+});
+```
+
+Express 5 (now stable) auto-catches async errors — but the unit's examples assume Express 4 conventions.
+
+## Common exam patterns
+
+- **Classify code as M, V, or C.** Database queries → Model. HTML/template strings → View. Route handlers that call into both → Controller.
+- **Pick the HTTP status code.** 200 OK, 201 Created (with `Location`), 204 No Content (for DELETE), 400 Bad Request (malformed body), 404 Not Found (no route), 405 Method Not Allowed (route exists for a different method), 422 Unprocessable Entity (validation failure).
+- **Trace the request lifecycle.** Given an Express snippet with three middleware and one route, list the order of `console.log` outputs for one request. Remember: middleware registered *after* a terminating handler never runs.
+- **Order async output.** Given `setImmediate`, `setTimeout(0)`, `process.nextTick`, and `Promise.resolve().then`, list the print order. Microtasks (`nextTick`, then promises) drain between every callback; macrotasks queue per phase.
+- **Body parser plumbing.** Predict `req.body` given `Content-Type` and registered middleware. No `express.json()` → `req.body` is `undefined`. JSON content-type with a malformed body → Express responds 400 itself.
+- **Spot the middleware mistake.** A logger registered after the route handler never logs. A handler that calls `res.send()` then `next()` without `return` triggers "Cannot set headers after they are sent".
+- **Error middleware signature.** Four arguments: `(err, req, res, next)`. Three arguments is a regular middleware. Express identifies the error handler by arity.
+- **EJS rendering.** Given a template, controller-supplied data, and a request, predict the rendered HTML. Watch for HTML-escaping in `<%= %>` versus raw output in `<%- %>`.
+- **Tutorial command order.** `node -v` → `mkdir COMP5347 && cd COMP5347` → `npm init` (entry point `app.js`) → `npm install express ejs pug` → drop in `week5.zip` → `node app.js` → visit `localhost:3000`.
+- **Local vs global installs.** Express is local (`npm install express`) because it's a library you import. Nodemon may be global (`npm install -g nodemon`) because it's a CLI. The lockfile lives in the project, alongside `package.json`.
+- **CommonJS vs ESM.** `require`/`module.exports` is CommonJS, synchronous, default. `import`/`export` is ESM, needs `"type": "module"`, supports top-level await, requires file extensions.

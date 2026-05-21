@@ -1,0 +1,232 @@
+{
+  "unit": "COMP4347",
+  "week": 1,
+  "topic": "Web fundamentals + JavaScript intro",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "Which HTTP status code means the request was understood and the user is authenticated, but they lack permission for this resource?",
+      "choices": ["401 Unauthorized", "403 Forbidden", "404 Not Found", "409 Conflict"],
+      "correctIndex": 1,
+      "explanation": "403 means the server knows who you are but refuses the action. 401 means the credentials were missing or invalid."
+    },
+    {
+      "id": "q2",
+      "stem": "Which part of a URL is NEVER sent to the server?",
+      "choices": ["The path", "The query string", "The fragment", "The port"],
+      "correctIndex": 2,
+      "explanation": "Fragments (#...) are resolved entirely by the browser and never appear in the HTTP request line."
+    },
+    {
+      "id": "q3",
+      "stem": "What is the output?\n\nconsole.log(0 == '0');\nconsole.log(0 === '0');",
+      "choices": ["true, true", "true, false", "false, true", "false, false"],
+      "correctIndex": 1,
+      "explanation": "== coerces the string '0' to number 0 so the first is true. === checks type first and fails because string != number."
+    },
+    {
+      "id": "q4",
+      "stem": "Which HTTP method is NOT idempotent?",
+      "choices": ["GET", "PUT", "DELETE", "POST"],
+      "correctIndex": 3,
+      "explanation": "POST typically creates a new resource each time, so calling it twice produces two resources. PUT/DELETE/GET are idempotent."
+    },
+    {
+      "id": "q5",
+      "stem": "What is logged?\n\nconsole.log(x);\nvar x = 5;",
+      "choices": ["5", "undefined", "ReferenceError", "null"],
+      "correctIndex": 1,
+      "explanation": "var declarations are hoisted but not their initializers, so x exists with value undefined when the log runs."
+    },
+    {
+      "id": "q6",
+      "stem": "What is logged?\n\nconsole.log(y);\nlet y = 5;",
+      "choices": ["5", "undefined", "ReferenceError", "null"],
+      "correctIndex": 2,
+      "explanation": "let/const are in the temporal dead zone until the declaration line, so accessing y first throws ReferenceError."
+    },
+    {
+      "id": "q7",
+      "stem": "Which response header tells the browser to store a value across requests?",
+      "choices": ["Content-Type", "Set-Cookie", "Authorization", "Cache-Control"],
+      "correctIndex": 1,
+      "explanation": "Set-Cookie instructs the browser to store the cookie and send it back on subsequent requests to that origin."
+    },
+    {
+      "id": "q8",
+      "stem": "An arrow function differs from a regular function in that it:",
+      "choices": [
+        "Cannot be assigned to a variable",
+        "Has its own this, arguments, and prototype",
+        "Does not have its own this binding",
+        "Always returns a Promise"
+      ],
+      "correctIndex": 2,
+      "explanation": "Arrow functions capture this lexically from the enclosing scope and have no own this, arguments, or prototype."
+    },
+    {
+      "id": "q9",
+      "stem": "Which HTTP status code indicates a cached response is still valid?",
+      "choices": ["200 OK", "204 No Content", "301 Moved Permanently", "304 Not Modified"],
+      "correctIndex": 3,
+      "explanation": "304 is returned to a conditional GET (If-None-Match/If-Modified-Since) telling the client its cached copy is still good."
+    },
+    {
+      "id": "q10",
+      "stem": "What is the output?\n\nconst obj = { x: 1, f: function() { return this.x; } };\nconst g = obj.f;\nconsole.log(g());",
+      "choices": ["1", "undefined", "TypeError", "null"],
+      "correctIndex": 1,
+      "explanation": "Detaching the method loses the obj binding. In strict mode this is undefined, so this.x is undefined."
+    },
+    {
+      "id": "q11",
+      "stem": "Why is HTTP described as stateless?",
+      "choices": [
+        "Servers cannot store any data",
+        "Each request is processed independently with no built-in memory of previous requests",
+        "It cannot be used with databases",
+        "All connections are encrypted"
+      ],
+      "correctIndex": 1,
+      "explanation": "HTTP itself carries no notion of a session; state is layered on top via cookies, tokens, or server-side sessions."
+    },
+    {
+      "id": "q12",
+      "stem": "What does DNS resolution do?",
+      "choices": [
+        "Encrypts the connection",
+        "Maps a domain name to an IP address",
+        "Negotiates the HTTP version",
+        "Compresses the response body"
+      ],
+      "correctIndex": 1,
+      "explanation": "DNS translates human-friendly names like example.com into IPs that TCP can connect to."
+    },
+    {
+      "id": "q13",
+      "stem": "Which status code is most appropriate after a successful POST that creates a new user?",
+      "choices": ["200 OK", "201 Created", "202 Accepted", "204 No Content"],
+      "correctIndex": 1,
+      "explanation": "201 Created specifically signals a new resource was created, usually with a Location header pointing to it."
+    },
+    {
+      "id": "q14",
+      "stem": "typeof null evaluates to:",
+      "choices": ["'null'", "'undefined'", "'object'", "'boolean'"],
+      "correctIndex": 2,
+      "explanation": "This is a famous JavaScript bug preserved for backward compatibility: typeof null is 'object'."
+    },
+    {
+      "id": "q15",
+      "stem": "What does the three-way TCP handshake establish before HTTP can flow?",
+      "choices": [
+        "TLS certificate trust",
+        "A reliable bidirectional connection (SYN, SYN-ACK, ACK)",
+        "The DNS mapping",
+        "The HTTP version"
+      ],
+      "correctIndex": 1,
+      "explanation": "TCP needs SYN/SYN-ACK/ACK to establish sequence numbers for both directions before data is sent."
+    },
+    {
+      "id": "q16",
+      "stem": "Which is true about `let` declarations?",
+      "choices": [
+        "They are function-scoped like var",
+        "They are block-scoped and not hoisted into a usable state",
+        "They are global by default",
+        "They cannot be reassigned"
+      ],
+      "correctIndex": 1,
+      "explanation": "let is block-scoped; the binding exists from the start of the block but is in the TDZ until the declaration line."
+    },
+    {
+      "id": "q17",
+      "stem": "What is the precedence order for `this` binding (highest first)?",
+      "choices": [
+        "default → implicit → explicit → new",
+        "new → explicit (call/bind) → implicit (obj.method) → default",
+        "implicit → new → default → explicit",
+        "explicit → default → new → implicit"
+      ],
+      "correctIndex": 1,
+      "explanation": "new beats call/bind, which beat method-style invocation, which beats the default (undefined/global)."
+    },
+    {
+      "id": "q18",
+      "stem": "An API returns 429. The correct client behavior is to:",
+      "choices": [
+        "Retry immediately with the same request",
+        "Back off and retry later, respecting Retry-After if present",
+        "Treat it as a permanent failure",
+        "Re-authenticate"
+      ],
+      "correctIndex": 1,
+      "explanation": "429 Too Many Requests is a rate-limit signal; clients should wait (Retry-After header tells you how long)."
+    },
+    {
+      "id": "q19",
+      "stem": "Which response header drives Same-Origin policy decisions in the browser?",
+      "choices": ["Content-Type", "Origin", "Access-Control-Allow-Origin", "Host"],
+      "correctIndex": 2,
+      "explanation": "Access-Control-Allow-Origin is the server's CORS response telling the browser which origins may read the response."
+    },
+    {
+      "id": "q20",
+      "stem": "Which JS value is falsy?",
+      "choices": ["'0'", "[]", "{}", "0"],
+      "correctIndex": 3,
+      "explanation": "The falsy primitives are false, 0, -0, 0n, '', null, undefined, NaN. Both '0' and [] and {} are truthy."
+    },
+    {
+      "id": "q21",
+      "stem": "What does HTTPS provide over HTTP?",
+      "choices": [
+        "Faster transport",
+        "Confidentiality, integrity, and server authentication via TLS",
+        "Stateless sessions",
+        "Compression of headers"
+      ],
+      "correctIndex": 1,
+      "explanation": "TLS wraps HTTP to give encrypted, tamper-evident transport plus identity assurance via the server's certificate."
+    },
+    {
+      "id": "q22",
+      "stem": "What is logged?\n\nfunction foo() { return this; }\nconst bar = foo.bind({x: 1});\nconsole.log(bar().x);",
+      "choices": ["undefined", "1", "TypeError", "{x: 1}"],
+      "correctIndex": 1,
+      "explanation": "bind permanently fixes this to the given object, so bar() returns {x:1} and .x is 1."
+    },
+    {
+      "id": "q23",
+      "stem": "Which is correct about a 301 vs 302 redirect?",
+      "choices": [
+        "301 is temporary, 302 is permanent",
+        "301 is permanent (browsers cache it), 302 is temporary",
+        "Both are permanent",
+        "Both are temporary"
+      ],
+      "correctIndex": 1,
+      "explanation": "301 Moved Permanently is cached aggressively by browsers; 302 Found is treated as a temporary redirect."
+    },
+    {
+      "id": "q24",
+      "stem": "What is the output?\n\nconsole.log([] + []);\nconsole.log([] + {});",
+      "choices": [
+        "'' then '[object Object]'",
+        "0 then NaN",
+        "undefined then undefined",
+        "TypeError"
+      ],
+      "correctIndex": 0,
+      "explanation": "Arrays coerce to '' via toString. [] + [] is ''. [] + {} is '' + '[object Object]'."
+    },
+    {
+      "id": "q25",
+      "stem": "Which header field distinguishes virtual hosts on a single IP?",
+      "choices": ["User-Agent", "Host", "Referer", "Origin"],
+      "correctIndex": 1,
+      "explanation": "Host tells the server which domain was requested so a single IP can serve many sites."
+    }
+  ]
+}

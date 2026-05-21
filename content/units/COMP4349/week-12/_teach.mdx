@@ -1,0 +1,435 @@
+---
+title: "Week 12 — Serverless Architectures"
+unit: COMP4349
+week: 12
+type: overview
+status: done
+---
+
+Week 12 completes the abstraction ladder from Week 3's VMs and Week 10's containers to Function-as-a-Service. The exam asks you to design a serverless image- or data-processing flow (S3 → Lambda → DynamoDB) with the right invoke- and execution-role permissions, and to contrast serverless against ECS and EC2 on cost, scaling, and state. Internalise Lambda's execution model, anti-patterns, and the API Gateway → Lambda vs ALB → EC2 comparison.
+
+## Function as a Service — what serverless actually means
+
+In 2009 the Berkeley View on Cloud Computing paper observed two extremes of cloud abstraction: at one end EC2 instances that look almost like physical hardware ("control the entire software stack from the kernel upward"), at the other application-domain-specific platforms like Google App Engine that enforce "a clean separation between a stateless computation tier and a stateful storage tier."
+
+The market chose IaaS first because customers wanted to recreate their existing environment in the cloud. But as customers gained trust they wanted simpler operation, and providers responded by doing more of the work. **Function as a Service (FaaS)** was the natural endpoint: write a function, hand it to the platform, the platform handles everything else.
+
+Three critical distinctions of serverless:
+
+1. **Decoupled computation and storage** — compute is stateless, state is persisted in S3, DynamoDB, RDS, etc.
+2. **Execute code without managing resource allocation** — the platform provisions whatever it needs, scaling from zero to thousands of concurrent invocations.
+3. **Pay only for what's used** — billed per execution time (milliseconds), not for idle capacity.
+
+AWS released **AWS Lambda** in November 2015 — the first major commercial FaaS. Azure Functions, Google Cloud Functions, and Cloudflare Workers followed.
+
+## Why serverless is attractive
+
+For providers:
+
+- Business growth from new customers who couldn't justify a VM.
+- More predictable utilisation; better scheduling on shared hardware.
+- Even less-popular machine types can be utilised.
+
+For customers:
+
+- Higher developer productivity — no servers, OS, runtime to manage.
+- True cost savings for spiky/low-duty-cycle workloads (no idle costs).
+- Automatic scaling from zero.
+
+## The trade-offs
+
+Serverless isn't free of constraints:
+
+- **Stateless** — function instances may be recycled between invocations; ephemeral `/tmp` only.
+- **Storage latency and cost** — every state change is a round-trip to S3 / DynamoDB. Tight inner loops with shared state are slower than in a long-running server.
+- **Cold starts** — the first invocation in a new execution environment pays a startup cost (100 ms - several seconds depending on language and package size).
+- **Maximum duration** — Lambda 15 minutes; Step Functions Standard is much longer if you orchestrate.
+- **Per-region quotas** — concurrent executions limit (1000 default, raisable).
+- **Observability gap** — many short-lived invocations make tracing harder.
+
+## AWS serverless portfolio
+
+AWS's serverless services span every layer:
+
+- **Compute** — AWS Lambda, AWS Lambda@Edge, AWS Fargate.
+- **Storage** — Amazon S3, Amazon EFS.
+- **Data stores** — Amazon DynamoDB, Aurora Serverless v2, RDS Proxy.
+- **API proxy** — Amazon API Gateway.
+- **Application integration** — Amazon SNS, Amazon SQS, AWS AppSync, Amazon EventBridge.
+- **Orchestration** — AWS Step Functions.
+- **Analytics** — Amazon Athena, Amazon Kinesis (Firehose, Data Streams).
+
+A serverless application typically chains several of these — API Gateway → Lambda → DynamoDB + S3, with EventBridge schedules and SQS for async work.
+
+## AWS Lambda — anatomy
+
+A Lambda function is a piece of code (Python, Node.js, Java, Go, Ruby, C#, PowerShell, or your own runtime via Runtime API) plus metadata: name, runtime, memory size, timeout, IAM execution role, environment variables, layers.
+
+```python
+import json
+import boto3
+
+s3 = boto3.client("s3")
+
+def lambda_handler(event, context):
+    bucket = event["Records"][0]["s3"]["bucket"]["name"]
+    key    = event["Records"][0]["s3"]["object"]["key"]
+    obj    = s3.get_object(Bucket=bucket, Key=key)
+    # ... process ...
+    return { "statusCode": 200, "body": json.dumps({"key": key, "size": obj["ContentLength"]}) }
+```
+
+Two parameters arrive at every invocation:
+
+- **event** — JSON document describing the trigger payload (S3 event, API Gateway request, EventBridge event, …).
+- **context** — runtime info (request ID, log group, time remaining, function ARN).
+
+The function returns a JSON value. For sync invocations (API Gateway) the value becomes the HTTP body; for async (S3 events) it's discarded.
+
+### Memory ↔ CPU coupling
+
+Lambda lets you choose memory between 128 MB and 10 240 MB. **CPU is allocated proportionally to memory** — at ~1 769 MB you get one full vCPU; at 10 240 MB you get six. There is no separate CPU dial. Increasing memory often *reduces* total cost because the function finishes much faster.
+
+### /tmp ephemeral storage
+
+Each function gets ephemeral `/tmp` storage — 512 MB by default, configurable up to 10 GB. Useful for downloading a large S3 object, processing it, and uploading the result. Data survives across invocations on the same execution environment, but you can't rely on it (the environment may be recycled).
+
+### Lambda layers
+
+A **layer** is a zip of code or libraries shared across multiple functions — keep heavy dependencies (numpy, pandas) out of every function's deployment package. Up to 5 layers per function. Layers also enable the use of the same runtime patch across many functions.
+
+### Concurrency
+
+By default Lambda scales out as needed up to your account's concurrent execution limit (1 000 by default, can request raising).
+
+- **Reserved concurrency** — guarantee a function gets a slice of the limit, and cap it at that.
+- **Provisioned concurrency** — pre-warmed execution environments; eliminates cold starts at the cost of paying for idle capacity. Use for latency-critical synchronous functions.
+
+## Lambda triggers and invocation models
+
+Lambda runs in response to events. Triggers fall into three models:
+
+### Synchronous invocation
+
+Caller waits for the function to finish; gets the return value. Used for:
+
+- **API Gateway** — REST/HTTP API → Lambda. Most common synchronous trigger.
+- **Application Load Balancer** — ALB target group can be a Lambda.
+- **Lambda Function URL** — built-in HTTPS endpoint without API Gateway.
+- **AWS CLI / SDK `InvokeFunction`** with `InvocationType=RequestResponse`.
+
+```bash
+aws lambda invoke --function-name my-fn --payload '{"key":"value"}' out.json
+```
+
+### Asynchronous invocation
+
+Caller fires and forgets; Lambda queues internally and retries on failure. Two retries by default; failed events go to a configured DLQ (SQS) or destination (SNS, EventBridge, another Lambda).
+
+Async triggers:
+
+- **S3 events** — object created/deleted/copied.
+- **SNS** — topic publishes.
+- **EventBridge** — schedule or event-pattern matches.
+- **SES** — email received.
+- `InvokeFunction` with `InvocationType=Event`.
+
+### Event source mapping (stream/queue pollers)
+
+Lambda polls a stream or queue and invokes the function with a batch of records. Pollers:
+
+- **SQS** — Lambda polls the queue, hands batches to the function, deletes on success.
+- **Kinesis Data Streams** — per-shard polling, ordered processing.
+- **DynamoDB Streams** — change capture from table.
+- **Kafka (MSK)** — managed Kafka source.
+
+## The two permission planes
+
+A frequently-tested Lambda topic. Permissions split into two questions:
+
+| Question | Controlled by | Example |
+|---|---|---|
+| Who can invoke the function? | Lambda resource-based policy | Allow S3 to call `lambda:InvokeFunction` |
+| What can the function do when it runs? | Execution role (IAM role) | Allow the function to read S3, write to DynamoDB, etc. |
+
+### Resource-based policy — invoke permissions
+
+Attached to the Lambda function. Says "service X can invoke me":
+
+```json
+{
+  "Effect": "Allow",
+  "Principal": { "Service": "s3.amazonaws.com" },
+  "Action": "lambda:InvokeFunction",
+  "Resource": "arn:aws:lambda:ap-southeast-2:123:function:process-upload",
+  "Condition": { "ArnLike": { "aws:SourceArn": "arn:aws:s3:::upload-bucket" } }
+}
+```
+
+When you configure a trigger via the Lambda console, AWS auto-adds the policy.
+
+### Execution role — what the function can do
+
+An IAM role assumed by the Lambda service during invocation. The function's AWS SDK calls (`s3.get_object`, `dynamodb.put_item`) use the role's credentials.
+
+Common permissions:
+
+- `logs:CreateLogStream`, `logs:PutLogEvents` — write to CloudWatch Logs.
+- `s3:GetObject`, `s3:PutObject` — read/write S3.
+- `dynamodb:PutItem`, `dynamodb:Query` — talk to DynamoDB.
+- `sqs:ReceiveMessage`, `sqs:DeleteMessage` — consume from SQS.
+- `secretsmanager:GetSecretValue` — read secrets.
+
+```text
+Worked example — S3 → Lambda → DynamoDB
+
+1. Client uploads to S3:           IAM policy on client or bucket policy allows s3:PutObject
+2. S3 triggers Lambda:             Lambda resource policy allows s3.amazonaws.com lambda:InvokeFunction
+3. Lambda reads the uploaded file: Execution role allows s3:GetObject on the bucket
+4. Lambda writes to DynamoDB:      Execution role allows dynamodb:PutItem on the table
+5. Lambda writes logs:             Execution role allows the standard CloudWatch Logs actions
+```
+
+## Execution environment — Firecracker microVMs
+
+Early Lambda used container-based isolation: each function ran in a container, multiple functions from the same account could share a VM, but functions from different accounts always ran on different VMs. That model wastes resources — at least one VM per account.
+
+To enable serverless on truly mixed multi-tenant hardware, AWS built **Firecracker** — a lightweight Virtual Machine Monitor based on KVM that starts microVMs in under 125 ms with ~5 MB of memory overhead each. A microVM gives VM-level isolation (strong, hardware-enforced) with container-level start latency.
+
+```text
+                Isolation   Resource cost  Start latency   Use case
+Container         Medium       Low            Low           Microservices (ECS, K8s)
+MicroVM           High         Medium         Medium        Serverless (Lambda, Fargate)
+Traditional VM    High         High           High          General-purpose IaaS (EC2)
+```
+
+Lambda (and Fargate) now use Firecracker microVMs as their isolation primitive. Two different customers can run on the same physical host, each in its own microVM, with no shared kernel.
+
+## Where Lambda runs in your network
+
+By default, Lambda functions run in an **AWS-managed VPC** with public internet access (to call external APIs). They can reach AWS services with public endpoints (S3, DynamoDB) directly.
+
+If the function needs to access resources in **your own VPC** (an RDS in a private subnet, a private API endpoint), configure VPC integration: provide subnet IDs and security group; Lambda creates ENIs in those subnets and runs the function with that network identity. Trade-off: cold starts are slightly higher; you must size the VPC's IP space generously.
+
+## Anti-patterns to avoid
+
+The AWS Lambda operator guide names common mistakes:
+
+### The Lambda monolith
+
+One giant function handling many event types. Hard to upgrade, hard to test, big deployment package, hard to grant least privilege.
+
+**Fix**: split into many small single-responsibility functions. Use API Gateway or EventBridge to route requests to the right function.
+
+### Recursive S3 → Lambda → S3 (same bucket)
+
+A Lambda triggered on object creation that writes a new object into the same bucket triggers itself. Without a careful guard, it loops until the concurrency limit is hit or AWS suspends the function.
+
+**Fix**: write outputs to a *different* bucket, or filter the event prefix so the Lambda doesn't see its own writes.
+
+### Lambda calling Lambda synchronously
+
+Function A invokes Function B and waits for the result. You pay for both functions during B's runtime, and your call stack is now distributed — error handling becomes harder, the workflow is limited by the slowest function, scaling is now joint.
+
+**Fix**: use SQS to decouple producers from consumers, or Step Functions to orchestrate explicit state machines.
+
+### Synchronous wait inside a Lambda
+
+A function that polls or sleeps for a downstream response burns time you're paying for.
+
+**Fix**: split into two functions and use an async trigger; or use Step Functions `Wait` states.
+
+### Long-running, steady workloads
+
+Lambda is great for bursty/intermittent traffic. If your workload runs at constant high concurrency 24×7, container or VM compute is cheaper.
+
+**Fix**: benchmark; if steady-state, deploy as ECS/EKS service.
+
+## Amazon API Gateway — the HTTPS front door
+
+API Gateway is a managed HTTPS endpoint that fronts your backend (Lambda, EC2 via VPC link, HTTP, AWS services directly). Features:
+
+- TLS termination via ACM certificates.
+- Throttling (per-API-key, per-stage, per-method).
+- Request validation, transformation, mapping.
+- Caching (per-stage, per-method).
+- Authentication via Cognito, IAM, Lambda authorizers, JWT, mTLS.
+- Stages (dev / staging / prod) and aliases.
+- CloudFront integration for global edge caching.
+
+### REST vs HTTP vs WebSocket APIs
+
+API Gateway has three API types:
+
+- **REST API** — original, most features (request validation, models, mapping templates, usage plans, API keys). More expensive.
+- **HTTP API** — newer, lighter, faster, ~70% cheaper. Best default for Lambda backends. Fewer features (no API keys, simpler validation).
+- **WebSocket API** — bidirectional, push from server to client. Used for chat, notifications, real-time games.
+
+### Request flow
+
+```text
+Client → CloudFront edge (optional cache hit?) → API Gateway → integration target
+                                                       │
+                                       Lambda authorizer (auth)
+                                       Throttling
+                                       Cache
+                                       Mapping template (transform)
+                                                       │
+                                                       ▼
+                                            Lambda / EC2 / HTTP / AWS service
+```
+
+## API Gateway → Lambda vs ALB → EC2
+
+The exam asks this comparison; you should be able to fill it in:
+
+| Aspect | API Gateway → Lambda | ALB → EC2 |
+|---|---|---|
+| Front-end service | API Gateway | Application Load Balancer |
+| Backend compute | Lambda function | EC2 instance |
+| Backend process | Function runs on-demand | Web server runs continuously |
+| Backend listens? | No | Yes, on a port |
+| Scaling model | Lambda concurrency scales by invocation | EC2 scales via ASG |
+| Auth options | Lambda authorizer, Cognito, IAM, JWT | None (handle in app or use Cognito on ALB) |
+| Idle cost | Near zero | Pay while instances run |
+| Long-running | Limited to 29 s (API GW) / 15 min (Lambda) | Any duration the app supports |
+| Per-request cost | Higher per request | Lower at high RPS |
+| Best for | Spiky, low-duty-cycle | Steady, predictable load |
+
+Permission models:
+
+- API Gateway → Lambda: Lambda resource policy allows `apigateway.amazonaws.com` to invoke; API Gateway execution role for non-Lambda backends.
+- ALB → EC2: SG on EC2 must allow inbound traffic from the ALB SG; the EC2 application listens on a port.
+
+## When serverless is the wrong choice
+
+Lambda is not always the answer. Anti-patterns where you should choose a long-running compute:
+
+- **Long-running tasks** that exceed 15 minutes — use ECS task, Step Functions Standard, or Batch.
+- **Predictable steady-state load** at high concurrency — Lambda's per-invoke pricing exceeds ECS/EC2 at saturation; benchmark and pick the cheaper one.
+- **GPU workloads** — Lambda doesn't have GPUs; use EC2 G/P instances or SageMaker.
+- **Strict sub-100 ms tail latency** — cold starts will violate. Pre-warmed services (ECS, provisioned concurrency) are safer.
+- **Stateful protocols** (WebSocket-heavy, MQTT broker) — API Gateway WebSocket is one option but not for everything.
+
+## Observability for serverless
+
+Lambda writes logs to CloudWatch Logs automatically (via the execution role). Best practices:
+
+- **Structured JSON logs** — much easier to query with Logs Insights.
+- **X-Ray** for distributed tracing — toggle in the function config.
+- **CloudWatch Lambda Insights** — runtime metrics (init duration, memory used, CPU steal).
+- **EventBridge schedules** + DLQ alarms — alarms when async functions are repeatedly failing.
+
+The "FaaS observability gap" comes from many short-lived invocations: you can't SSH in. Make telemetry a first-class concern from day one.
+
+## Serverless tooling
+
+- **AWS SAM** (Serverless Application Model) — CloudFormation extension with shortcuts for Lambda/API Gateway. `AWS::Serverless::Function` etc.
+- **Serverless Framework** — multi-cloud serverless toolkit. Older popular choice.
+- **AWS CDK** — write IaC in TypeScript/Python; has high-level constructs for Lambda + API Gateway.
+
+```yaml
+# SAM template snippet
+Resources:
+  Process:
+    Type: AWS::Serverless::Function
+    Properties:
+      CodeUri: src/
+      Handler: app.handler
+      Runtime: python3.12
+      MemorySize: 512
+      Events:
+        Api:
+          Type: HttpApi
+          Properties: { Path: /process, Method: post }
+```
+
+## Putting it together — a complete serverless image pipeline
+
+Mobile client uploads an image → S3 → SNS topic → multiple SQS queues → Lambda thumbnailer, resizer, format-converter → write outputs back to S3 → DynamoDB records the result.
+
+```text
+Mobile ──► S3 (upload)
+              │ event
+              ▼
+         SNS topic
+            │  │  │
+            ▼  ▼  ▼
+      SQS1 SQS2 SQS3
+            │  │  │
+            ▼  ▼  ▼
+      Lambda Lambda Lambda
+            │  │  │
+            ▼  ▼  ▼
+        S3 (processed) + DynamoDB (metadata)
+```
+
+Permissions in five places (cf. Week 9 worked example): client → S3, S3 → SNS, SNS → SQS, SQS → Lambda (event source mapping handles this), Lambda execution role → S3 + DynamoDB.
+
+## Common exam traps
+
+- "Function as a Service" — decoupled compute+storage; stateless; pay per execution time.
+- "Cold start" — first invocation in a new execution environment pays init cost. Provisioned concurrency hides it.
+- "Memory ↔ CPU" — proportional. Higher memory → more CPU → faster runtime → often lower total cost.
+- "/tmp ephemeral storage" — up to 10 GB; not durable across invocations reliably.
+- "Two permission planes" — invoke (resource policy) vs execute (IAM role).
+- "S3 → Lambda permission" — Lambda resource policy allows `s3.amazonaws.com` to invoke; *also* execution role lets Lambda read the S3 object.
+- "Synchronous vs async invocation" — sync returns the result (API Gateway); async fires and forgets (S3, SNS, EventBridge schedule).
+- "Lambda monolith" — anti-pattern; one giant function. Split it.
+- "Recursive S3 trigger" — anti-pattern; trigger writes back into same bucket → infinite loop.
+- "Firecracker microVM" — Lambda's isolation primitive; VM-grade isolation, container-grade overhead.
+- "Long-running task" — Lambda max 15 min; use Step Functions, ECS, or Batch.
+- "API Gateway REST vs HTTP" — HTTP is newer, cheaper, fewer features; default to HTTP for Lambda backends.
+- "API Gateway timeout" — 29 seconds (hard limit, not configurable).
+
+## Lambda destinations — async invocation routing
+
+For async-invoked Lambdas you can configure **on-success** and **on-failure** destinations (separate from a DLQ): the result of the function is automatically forwarded to SQS, SNS, EventBridge, or another Lambda. Cleaner than a DLQ-only setup because successes get an explicit downstream too.
+
+## Lambda Function URLs vs API Gateway
+
+**Lambda Function URLs** give a Lambda its own HTTPS endpoint without API Gateway. Use when:
+
+- You just need a public webhook endpoint, no routing/throttling/auth complexity.
+- You want to avoid API Gateway's per-request cost.
+- The Lambda's own concurrency and timeout limits suffice.
+
+You lose: usage plans, API keys, request validation, mapping templates, caching, AWS WAF integration. For anything but the simplest backend, API Gateway is still the right choice.
+
+## Lambda extensions and ADOT
+
+Lambda extensions run alongside the function in the same execution environment, hooking into init/invoke/shutdown phases. Used for:
+
+- Observability agents (CloudWatch Logs agent, Datadog agent, OpenTelemetry collector).
+- Secrets caching (Secrets Manager extension fetches and caches secrets at init, saving per-invocation latency).
+- AppConfig dynamic config refresh.
+
+**AWS Distro for OpenTelemetry (ADOT)** is the AWS-supported OpenTelemetry distribution; deploy it as an extension or sidecar to ship traces/metrics to X-Ray, AMP, third-party backends.
+
+## Step Functions integrations with Lambda
+
+Lambda has a 15-minute hard limit; some business workflows take longer. Step Functions Standard workflows can run up to 1 year, with explicit Wait, Choice, Map, Parallel states. A common pattern:
+
+```text
+EventBridge schedule (cron) ──► Step Functions state machine
+                                   ├─► Lambda: list new files
+                                   ├─► Map state, for each file:
+                                   │       Lambda: process file
+                                   ├─► Choice: any failures?
+                                   │       Lambda: notify on-call (failure)
+                                   └─► Lambda: summary email (success)
+```
+
+Step Functions handles retries, error catching, and state durability without your Lambdas needing to coordinate. This is the modern replacement for "Lambda calls Lambda" chains.
+
+## When to migrate from Lambda back to a container
+
+A useful rule of thumb: if your function runs continuously at near-max concurrency for hours, you're paying Lambda's per-millisecond rate when a container would be cheaper. Migration signals:
+
+- Average concurrency > 100 sustained.
+- Cold starts becoming a real user-visible problem and provisioned concurrency reaches your funding limit.
+- Need for >15 min runs (move to Step Functions, ECS, or Batch).
+- Need for GPUs.
+- Need for stateful protocols (WebSockets) at high RPS.
+
+ECS Fargate is the typical destination — same deployment story (container image), no servers to manage, similar IAM model (task role ≈ execution role).

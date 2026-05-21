@@ -1,0 +1,307 @@
+{
+  "unit": "INFO4444",
+  "week": 1,
+  "topic": "Intro: IT innovation, general-purpose & emerging tech",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "In Schumpeter's classic framing, what distinguishes innovation from invention?",
+      "choices": [
+        "Innovation requires a patent; invention does not.",
+        "Innovation is the first commercial application of an invention.",
+        "Innovation must be technologically radical; invention can be incremental.",
+        "Innovation is performed by firms; invention is performed by individuals."
+      ],
+      "correctIndex": 1,
+      "explanation": "Schumpeter defined innovation as the first commercial application of an invention. Without entering a market, even a brilliant new device remains an invention."
+    },
+    {
+      "id": "q2",
+      "stem": "Rogers' diffusion of innovations describes which phenomenon?",
+      "choices": [
+        "How an invention becomes patentable.",
+        "The spread of an innovation through a population of adopters over time.",
+        "How firms decide to allocate R&D budgets.",
+        "The displacement of incumbents by new entrants."
+      ],
+      "correctIndex": 1,
+      "explanation": "Diffusion is the temporal spread of an innovation across adopters, classically following an S-curve from innovators through to laggards."
+    },
+    {
+      "id": "q3",
+      "stem": "Which of the following is the best example of a process innovation?",
+      "choices": [
+        "Apple launching the iPhone.",
+        "Toyota implementing the just-in-time production system.",
+        "Lucozade repositioning from a sick-room drink to a sports drink.",
+        "Netflix moving from DVD-by-mail to streaming."
+      ],
+      "correctIndex": 1,
+      "explanation": "Toyota's just-in-time / lean production reorganised how cars were made, not what was made — the textbook example of process innovation."
+    },
+    {
+      "id": "q4",
+      "stem": "Lucozade's shift from a sick-room recovery drink to a sports drink is best classified as which type of innovation?",
+      "choices": [
+        "Product innovation",
+        "Process innovation",
+        "Position innovation",
+        "Paradigm innovation"
+      ],
+      "correctIndex": 2,
+      "explanation": "The product chemistry barely changed; what changed was the market position. That is position innovation in the 4Ps of innovation."
+    },
+    {
+      "id": "q5",
+      "stem": "Henderson and Clark's 'architectural innovation' is dangerous to incumbents because:",
+      "choices": [
+        "It introduces entirely new components they cannot manufacture.",
+        "It uses familiar components but reconfigures their interactions, defeating the incumbent's design knowledge.",
+        "It targets only the high-end of the market where margins are thin.",
+        "It requires regulatory approval the incumbent cannot obtain."
+      ],
+      "correctIndex": 1,
+      "explanation": "Architectural innovations keep components but change the system architecture. Incumbents' deep component knowledge becomes irrelevant or misleading."
+    },
+    {
+      "id": "q6",
+      "stem": "Which three criteria define a general-purpose technology (GPT)?",
+      "choices": [
+        "Patent-protected, capital-intensive, and globally distributed.",
+        "Pervades the whole economy, improves over time, and spawns complementary innovations.",
+        "Originates in universities, requires standards bodies, and is open-source.",
+        "Reduces unit cost, increases speed, and improves quality."
+      ],
+      "correctIndex": 1,
+      "explanation": "Bresnahan and Trajtenberg's GPT criteria are pervasiveness, continuous improvement, and innovation spawning. The steam engine, electricity, and the internet all qualify."
+    },
+    {
+      "id": "q7",
+      "stem": "Which of the following is NOT typically listed as a historical general-purpose technology?",
+      "choices": [
+        "The steam engine",
+        "Electricity",
+        "The integrated circuit / computer",
+        "The relational database"
+      ],
+      "correctIndex": 3,
+      "explanation": "Relational databases are an enabling technology but lack the cross-economy pervasiveness GPT scholars look for. The canonical GPT list is steam, electricity, ICE, computer, internet."
+    },
+    {
+      "id": "q8",
+      "stem": "Why did US factory productivity initially fall after the introduction of electricity?",
+      "choices": [
+        "Electricity was unreliable and frequently caused fires.",
+        "Workers resisted the new technology and went on strike.",
+        "Factories had to be redesigned from line-shaft layouts to per-machine motors, a 40-year reorganisation.",
+        "Coal prices spiked, making electricity uneconomic."
+      ],
+      "correctIndex": 2,
+      "explanation": "The GPT productivity J-curve: electricity required complete factory redesign. Productivity only surged once unit-drive electrification replaced central line shafts in the 1920s."
+    },
+    {
+      "id": "q9",
+      "stem": "The four emerging-tech categories used in this unit are AI/ML; distributed ledger / blockchain; IoT, edge and 5G; and:",
+      "choices": [
+        "Quantum, biotech, and advanced materials",
+        "Cybersecurity and zero-trust networking",
+        "Mobile applications and SaaS",
+        "Cloud computing and serverless"
+      ],
+      "correctIndex": 0,
+      "explanation": "The fourth bucket is long-horizon deep tech: quantum computing, biotech, and advanced materials. The others are either mature (cloud) or sub-domains of AI/security."
+    },
+    {
+      "id": "q10",
+      "stem": "A pharmaceutical company files a patent for an mRNA delivery mechanism. They have not yet entered any market. This is best described as:",
+      "choices": [
+        "An innovation",
+        "An invention",
+        "Diffusion",
+        "An architectural innovation"
+      ],
+      "correctIndex": 1,
+      "explanation": "Patent filing without commercial entry is invention. Innovation requires first commercial application."
+    },
+    {
+      "id": "q11",
+      "stem": "Which statement best captures the difference between technology push and demand pull as drivers of innovation?",
+      "choices": [
+        "Technology push originates in universities; demand pull originates in firms.",
+        "Technology push starts from a new capability seeking applications; demand pull starts from a market need seeking solutions.",
+        "Technology push is faster; demand pull is slower.",
+        "Technology push is incremental; demand pull is radical."
+      ],
+      "correctIndex": 1,
+      "explanation": "Push = capability looking for a use (e.g. the laser). Pull = customer need driving search (e.g. lithium-ion batteries for portable electronics)."
+    },
+    {
+      "id": "q12",
+      "stem": "Netflix's transition from DVD-by-mail to streaming to original-content studio is best described as:",
+      "choices": [
+        "Process innovation",
+        "Paradigm innovation",
+        "Incremental product innovation",
+        "Diffusion"
+      ],
+      "correctIndex": 1,
+      "explanation": "Each step changed Netflix's fundamental business model and mental model. Paradigm innovation is a shift in what the business actually does."
+    },
+    {
+      "id": "q13",
+      "stem": "Which Australian innovation challenge is most often cited in this unit?",
+      "choices": [
+        "Weak research output per capita.",
+        "Strong research output but weak commercialisation and scale-up.",
+        "Lack of skilled engineers in absolute numbers.",
+        "Excessive government R&D subsidies crowding out private investment."
+      ],
+      "correctIndex": 1,
+      "explanation": "Australia's tension: high research quality and per-capita output, weak translation to scaled commercial ventures. Discussed in depth in Week 10."
+    },
+    {
+      "id": "q14",
+      "stem": "A scenario reads: 'A startup ships a card that auto-rebalances crypto holdings into stablecoins when spent.' Which emerging-tech category is the primary fit?",
+      "choices": [
+        "Artificial intelligence",
+        "Distributed ledger / blockchain",
+        "Internet of Things",
+        "Quantum and deep tech"
+      ],
+      "correctIndex": 1,
+      "explanation": "The defining substrate is crypto/stablecoins on a blockchain, so the primary category is distributed ledger, even though AI may feature in rebalancing logic."
+    },
+    {
+      "id": "q15",
+      "stem": "Which of these is best characterised as radical innovation?",
+      "choices": [
+        "A faster Intel chip with the same x86 instruction set.",
+        "The first commercial mRNA vaccine.",
+        "A new colour option for an existing car model.",
+        "A software patch that improves battery life."
+      ],
+      "correctIndex": 1,
+      "explanation": "mRNA vaccines used a fundamentally different mechanism and unlocked a new industry trajectory — radical. The others are incremental refinements within an existing trajectory."
+    },
+    {
+      "id": "q16",
+      "stem": "At the country level, the single most important macroeconomic reason innovation matters is:",
+      "choices": [
+        "It increases trade balance via exports.",
+        "It drives productivity growth, the only sustainable source of rising real incomes.",
+        "It generates patent licensing revenue.",
+        "It improves national defence capabilities."
+      ],
+      "correctIndex": 1,
+      "explanation": "Long-run growth in living standards comes from productivity growth, which comes from innovation. Trade and patents are downstream effects."
+    },
+    {
+      "id": "q17",
+      "stem": "Which is the strongest argument that AI may qualify as a general-purpose technology?",
+      "choices": [
+        "AI startups raise large amounts of venture capital.",
+        "AI is pervasive across sectors, is improving rapidly, and spawns complementary innovations (chips, tooling, applications).",
+        "AI has been studied since the 1950s, so it is mature.",
+        "AI is patent-protected in major economies."
+      ],
+      "correctIndex": 1,
+      "explanation": "Apply the three GPT criteria: pervasiveness, continuous improvement, and innovation spawning. AI plausibly satisfies all three."
+    },
+    {
+      "id": "q18",
+      "stem": "Which is NOT one of the four types of innovation in the 4Ps framework?",
+      "choices": [
+        "Product",
+        "Process",
+        "Personnel",
+        "Paradigm"
+      ],
+      "correctIndex": 2,
+      "explanation": "The 4Ps are Product, Process, Position, Paradigm. Personnel is a distractor."
+    },
+    {
+      "id": "q19",
+      "stem": "Which is the best example of incremental innovation?",
+      "choices": [
+        "Replacing the internal combustion engine with electric drivetrains.",
+        "A 5% range improvement in a Tesla Model 3 from a new battery chemistry tweak.",
+        "Apple introducing the App Store.",
+        "Amazon launching AWS."
+      ],
+      "correctIndex": 1,
+      "explanation": "A modest range gain on an existing product is the canonical incremental case. The others are radical/architectural shifts that opened new markets."
+    },
+    {
+      "id": "q20",
+      "stem": "A common barrier to innovation that incumbents face but new entrants do not is:",
+      "choices": [
+        "Access to capital markets.",
+        "Organisational inertia and commitment to existing customers.",
+        "Lack of trained engineers.",
+        "Inability to file patents."
+      ],
+      "correctIndex": 1,
+      "explanation": "Incumbents' resource allocation processes optimise for current high-margin customers (foreshadowing Christensen's dilemma). Entrants lack that inertia."
+    },
+    {
+      "id": "q21",
+      "stem": "Diffusion of an innovation is typically modelled as which curve?",
+      "choices": [
+        "Linear",
+        "Exponential",
+        "S-curve (logistic)",
+        "Inverted-U"
+      ],
+      "correctIndex": 2,
+      "explanation": "Rogers' adopter curve aggregates to a logistic S-curve: slow start, rapid take-off in the middle, saturation at the top."
+    },
+    {
+      "id": "q22",
+      "stem": "If a country has high R&D intensity but low high-tech exports, the most likely diagnosis is:",
+      "choices": [
+        "Weak invention capacity.",
+        "Weak commercialisation / translation capacity.",
+        "Excessive patent protection.",
+        "Overly strict labour laws."
+      ],
+      "correctIndex": 1,
+      "explanation": "High R&D, low commercial output is the classic translation gap — the country invents but does not capture the value. Australia's situation."
+    },
+    {
+      "id": "q23",
+      "stem": "Which of the following describes the GPT productivity J-curve correctly?",
+      "choices": [
+        "Productivity rises immediately on adoption, then plateaus.",
+        "Productivity falls for years while firms reorganise, then surges as complementary innovations diffuse.",
+        "Productivity stays flat indefinitely.",
+        "Productivity follows a sine wave around a long-term mean."
+      ],
+      "correctIndex": 1,
+      "explanation": "GPTs require complementary investments (organisational, human, infrastructural) before benefits show up. Productivity dips, then accelerates."
+    },
+    {
+      "id": "q24",
+      "stem": "Which of the following is best classified as an emerging IoT/edge/5G application rather than an AI application?",
+      "choices": [
+        "ChatGPT-style customer support agents.",
+        "A computer-vision crop-monitoring system.",
+        "A network of soil-moisture sensors that throttles irrigation valves in real time.",
+        "An LLM that summarises legal contracts."
+      ],
+      "correctIndex": 2,
+      "explanation": "Sensor + actuator + connectivity at the edge is canonical IoT. The CV crop case mixes IoT and AI but its primary novelty is the AI model; the soil-sensor case is IoT-first."
+    },
+    {
+      "id": "q25",
+      "stem": "The single best one-line definition of innovation for this unit is:",
+      "choices": [
+        "Any new technology.",
+        "The creation of a novel idea.",
+        "The first successful commercial application of an invention.",
+        "Continuous improvement of an existing process."
+      ],
+      "correctIndex": 2,
+      "explanation": "Schumpeter's definition is the unit's anchor: innovation = first commercial application. Memorise this exact phrasing."
+    }
+  ]
+}

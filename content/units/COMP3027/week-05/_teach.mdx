@@ -1,0 +1,414 @@
+---
+title: "Week 5 — Dynamic Programming II"
+unit: COMP3027
+week: 5
+type: overview
+status: done
+---
+
+## What Week 5 adds to your DP toolkit
+
+Week 4 set up DP with one-dimensional subproblems on linear inputs. Week 5 pushes into harder territory.
+
+**New things this week:**
+
+- **Two-dimensional DP** (knapsack).
+- **Interval DP** (matrix-chain multiplication).
+- **Tree DP** (max-weight independent set on a tree).
+- **DP on graphs with negative edges** (Bellman-Ford).
+- **Exponential-state DP** for NP-hard problems (Held-Karp TSP).
+- **Pseudo-polynomial time** — the bridge to approximation algorithms in Week 11.
+- **Space optimisation** via rolling arrays.
+
+The recipe doesn't change: subproblem, recurrence, fill order, reconstruct. What changes is the *shape* of the parameter space — two indices, an interval, a subtree, a subset bitmask.
+
+## 0/1 knapsack
+
+**Problem.** A list of n items. Item i has weight **wᵢ** and value **vᵢ**. You have a knapsack with weight capacity **W**. Pick a subset of items whose total weight is ≤ W and total value is as large as possible. ("0/1" means: each item is either taken or not — no fractions, no duplicates.)
+
+**Subproblem.** **K(i, c)** = the best total value achievable using only the first i items, with weight budget c.
+
+The final answer is K(n, W). We need two indices because the future depends on both *which items remain* and *how much capacity is left*.
+
+**Recurrence — deriving it from the last decision.**
+
+Look at item i (the last item we're considering). Two cases:
+
+Case A: **item i doesn't fit** (wᵢ > c). We have no choice but to skip it. K(i, c) = K(i−1, c).
+
+Case B: **item i fits**. Now we have a choice — skip or take.
+
+- Skip i: best value using items 1..i−1 with budget c → K(i−1, c).
+- Take i: collect value vᵢ, use up wᵢ of the budget. Best value for the rest: K(i−1, c−wᵢ). Total: vᵢ + K(i−1, c−wᵢ).
+
+Pick the larger.
+
+```text
+K(i, c) = K(i-1, c)                                 if w_i > c
+        = max( K(i-1, c),  v_i + K(i-1, c - w_i) )  otherwise
+K(0, c) = 0                                         (no items → no value)
+```
+
+### Worked example
+
+n = 3, W = 5. Items: (w, v) = (2, 3), (3, 4), (4, 5).
+
+| i \ c | 0 | 1 | 2 | 3 | 4 | 5 |
+|-------|---|---|---|---|---|---|
+| 0     | 0 | 0 | 0 | 0 | 0 | 0 |
+| 1     | 0 | 0 | 3 | 3 | 3 | 3 |
+| 2     | 0 | 0 | 3 | 4 | 4 | 7 |
+| 3     | 0 | 0 | 3 | 4 | 5 | 7 |
+
+**K(3, 5) = 7** via items &#123;1, 2&#125;.
+
+**Tracing one cell.** K(2, 5) = ? Item 2 has w₂ = 3, v₂ = 4. Capacity c = 5 ≥ 3, so item 2 fits.
+
+- Skip: K(1, 5) = 3.
+- Take: 4 + K(1, 5−3) = 4 + K(1, 2) = 4 + 3 = 7.
+
+Max is 7. ✓
+
+**Complexity.** Θ(nW) time and space.
+
+### Why this is pseudo-polynomial
+
+Θ(nW) *looks* polynomial. But W is encoded in O(log W) bits. So the running time is *exponential* in input bit-length.
+
+**Pseudo-polynomial** = polynomial in the input *value*, exponential in the input *length*.
+
+No truly polynomial algorithm exists unless P = NP — 0/1 knapsack's decision version is NP-complete (Week 9). The Week 11 FPTAS resolves this by accepting (1−ε)-approximations.
+
+**Reconstruction.** From (n, W): if vₙ + K(n−1, W−wₙ) ≥ K(n−1, W), include n and jump to (n−1, W−wₙ); else jump to (n−1, W). Θ(n).
+
+## Unbounded knapsack
+
+Same problem, but unlimited copies allowed. The "items remaining" dimension collapses.
+
+```text
+U(c) = max over i with w_i <= c of (v_i + U(c - w_i))
+U(0) = 0
+```
+
+**Θ(nW) time, Θ(W) space.** Reconstruction tracks which item was chosen at each c.
+
+**Fractional knapsack** is a *different* problem — items can be split — and admits a greedy by density vᵢ/wᵢ in Θ(n log n). The contrast nails down why integrality makes the problem hard.
+
+## Matrix-chain multiplication
+
+**Problem.** Multiply matrices M₁ · M₂ · ... · Mₙ where Mₖ has dimensions pₖ₋₁ × pₖ. Matrix multiplication is associative but not commutative. The order of parenthesisation drastically changes the count of scalar multiplications.
+
+**Lead with intuition.** Suppose M₁ is 100×1, M₂ is 1×100, M₃ is 100×1. Computing (M₁ · M₂) · M₃:
+
+- M₁ · M₂ costs 100 · 1 · 100 = 10,000.
+- Result is 100×100; times M₃ costs 100 · 100 · 1 = 10,000.
+- Total: 20,000.
+
+Computing M₁ · (M₂ · M₃):
+
+- M₂ · M₃ costs 1 · 100 · 1 = 100.
+- Result is 1×1; times M₁ costs 100 · 1 · 1 = 100.
+- Total: 200.
+
+100× speedup just from the parenthesisation. We want the best one.
+
+**Subproblem.** **M(i, j)** = the minimum number of scalar multiplications needed to compute the product Mᵢ · Mᵢ₊₁ · ... · Mⱼ.
+
+The final answer is M(1, n).
+
+**Recurrence — the "split at k" argument.**
+
+Any way to parenthesise Mᵢ · ... · Mⱼ has an **outermost** multiplication — the very last multiply you perform. It splits the chain into two halves at some position k:
+
+```text
+(Mᵢ · ... · Mₖ) · (M_(k+1) · ... · Mⱼ)
+   ↑ left half          ↑ right half
+```
+
+For a fixed split point k, the cost has three parts:
+
+1. **Compute the left half.** Costs M(i, k) scalar multiplications. Resulting matrix has dimensions pᵢ₋₁ × pₖ.
+2. **Compute the right half.** Costs M(k+1, j). Resulting matrix has dimensions pₖ × pⱼ.
+3. **One last multiply.** A pᵢ₋₁ × pₖ matrix times a pₖ × pⱼ matrix costs pᵢ₋₁ · pₖ · pⱼ scalar multiplications.
+
+We don't know which k is best, so we try every k from i to j−1 and take the minimum.
+
+```text
+M(i, j) = min over k = i .. j-1 of
+            ( M(i, k) + M(k+1, j) + p_(i-1) · p_k · p_j )
+M(i, i) = 0                                  ← single matrix, no multiply needed
+```
+
+**Complexity.** O(n²) subproblems × O(n) transitions = **Θ(n³)**.
+
+**Fill order:** by chain length, from 2 to n.
+
+**Reconstruction:** store the argmin k at each (i, j); recursively parenthesise.
+
+**Pattern.** This is **interval DP** — subproblem indexed by an interval [i, j], transition splits at an interior k. Same template works for optimal BSTs, polygon triangulation, palindrome partitioning, and more.
+
+## Bellman-Ford shortest paths
+
+**Problem.** Single-source shortest paths from s in a weighted directed graph, possibly with **negative** edges. (Dijkstra fails here.)
+
+If a negative-weight cycle is reachable from s, no shortest path is well-defined — Bellman-Ford detects this.
+
+**Subproblem.** D(i, v) = shortest s→v path using at most i edges.
+
+**Recurrence.**
+
+```text
+D(0, s) = 0;  D(0, v) = +inf otherwise
+D(i, v) = min(
+  D(i-1, v),
+  min over edges (u, v) of  ( D(i-1, u) + w(u, v) )
+)
+```
+
+**Algorithm (the practical form).** Iterate |V| − 1 times; relax every edge in each pass.
+
+```text
+bellman_ford(G, s):
+  for v in V: d[v] = +infinity
+  d[s] = 0
+  for i = 1 .. |V| - 1:
+    for (u, v, w) in E:
+      d[v] = min(d[v], d[u] + w)
+  # negative cycle check
+  for (u, v, w) in E:
+    if d[u] + w < d[v]:
+      return "negative cycle reachable"
+  return d
+```
+
+**Correctness — the at-most-i-edges claim.**
+
+We want to prove **after iteration i, for every vertex v: d[v] ≤ (length of the shortest s→v path that uses at most i edges).** Call this the **"i-edge claim"**.
+
+Why this claim matters: in a graph without negative cycles, any shortest path uses at most |V|−1 edges (no vertex repeats). So after |V|−1 iterations, d[v] equals the true shortest-path length.
+
+Proof by induction on i.
+
+**Base case (i = 0).** Before any iteration, d[s] = 0 (the only 0-edge path) and d[v] = ∞ for v ≠ s (no 0-edge path from s reaches v). The claim holds. ✓
+
+**Inductive step.** Assume the claim holds after iteration i−1. Show it still holds after iteration i.
+
+1. Take any vertex v and any shortest s→v path P that uses at most i edges.
+2. If P uses ≤ i−1 edges, the induction hypothesis already gives d[v] ≤ length(P). ✓
+3. Otherwise P uses exactly i edges. Let (u, v) be its last edge. The prefix s→u of P uses i−1 edges, and it must itself be a shortest s→u path on i−1 edges (any shorter prefix would give a shorter total).
+4. By the induction hypothesis, after iteration i−1: d[u] ≤ length(prefix).
+5. During iteration i we relax every edge, including (u, v). After the relax: d[v] ≤ d[u] + w(u, v) ≤ length(prefix) + w(u, v) = length(P). ✓
+
+So after iteration i, the claim holds for every v. ∎
+
+**Negative cycles.** After |V|−1 iterations, do one more pass. If any edge can still relax (i.e. d[u] + w(u, v) &lt; d[v]), then some shortest "path" needs more than |V|−1 edges — impossible without a negative cycle. So that's our detector.
+
+**Complexity.** **Θ(V · E)** time, Θ(V) space.
+
+Slower than Dijkstra. But unconditionally correct.
+
+### Bellman-Ford traced
+
+5 vertices, edges: (1,2,6), (1,3,7), (2,3,8), (2,4,−4), (2,5,5), (3,4,9), (3,5,−3), (4,1,2), (4,5,7), (5,1,3), (5,4,−1). Source = 1.
+
+Initial: d = [0, ∞, ∞, ∞, ∞].
+
+After iteration 1 (relaxing all edges once):
+
+- (1,2): d[2] = 6.
+- (1,3): d[3] = 7.
+- (2,4): d[4] = 2.
+- (2,5): d[5] = 11.
+- (3,5): d[5] = 4 (improvement).
+- (4,1): d[1] = 0 (no change, 2+2=4 not better).
+
+After iteration 1: d = [0, 6, 7, 2, 4].
+
+Iterations 2-4: no improvements. Converged.
+
+Final pass: no edge can still relax → no negative cycle. **d = [0, 6, 7, 2, 4]**.
+
+## Held-Karp: TSP in O(n² · 2ⁿ)
+
+**Travelling Salesman Problem.** Complete weighted graph on n cities. Find a Hamiltonian cycle of minimum total weight. NP-hard (Week 9).
+
+**Brute force.** (n−1)! tours. For n = 20, that's about 1.2 × 10¹⁷. Infeasible.
+
+**Held-Karp's clever DP.**
+
+**Subproblem.** D(S, j) = min weight of a path starting at city 1, visiting *every* city in S exactly once, ending at j ∈ S.
+
+**Recurrence.** *Last city visited before j.*
+
+```text
+D({1}, 1) = 0
+D(S, j)   = min over k in S{j}, k != 1 (if |S|>2) of
+              ( D(S \ {j}, k) + w(k, j) )
+```
+
+**Final answer.** min over j ≠ 1 of D(&#123;1,...,n&#125;, j) + w(j, 1).
+
+**Complexity.** 2ⁿ subsets × n endpoints × O(n) transition = **Θ(n² · 2ⁿ)**.
+
+For n = 20: 4 × 10⁸. Six orders of magnitude faster than brute force.
+
+### Held-Karp traced
+
+4 cities; distance matrix:
+
+|   | 1  | 2  | 3  | 4  |
+|---|----|----|----|----|
+| 1 | 0  | 10 | 15 | 20 |
+| 2 | 10 | 0  | 35 | 25 |
+| 3 | 15 | 35 | 0  | 30 |
+| 4 | 20 | 25 | 30 | 0  |
+
+Base |S|=2: D(&#123;1,2&#125;, 2) = 10; D(&#123;1,3&#125;, 3) = 15; D(&#123;1,4&#125;, 4) = 20.
+
+|S|=3:
+- D(&#123;1,2,3&#125;, 3) = D(&#123;1,2&#125;, 2) + w(2,3) = 10 + 35 = 45.
+- D(&#123;1,2,3&#125;, 2) = 15 + 35 = 50.
+- D(&#123;1,2,4&#125;, 4) = 10 + 25 = 35.
+- D(&#123;1,2,4&#125;, 2) = 20 + 25 = 45.
+- D(&#123;1,3,4&#125;, 4) = 15 + 30 = 45.
+- D(&#123;1,3,4&#125;, 3) = 20 + 30 = 50.
+
+|S|=4:
+- D(&#123;1,2,3,4&#125;, 2) = min(50 + 35, 45 + 25) = **70**.
+- D(&#123;1,2,3,4&#125;, 3) = min(45 + 35, 35 + 30) = **65**.
+- D(&#123;1,2,3,4&#125;, 4) = min(50 + 25, 45 + 30) = **75**.
+
+Final: min(70 + 10, 65 + 15, 75 + 20) = min(80, 80, 95) = **80**. Optimal tour cost.
+
+## DP on trees
+
+**Setup.** Rooted tree T = (V, E). Subtrees only interact through their root → perfect for DP.
+
+**Example: Max-Weight Independent Set on a Tree.** Pick an independent set (no two adjacent) maximising total weight.
+
+For each node v, two states:
+
+- **Iᵢₙ(v)** = best value in subtree(v) *with v included*.
+- **Iₒᵤₜ(v)** = best value in subtree(v) *with v excluded*.
+
+```text
+I_in(v)  = w(v) + sum over children c of I_out(c)
+I_out(v) = sum over children c of max(I_in(c), I_out(c))
+```
+
+Answer: max(Iᵢₙ(root), Iₒᵤₜ(root)).
+
+**Complexity.** **O(V)** — one post-order traversal, each child examined once.
+
+**The pattern.** *Post-order DFS combining child answers.* It handles tree DP problems in general. (Note: MIS on *general graphs* is NP-hard. The tree structure is what saves us.)
+
+## More interval DP examples
+
+Same shape as matrix chain: subproblem indexed by interval [i, j], transition splits at interior k.
+
+- **Optimal binary search tree (Knuth).** Build a BST minimising expected access cost. O(n³); reducible to O(n²) via Knuth's monotone-split lemma.
+- **Polygon triangulation.** Min-weight triangulation of a convex polygon. Identical recurrence shape.
+- **Palindrome partitioning.** Min cuts to break a string into palindromes. O(n²) with precomputed palindrome table.
+
+## Multidimensional DP
+
+When optimal substructure needs multiple parameters, the table grows.
+
+- **Edit distance** — 2D (two prefixes).
+- **Knapsack** — 2D (items × capacity).
+- **Three-string LCS** — 3D.
+- **DP on a 2D grid with obstacles** — 2D.
+
+**Time** = table size × per-cell work. **Space** = table size, unless rolling helps.
+
+**Principle.** *The state of a DP must be a sufficient statistic for the future.* If you keep adding parameters to handle edge cases, your subproblem is incomplete. Sometimes one extra boolean ("did we just place a vowel?") fixes everything.
+
+## Rolling-array space optimisation
+
+If the recurrence depends only on the previous row (or previous k rows), you don't need the full table. You only need the last k rows. Memory drops from Θ(nm) to Θ(km).
+
+**Knapsack rolling to Θ(W) space:**
+
+```text
+K = [0] * (W+1)
+for i in 1..n:
+  for c in W down to w_i:           # iterate DOWN
+    K[c] = max(K[c], v_i + K[c - w_i])
+```
+
+**Why the reverse iteration matters.** If we went forward (small c to large), item i would contribute to K[c−wᵢ] *before* we read it for K[c]. Item i would end up counted multiple times — silently turning 0/1 knapsack into *unbounded* knapsack.
+
+This direction-of-iteration bug is the single most common DP error in exams.
+
+**Caveat.** Rolling arrays kill the ability to reconstruct via back-pointers (the old rows are gone). To recover the witness, use Hirschberg's D&C reconstruction.
+
+## Pseudo-polynomial → FPTAS
+
+**Pseudo-polynomial** algorithms are polynomial in the input *values* but exponential in input *bit-length*. Subset sum in Θ(nT), knapsack in Θ(nW), Held-Karp in Θ(2ⁿ n²) — all examples.
+
+This means *weakly NP-hard* problems can be solved exactly when the relevant value is polynomially bounded.
+
+**FPTAS (Fully Polynomial-Time Approximation Scheme)** — Week 11 — gives a (1−ε)-approximation in time poly(n, 1/ε). For knapsack, the trick:
+
+1. Scale values down: replace vᵢ with ⌊vᵢ / s⌋ for an appropriate s.
+2. Run the pseudo-poly DP on the smaller values.
+
+Smaller values → smaller DP table → polynomial time. The lost precision controls the approximation ratio.
+
+The bridge from "pseudo-poly DP this week" to "FPTAS in Week 11" is short and worth keeping in mind.
+
+## All-pairs shortest paths: Floyd-Warshall
+
+**Problem.** Shortest path δ(u, v) between *every* pair of vertices. Edge weights may be negative; no negative cycles.
+
+**Subproblem.** D(k, u, v) = shortest u→v path using only intermediate vertices in &#123;1, ..., k&#125;.
+
+**Recurrence.** *Either the path uses vertex k or it doesn't.*
+
+```text
+D(k, u, v) = min( D(k-1, u, v),  D(k-1, u, k) + D(k-1, k, v) )
+D(0, u, v) = w(u, v) if (u, v) ∈ E else ∞
+D(0, u, u) = 0
+```
+
+**Complexity.** **O(V³)** time, O(V²) space (the third dimension can be overwritten).
+
+This is Floyd-Warshall in DP clothing. The canonical "DP on three indices".
+
+## Bitmask subset DPs
+
+When a DP needs to remember a *subset*, the state space is 2ⁿ. Feasible for small n (≤ 20-ish).
+
+Examples:
+
+- **Held-Karp TSP.** D(S, j).
+- **TSP with profits.**
+- **Steiner tree on small terminal set.** O(3ᵏ n + 2ᵏ n²) for k terminals.
+- **Hamiltonian path / cycle.** O(n² 2ⁿ).
+
+**Implementation.** Represent S as an integer in [0, 2ⁿ). "Add element j" = bitwise OR with (1 &lt;&lt; j). Enumerate subsets in increasing cardinality so that smaller subproblems are ready.
+
+## The Week 4 + Week 5 design checklist
+
+For any new optimisation problem you suspect is DP:
+
+1. **Optimal substructure?** Optimum built from strictly smaller optima?
+2. **Overlap?** Same subproblems recur? If not, prefer D&C.
+3. **Smallest parameter set?** Prefixes, suffixes, intervals, subsets, subtrees.
+4. **Tractable transition?** Per-state work; total time stays polynomial (or pseudo-poly).
+5. **Fill order?** Topological by index/length, or memoised recursion.
+6. **Reconstruction?** Back-pointers vs walk-the-table.
+7. **Space optimisation possible?** Rolling array?
+8. **Implicit DAG?** Confirms correctness mechanically.
+
+If anything is unclear, return to step 3. Most DP failures originate in a bad subproblem definition.
+
+## What to do this week
+
+1. Fill the 0/1 knapsack table for n=3, W=5 example by hand. Confirm K(3, 5) = 7.
+2. Implement Held-Karp on a 6-city instance with random weights. Verify against brute-force enumeration.
+3. Run Bellman-Ford on a 6-vertex graph with one negative edge. Confirm V−1 iterations suffice.
+4. Write the tree DP for *maximum matching* on a tree. (Hint: states are "v is matched with a child" or "v is unmatched".)
+5. Code 0/1 knapsack with rolling array. Then reverse the inner-loop direction and watch it silently turn into unbounded knapsack.
+6. For the worked Held-Karp trace, recover the actual tour (not just its cost) by back-pointer.
+7. Skim the quiz: any pseudo-poly / strongly-poly / weakly-NP-hard distinction you can't articulate is a study target.

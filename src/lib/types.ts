@@ -1,6 +1,6 @@
 export type UnitCode = string;
 
-export type NoteType = "lecture" | "lab" | "tutorial" | "reading" | "overview" | "exam";
+export type NoteType = "lecture" | "lab" | "tutorial" | "reading" | "overview" | "exam" | "ai-overview";
 
 /**
  * Lifecycle of a note:

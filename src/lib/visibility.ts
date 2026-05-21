@@ -6,7 +6,8 @@ import type { Note } from "./types";
  * user prose) are hidden — they live on the /sync page until ticked.
  */
 export function isVisibleNote(n: Note): boolean {
-  if (n.localFile) return true;            // downloaded → has extracted text
-  if (n.status && n.status !== "stub") return true;  // user-edited or marked done
+  if (n.type === "ai-overview") return true; // synthetic teach pages always show
+  if (n.localFile) return true;              // downloaded → has extracted text
+  if (n.status && n.status !== "stub") return true;
   return false;
 }

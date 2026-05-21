@@ -1,0 +1,616 @@
+---
+title: "Week 1 — Web fundamentals + JavaScript intro"
+unit: COMP4347
+week: 1
+type: overview
+status: done
+---
+
+## What this week is really about
+
+This unit teaches you to build full-stack web apps. **Before you can build one, you have to understand the conversation a browser has with a server.** That conversation is the HTTP request/response cycle, and it sits underneath every framework you will ever use.
+
+The other half of Week 1 is **JavaScript**. JS is the only language that runs in every browser. It also runs on the server (Node.js) and increasingly on the edge. You will spend the rest of the semester writing it.
+
+The slides cover both halves at a sprint. **This page is the long-form version.** Read it once for understanding, then come back to specific sections when you trip over a bug.
+
+## Web app architecture, in plain language
+
+Before HTTP itself, you need a mental model of who is talking to whom.
+
+**A client is the user's browser session.** It runs on the user's laptop or phone. It makes requests and renders responses.
+
+**A server is a remote computer that answers requests.** It usually lives in a data centre. It stores data, runs business logic, and sends back responses.
+
+**A service is a smaller server that your main server depends on.** Examples: a Stripe payments service, a Google identity service, an ad delivery service. Your server stitches together responses from many services to build one user-facing reply.
+
+The unit makes one vocabulary distinction worth memorising. **A "website" is just the files a browser fetches** — `.html`, `.css`, `.js`, images. **A "web application" is the website plus the server plus the services.** When someone says "this web app is slow", they could mean any of those layers. Be precise.
+
+### Four flavours of client/server split
+
+The slides describe four common shapes a web app can take. They are not mutually exclusive — most real apps mix and match.
+
+1. **Static website.** Every file is pre-built and served as-is. Many personal blogs, documentation sites, and marketing pages work this way. Cheap to host, fast to load, but no per-user content.
+2. **Single Page App (SPA).** One root HTML file boots up JavaScript. The JS then fetches data and rewrites the page in place. Gmail, Twitter, and Figma are SPAs.
+3. **Multi-Page App (MPA).** The server renders a fresh HTML page for each significant change. Wikipedia and most news sites are MPAs.
+4. **WebSocket-based app.** The client holds an open connection so the server can push messages whenever it wants. Slack, Discord, and most chat apps work this way.
+
+Exam tip — you should be able to look at a behaviour ("the URL bar never changes, but the feed updates") and classify the app. The URL bar changing or not changing is your single best signal.
+
+### "Architecture" means four different things
+
+When a textbook says "architecture", it could mean any of these. Context matters.
+
+- **Client/server architecture** — how work is divided between browser, server, and services.
+- **Tech stack** — which technologies do each job. Example: MERN = MongoDB, Express, React, Node. Other stacks: LAMP, WISA, PERN, MEAN.
+- **Infrastructure architecture** — how the software is laid out across physical machines or cloud instances. Amazon famously moved from a monolith to 100+ services per page load.
+- **Code architecture** — how the source code is organised inside a repo. The classical pattern is *MVC (Model-View-Controller)*, which you meet in Week 6.
+
+## How a URL becomes pixels
+
+When you paste a URL into a browser and press Enter, six things happen in order. Knowing the order is the difference between guessing at bugs and finding them.
+
+1. **Parse the URL** into scheme, host, port, path, query, fragment.
+2. **Resolve the host name** to an IP address using DNS.
+3. **Open a TCP connection** to that IP and port.
+4. **Negotiate TLS** if the scheme is `https`.
+5. **Send the HTTP request** and wait for the response.
+6. **Render the response** — parse HTML, fetch sub-resources, run JS.
+
+We will walk through each step.
+
+### URL anatomy
+
+A URL is just a structured string. Memorise the parts.
+
+```text
+https://api.example.com:443/users/42?detailed=true&locale=en-GB#bio
+└─┬─┘   └──────┬──────┘ └┬┘ └───┬───┘ └─────────┬─────────────┘ └┬┘
+scheme       host       port  path             query           fragment
+```
+
+- **Scheme** — the protocol. Usually `http` or `https`. Can also be `ws`, `wss`, `mailto`, `file`.
+- **Host** — the domain name or IP address. The DNS-resolvable bit.
+- **Port** — the TCP port number. Defaults: 80 for `http`, 443 for `https`. Usually omitted.
+- **Path** — what resource you want on that host. Servers interpret paths however they like.
+- **Query** — key/value pairs after `?`, separated by `&`. Used for filters, pagination, search terms.
+- **Fragment** — everything after `#`. Only the browser sees this. It is never sent to the server. Used for in-page anchors and SPA routing.
+
+**The fragment never reaches the server.** This trips up beginners constantly. If you put a secret in the fragment, the server cannot read it — which is sometimes a feature, sometimes a bug.
+
+### DNS, the phonebook of the internet
+
+A computer cannot send a packet to `api.example.com`. It can only send packets to IP addresses like `93.184.216.34`. **DNS is the system that translates names to IP addresses.**
+
+A simplified resolution chain for `api.example.com`:
+
+```text
+1. browser cache       — "did I look this up in the last few minutes?"
+2. OS cache            — "did any program on this machine look it up?"
+3. recursive resolver  — your ISP's or 1.1.1.1, 8.8.8.8
+4. root nameserver     — "ask the .com nameservers"
+5. TLD nameserver      — "ask example.com's authoritative server"
+6. authoritative NS    — "api.example.com is at 93.184.216.34"
+```
+
+Each step is cached for some TTL (time-to-live). That is why DNS changes "propagate" slowly — old caches keep answering with the old IP until their TTL expires.
+
+**Why DNS matters for architecture.** A server can change its IP, move data centres, or sit behind a load balancer with hundreds of IPs. None of that breaks the client, because the client looks up the name fresh each time the cache expires.
+
+### TCP and TLS, briefly
+
+TCP gives you a reliable, ordered byte stream between two endpoints. Setting one up costs **one round-trip** (the SYN / SYN-ACK / ACK handshake).
+
+If the scheme is `https`, you then run **TLS** on top of TCP. TLS does two things:
+
+1. Authenticates the server (using a certificate signed by a Certificate Authority).
+2. Negotiates an encryption key so nothing in between can read the traffic.
+
+A TLS 1.3 handshake costs **one more round-trip** on top of TCP. So for a fresh `https` connection: 1 RTT (TCP) + 1 RTT (TLS) + 1 RTT (request + first byte of response) = **3 RTTs before any data arrives**. That is why HTTP keepalive matters so much — it amortises that cost over many requests.
+
+## Anatomy of an HTTP message
+
+HTTP is a text-based protocol (in versions 1.0 and 1.1 — version 2 and 3 are binary, but they encode the same fields). A request has four parts.
+
+```http
+GET /users/42?detailed=true HTTP/1.1
+Host: api.example.com
+Accept: application/json
+Authorization: Bearer eyJhbGc...
+
+```
+
+The four parts:
+
+1. **Request line** — `METHOD path HTTP/version`.
+2. **Headers** — key/value pairs, one per line. Always include `Host`.
+3. **Blank line** — separates headers from body.
+4. **Body** — optional. GET and DELETE usually have none. POST and PUT usually do.
+
+A response has the same shape, except the first line is the **status line**.
+
+```http
+HTTP/1.1 200 OK
+Content-Type: application/json
+Content-Length: 87
+
+{"id":42,"name":"Ada Lovelace","email":"ada@example.com"}
+```
+
+### HTTP methods
+
+You will use four methods constantly. The unit lists them with a verb that captures their intent.
+
+- **GET** — *retrieve* data. Should not modify anything. Safe to retry. Cacheable.
+- **POST** — *create* something new, or perform an action that has side effects. Not idempotent (calling it twice creates two things).
+- **PUT** — *replace* a resource at a known URL. Idempotent (calling it twice gives the same result as once).
+- **DELETE** — *remove* a resource. Idempotent.
+
+There are others — `PATCH`, `HEAD`, `OPTIONS`, `CONNECT`, `TRACE` — but most apps stick to the big four.
+
+**Idempotent** is jargon worth defining now. *A request is idempotent if making it once or making it ten times has the same effect on the server.* GET, PUT, DELETE are idempotent. POST is not. This matters when networks fail and clients retry.
+
+### HTTP status codes — the ones you need to know
+
+A status code is a three-digit number whose first digit is the category.
+
+- **1xx informational** — rare. `101 Switching Protocols` is what you see in a WebSocket upgrade.
+- **2xx success** — `200 OK`, `201 Created` (after a POST), `204 No Content` (success but nothing to return).
+- **3xx redirection** — `301 Moved Permanently`, `302 Found` (temporary), `304 Not Modified` (your cached copy is still valid).
+- **4xx client error** — the client did something wrong.
+- **5xx server error** — the server broke.
+
+The 4xx and 5xx codes are worth memorising in detail because they show up in every API you will ever build.
+
+| Code | Name | When to use it |
+|------|------|----------------|
+| 400 | Bad Request | The request is malformed. Missing field, bad JSON, wrong type. |
+| 401 | Unauthorized | The caller is not authenticated (no/invalid token). |
+| 403 | Forbidden | Authenticated, but not allowed to do *this*. |
+| 404 | Not Found | The resource does not exist (or you do not want to admit it does). |
+| 409 | Conflict | Edit collision, duplicate signup, version mismatch. |
+| 422 | Unprocessable Entity | Syntactically valid, semantically invalid. ("email" was a string but not a valid email.) |
+| 429 | Too Many Requests | Rate limit exceeded. |
+| 500 | Internal Server Error | The server threw and you have nothing better. |
+| 502 | Bad Gateway | Your reverse proxy got a bad response from the upstream server. |
+| 503 | Service Unavailable | Overloaded or down for maintenance. |
+
+**The 401 vs 403 distinction is exam bait.** 401 means "I do not know who you are". 403 means "I know who you are, and you cannot do this".
+
+### Headers worth knowing
+
+- `Host` — which site on this server you want. Required in HTTP/1.1.
+- `Content-Type` — the MIME type of the body (`application/json`, `text/html`).
+- `Content-Length` — body size in bytes.
+- `Authorization` — credentials. Usually `Bearer <token>`.
+- `Cookie` / `Set-Cookie` — the browser's session state.
+- `Cache-Control` — how long this response can be cached.
+- `Accept` — which content types the client is willing to receive.
+- `User-Agent` — what browser/library is making the request.
+
+### MIME types
+
+The browser decides what to do with a response by reading the `Content-Type` header. **A MIME type has two parts** — a top-level type (`text`, `image`, `application`) and a subtype (`html`, `png`, `json`). If the server sends `Content-Type: text/plain` for an HTML file, the browser will display the HTML as text. The header wins over the file extension.
+
+## HTTP versions and performance
+
+The protocol has evolved. You will not write low-level HTTP code, but knowing what each version added explains why modern apps feel fast.
+
+### HTTP/1.0 → 1.1 → 2 → 3
+
+**HTTP/1.0** opened a fresh TCP connection per request. With 50 sub-resources on a page, that is 50 TCP handshakes. Painfully slow.
+
+**HTTP/1.1** added **keepalive** — reuse the same TCP connection for many requests. Massive speedup. Still constrained by *head-of-line blocking*: requests on the same connection are answered in order, so one slow response blocks the rest. Browsers worked around this by opening 6 parallel connections per host.
+
+**HTTP/2** added **multiplexing** — many requests and responses interleaved on a single TCP connection. No more head-of-line blocking at the HTTP layer. Binary framing, header compression, server push.
+
+**HTTP/3** swaps TCP for **QUIC**, which runs on UDP. QUIC kills head-of-line blocking at the *transport* layer too, and combines the TCP and TLS handshakes into one round-trip. Faster on lossy networks like mobile.
+
+### Round-trip math
+
+The unit's lecture introduces this model. Let RTT = round-trip time.
+
+```text
+fresh HTTPS request, cold cache:
+  1 RTT  TCP handshake
++ 1 RTT  TLS handshake
++ 1 RTT  request + first byte of response (Time To First Byte)
++ X ms   transmit response body
+─────────
+  3 RTT + transmit time
+```
+
+On a warm keepalive connection, the first two RTTs vanish. **That is why keepalive halves real-world load times.** It is also why connection-pooling libraries exist.
+
+## Caching and proxies
+
+Between you and the origin server sit any number of intermediate boxes — corporate proxies, CDN edge nodes, reverse proxies. They all read HTTP. They can all cache.
+
+**A proxy is a server that sits between client and origin.** It can:
+
+- Authenticate the client before letting the request through.
+- Load-balance across many origin servers.
+- Serve a cached response without bothering the origin.
+
+The two ways a cache decides it can answer.
+
+1. **Expiration.** The origin sent `Cache-Control: max-age=3600` an hour ago. The cache replies directly. No network round-trip to the origin.
+2. **Validation.** The cache asks the origin "is your copy still the same as mine?". If yes, the origin sends `304 Not Modified` with an empty body. Cheaper than re-sending the full payload.
+
+Phil Karlton's joke is worth quoting because it is exam material disguised as a one-liner. *"There are only two hard things in Computer Science: cache invalidation and naming things."*
+
+## JavaScript — the absolute basics
+
+That is the web stack. Now we switch languages. The rest of this page is **JavaScript**.
+
+JavaScript was written in 10 days in May 1995 by Brendan Eich at Netscape. Its weirdnesses are mostly because of that deadline. **JS and Java are unrelated** — the name was a marketing decision when Netscape and Sun Microsystems were briefly allied.
+
+JS is:
+
+- **High-level** — you do not manage memory.
+- **Interpreted** — no separate compile step in development. (Modern engines JIT-compile at runtime, but you do not see it.)
+- **Dynamically typed** — a variable can hold any type, and that type can change. There is no `int x` versus `string s`.
+- **Weakly typed** — JS implicitly coerces between types. `"3" * 2` is `6`. `"3" + 2` is `"32"`. This is the source of most JS jokes.
+- **Multi-paradigm** — you can write functional, imperative, or object-oriented JS in the same file.
+
+### Three ways to declare a variable
+
+```js
+var   x = 1;  // old-school. function-scoped. hoisted. avoid.
+let   y = 2;  // block-scoped. can be reassigned.
+const z = 3;  // block-scoped. cannot be reassigned.
+```
+
+The rule of thumb: **default to `const`, use `let` when you need to reassign, never use `var` in new code**. The reasoning is in the next section.
+
+### Primitive types
+
+The seven primitives.
+
+- `number` — all numerics, integers and floats. Limited to ±2⁵³.
+- `bigint` — arbitrary-precision integers, written like `42n`.
+- `string` — text, single or double quotes, or backticks for templates.
+- `boolean` — `true` or `false`.
+- `null` — deliberate emptiness. *You* assigned it.
+- `undefined` — accidental emptiness. The variable exists but was never given a value.
+- `symbol` — rarely used. A unique, opaque value.
+
+Everything else is an **object**. Arrays are objects. Functions are objects. Maps, Sets, Dates, regular expressions — all objects.
+
+Check the type with `typeof`:
+
+```js
+typeof "abc"     // "string"
+typeof 42        // "number"
+typeof undefined // "undefined"
+typeof null      // "object"  ← historical bug, never fixed
+typeof [1, 2, 3] // "object"
+typeof function(){} // "function"
+```
+
+## Primitive vs reference, and why the exam loves it
+
+This is the single most common JS exam question.
+
+**Primitives are copied by value. Objects are copied by reference.**
+
+```js
+let a = 27;
+let b = a;       // b gets a *copy* of the value 27
+b = 10;
+console.log(a);  // still 27
+
+let arr1 = [45, 35, 25];
+let arr2 = arr1; // arr2 points at the *same* array as arr1
+arr2[0] = 200;
+console.log(arr1[0]); // 200 — they share storage
+```
+
+In the first case, `a` and `b` are independent. In the second, `arr1` and `arr2` are two names for one array.
+
+**The mental model.** A primitive is the value itself. An object variable holds an arrow pointing at the value, and copying the variable copies the arrow, not the thing the arrow points at.
+
+To actually clone an array or object, you have to do it explicitly: `[...arr1]`, `Object.assign({}, obj)`, or `structuredClone(obj)`.
+
+## Equality — the most dangerous operator in the language
+
+JavaScript has two equality operators.
+
+- `==` — **loose equality**. Coerces types, then compares.
+- `===` — **strict equality**. Same type required, then compares.
+
+**Default to `===`.** Always. Loose equality has rules that look insane until you memorise them.
+
+```js
+"1" == 1            // true   — string coerces to number
+0 == false          // true   — boolean coerces to number
+0 == null           // false  — special-cased
+0 == undefined      // false  — special-cased
+null == undefined   // true   — special-cased
+"" == 0             // true   — empty string coerces to 0
+[] == false         // true   — array → "" → 0
+[] == ![]           // true   — yes, really
+NaN == NaN          // false  — NaN is never equal to anything
+```
+
+Strict equality has none of this nonsense.
+
+```js
+"1" === 1   // false
+0 === false // false
+NaN === NaN // false  — still the NaN exception
+```
+
+**The exception that survives both operators: NaN.** To test for NaN, use `Number.isNaN(x)`.
+
+**The exam pattern.** You will be handed a snippet like `"5" == 5` or `0 == "0"` and asked to predict the output. Memorise the table or, better, learn to derive it: `==` always coerces both sides to a common primitive type before comparing. `null` and `undefined` are equal to each other but nothing else.
+
+## Hoisting and the var/let/const split
+
+JavaScript reads your file in two passes. First, it scans the code and reserves space for declarations. Then it executes.
+
+**Hoisting** is the name for that first pass. A `var` declaration is hoisted to the top of its function and initialised to `undefined`. A `function` declaration is hoisted with its body. `let` and `const` are also hoisted, but they sit in a **temporal dead zone** until execution reaches their declaration, so accessing them early throws.
+
+```js
+console.log(a);  // undefined  (var declaration hoisted, value not yet assigned)
+var a = 5;
+
+console.log(b);  // ReferenceError: Cannot access 'b' before initialization
+let b = 5;
+
+greet();         // works — function declarations hoist with body
+function greet() { console.log("hi") }
+```
+
+The other reason to avoid `var` is **scope**. `var` is function-scoped — it leaks out of `if` blocks and `for` loops. `let` and `const` are block-scoped, which is what every other modern language does.
+
+```js
+function leak() {
+  if (true) {
+    var x = 1;
+    let y = 2;
+  }
+  console.log(x); // 1   — var leaks
+  console.log(y); // ReferenceError
+}
+```
+
+The classic loop bug:
+
+```js
+// with var — all callbacks log 3
+for (var i = 0; i < 3; i++) {
+  setTimeout(() => console.log(i), 100);
+}
+// prints: 3, 3, 3
+
+// with let — each iteration gets its own i
+for (let i = 0; i < 3; i++) {
+  setTimeout(() => console.log(i), 100);
+}
+// prints: 0, 1, 2
+```
+
+This is also a Week 1 exam pattern.
+
+## Functions — declarations, expressions, arrows
+
+JavaScript has three ways to write a function and they behave subtly differently.
+
+```js
+// 1. function declaration — hoisted with body
+function add(a, b) { return a + b; }
+
+// 2. function expression — assigned to a variable, NOT hoisted
+const sub = function(a, b) { return a - b; };
+
+// 3. arrow function — shorter syntax, different `this` binding
+const mul = (a, b) => a * b;
+```
+
+The big difference is **`this` binding**.
+
+- A regular function (declaration or expression) has its own `this`, decided by *how it is called*.
+- An arrow function does not have its own `this`. It inherits `this` from the surrounding scope.
+
+```js
+const obj = {
+  name: "Ada",
+  greetRegular: function() { console.log(this.name); },
+  greetArrow:   () =>        { console.log(this.name); },
+};
+
+obj.greetRegular(); // "Ada"        — `this` is `obj`
+obj.greetArrow();   // undefined    — `this` is whatever wrapped this file
+```
+
+**Rule of thumb.** Use arrow functions for callbacks. Use regular functions (or method shorthand) when you actually need `this` to refer to the calling object.
+
+## Scope and closures
+
+Scope is "where can I see this variable". JavaScript has two kinds.
+
+- **Global scope** — declared outside any function or block. Visible everywhere. Avoid.
+- **Local scope** — declared inside a function (`var`) or block (`let`/`const`). Visible only there.
+
+**Lexical scope** means a function can see the variables of the place where it was *defined*, not the place where it is called. This is the foundation of closures.
+
+**A closure is a function that remembers variables from its outer scope, even after that outer function has returned.**
+
+```js
+function makeCounter() {
+  let count = 0;
+  return function() {
+    count = count + 1;
+    return count;
+  };
+}
+
+const c = makeCounter();
+c(); // 1
+c(); // 2
+c(); // 3
+```
+
+The inner function "closes over" `count`. Even though `makeCounter` has finished running, `count` lives on because the returned function still references it.
+
+Closures power most of the patterns you will write — event handlers, React hooks, currying, module-private state. Get comfortable with them now.
+
+## Objects, prototypes, and classes
+
+JavaScript has objects but no traditional classes under the hood. **An object is a bag of key/value pairs.**
+
+```js
+const person = {
+  firstName: "Ada",
+  lastName:  "Lovelace",
+  age:       28,
+  fullName:  function() { return this.firstName + " " + this.lastName; },
+};
+
+person.firstName     // "Ada"
+person["firstName"]  // "Ada" — same thing
+person.fullName()    // "Ada Lovelace"
+```
+
+Behind every object is a hidden link called its **prototype**. When you ask for a property the object does not have, JS walks up the prototype chain until it finds one or hits `null`.
+
+```text
+person ──prototype──▶ Object.prototype ──prototype──▶ null
+```
+
+That is why `person.toString()` works even though you did not write a `toString`. It lives on `Object.prototype`.
+
+**`class` syntax** is a thin layer over prototypes. The `class` keyword from ES6 looks like Java but compiles down to the same prototype machinery.
+
+```js
+class Rectangle {
+  constructor(width, height) {
+    this.width = width;
+    this.height = height;
+  }
+  area() { return this.width * this.height; }
+}
+
+const r = new Rectangle(3, 4);
+r.area(); // 12
+r instanceof Rectangle; // true
+```
+
+The `instanceof` operator checks whether `Rectangle.prototype` appears anywhere in `r`'s prototype chain.
+
+## Async JS — callbacks, Promises, async/await
+
+JavaScript is **single-threaded**. There is one call stack and one execution thread. So how does the browser run animations, network requests, and event handlers without freezing?
+
+The answer is the **event loop**. The runtime takes work off a queue, runs it to completion, then takes the next item.
+
+Async APIs (network, timers, file I/O) do not block. They register a callback and return immediately. When the work finishes, the callback is pushed onto a queue. The event loop picks it up when the current task is done.
+
+### Three generations of async syntax
+
+**Generation 1 — callbacks.** You pass a function to be called when the work is done. Callbacks compose badly. Three levels of nesting and you have *callback hell*.
+
+```js
+fs.readFile("data.txt", function(err, data) {
+  if (err) return console.error(err);
+  console.log(data.toString());
+});
+```
+
+**Generation 2 — Promises.** A Promise is an object representing a value that will exist later. Three states: pending, fulfilled, rejected.
+
+```js
+fetch("/api/users/42")
+  .then(response => response.json())
+  .then(user => console.log(user))
+  .catch(err => console.error(err));
+```
+
+Each `.then` returns a new Promise, so you chain them flat instead of nesting.
+
+**Generation 3 — async/await.** Syntactic sugar over Promises that makes async code look synchronous.
+
+```js
+async function loadUser() {
+  try {
+    const response = await fetch("/api/users/42");
+    const user = await response.json();
+    console.log(user);
+  } catch (err) {
+    console.error(err);
+  }
+}
+```
+
+`await` pauses the function until the Promise settles. The runtime is free to do other work in the meantime. You can only `await` inside an `async` function.
+
+### Microtasks vs macrotasks
+
+The event loop has *two* queues with different priorities.
+
+- **Macrotask queue** — `setTimeout`, `setInterval`, I/O callbacks, UI events.
+- **Microtask queue** — Promise callbacks (`.then`, `await` continuations), `queueMicrotask`.
+
+**After every macrotask, the runtime drains the entire microtask queue before picking up the next macrotask.** That is why this prints in surprising order:
+
+```js
+console.log("1");
+setTimeout(() => console.log("2"), 0);
+Promise.resolve().then(() => console.log("3"));
+console.log("4");
+
+// 1, 4, 3, 2
+```
+
+`1` and `4` run synchronously. `3` runs as a microtask before the timer fires. `2` runs last because timers are macrotasks. Exam favourite.
+
+## Arrays — the workhorse data structure
+
+Arrays are 0-indexed, mutable, and can hold mixed types.
+
+```js
+const xs = [1, "two", true, {four: 4}];
+xs.length;        // 4
+xs.push(5);       // mutates, returns new length
+xs.pop();         // mutates, returns removed item
+xs[0];            // 1
+xs.indexOf("two") // 1
+```
+
+The methods you will use every day.
+
+- `map(fn)` — new array, each element transformed.
+- `filter(fn)` — new array, only elements where `fn` returns true.
+- `reduce(fn, init)` — collapse to a single value.
+- `forEach(fn)` — run `fn` on each element, no return value.
+- `find(fn)` — first element where `fn` is true.
+- `some(fn)` / `every(fn)` — boolean.
+- `sort(fn)` — mutates in place. `fn(a, b)` returns negative, zero, or positive.
+
+```js
+const ages = [23, 9, 14, 2, 28, 19, 3, 15];
+const adults = ages.filter(a => a >= 18);     // [23, 28, 19]
+const doubled = ages.map(a => a * 2);
+const total = ages.reduce((sum, a) => sum + a, 0);
+```
+
+## Common exam patterns
+
+Things you will be asked to do under time pressure. Practise these until they are reflexes.
+
+1. **Classify an app.** Given a behaviour ("URL never changes; feed updates as you scroll"), call out which of static / SPA / MPA / WebSocket fits.
+2. **Pick the right status code.** "A logged-in user tries to delete another user's post" — 403. "Email field is missing" — 400 or 422. "User is not logged in at all" — 401.
+3. **Predict `==` vs `===` output.** Snippets like `0 == "0"`, `null == undefined`, `[] == false`. Strict version is almost always `false`.
+4. **Predict `typeof`.** Especially `typeof null` (the famous bug: `"object"`).
+5. **Spot the `var` loop bug.** `for (var i = 0; ...; i++) setTimeout(...)` prints the final value of `i`, not each iteration's value.
+6. **Spot the `if (x = 5)` bug.** Assignment, not comparison. The condition is always truthy.
+7. **Reference vs value.** Whether mutating `b` changes `a` depends on whether they hold a primitive or an object.
+8. **Hoisting traps.** Using a `var` before its declaration (`undefined`, not error). Using a `let` before its declaration (ReferenceError). Calling a `function` declaration before it appears (works) versus a function expression (TypeError).
+9. **`this` in arrow vs regular.** An arrow function method on an object does *not* bind `this` to the object.
+10. **Microtask order.** `Promise.then` runs before `setTimeout(..., 0)`.
+11. **RTT counting.** Cold HTTPS request: 3 RTTs before data. Warm keepalive: 1 RTT.
+12. **What is in the URL?** The fragment never goes to the server. The query does.
+13. **Cache hit vs validation vs miss.** Expiration means no round-trip. Validation means a round-trip but maybe a 304. Miss means a full re-fetch.
+
+If you can answer all thirteen without notes, you have understood Week 1.

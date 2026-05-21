@@ -1,0 +1,307 @@
+{
+  "unit": "COMP3027",
+  "week": 5,
+  "topic": "Dynamic programming (continued)",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "Which is the correct LCS recurrence when X[i] = Y[j]?",
+      "choices": [
+        "OPT(i-1, j) + OPT(i, j-1)",
+        "OPT(i-1, j-1) + 1",
+        "max(OPT(i-1, j), OPT(i, j-1))",
+        "OPT(i, j-1)"
+      ],
+      "correctIndex": 1,
+      "explanation": "Matching characters extend the previous diagonal LCS by 1."
+    },
+    {
+      "id": "q2",
+      "stem": "LCS runs in time:",
+      "choices": [
+        "O(n)",
+        "O(n log n)",
+        "O(nm)",
+        "O(n^3)"
+      ],
+      "correctIndex": 2,
+      "explanation": "The 2D table has n*m cells, each O(1) work. SETH says no truly subquadratic improvement."
+    },
+    {
+      "id": "q3",
+      "stem": "Why does a 1D prefix DP fail for LCS?",
+      "choices": [
+        "LCS has no overlapping subproblems",
+        "Both inputs are simultaneously consumed; the subproblem must index both",
+        "LCS is NP-hard",
+        "Sorting changes the answer"
+      ],
+      "correctIndex": 1,
+      "explanation": "Each character of X may match different positions of Y; you cannot collapse Y to a constant. Two indices are needed."
+    },
+    {
+      "id": "q4",
+      "stem": "In RNA secondary structure DP, the subproblem is OPT(i, j) = max pairs in substring b_i..b_j. Why is interval indexing necessary?",
+      "choices": [
+        "RNA is non-linear",
+        "Non-crossing pairings split the interval into two non-overlapping subintervals; the structure is recursive on intervals",
+        "Bases must be enumerated",
+        "It is faster"
+      ],
+      "correctIndex": 1,
+      "explanation": "Pairing position t with j splits [i, j] into [i, t-1] and [t+1, j-1] — both intervals, not prefixes. Prefix DP cannot express this."
+    },
+    {
+      "id": "q5",
+      "stem": "What is the running time of the standard RNA secondary structure DP?",
+      "choices": [
+        "O(n)",
+        "O(n^2)",
+        "O(n^3)",
+        "O(n^4)"
+      ],
+      "correctIndex": 2,
+      "explanation": "n^2 intervals * O(n) choices for the pairing partner = O(n^3)."
+    },
+    {
+      "id": "q6",
+      "stem": "What is the correct evaluation order for an interval DP?",
+      "choices": [
+        "Increasing interval length",
+        "Decreasing left endpoint",
+        "Lexicographic on (i, j)",
+        "Random"
+      ],
+      "correctIndex": 0,
+      "explanation": "Smaller intervals are computed first so that the recurrence's strictly smaller subintervals are already in the table."
+    },
+    {
+      "id": "q7",
+      "stem": "Bellman-Ford runs in time:",
+      "choices": [
+        "O(n + m)",
+        "O(n log n)",
+        "O(mn)",
+        "O(n^3)"
+      ],
+      "correctIndex": 2,
+      "explanation": "n iterations, each relaxing all m edges. Detects negative cycles in an extra iteration."
+    },
+    {
+      "id": "q8",
+      "stem": "What does OPT(i, v) represent in the Bellman-Ford DP from this unit?",
+      "choices": [
+        "Number of edges from v to t",
+        "Min cost of v -> t path using at most i edges",
+        "Number of paths from s to v",
+        "Edge weight of edge i"
+      ],
+      "correctIndex": 1,
+      "explanation": "The unit's formulation computes destination-oriented values: paths to a fixed sink t using at most i edges."
+    },
+    {
+      "id": "q9",
+      "stem": "Matrix-chain multiplication M(i, j) recurrence is:",
+      "choices": [
+        "M(i, j-1) + p_{j-1} p_j",
+        "min_{k in [i, j-1]} M(i, k) + M(k+1, j) + p_{i-1} p_k p_j",
+        "min(M(i, j-1), M(i+1, j))",
+        "max_k M(i, k) * M(k+1, j)"
+      ],
+      "correctIndex": 1,
+      "explanation": "Split at every possible position k; cost = subchains' costs + product cost of joining them (p_{i-1} p_k p_j)."
+    },
+    {
+      "id": "q10",
+      "stem": "Matrix-chain runs in:",
+      "choices": [
+        "O(n)",
+        "O(n log n)",
+        "O(n^2)",
+        "O(n^3)"
+      ],
+      "correctIndex": 3,
+      "explanation": "n^2 cells (intervals), each with up to n choices: O(n^3) time, O(n^2) space."
+    },
+    {
+      "id": "q11",
+      "stem": "Why must Bellman-Ford handle graphs with negative edges but not negative cycles?",
+      "choices": [
+        "Negative cycles let shortest path go arbitrarily low",
+        "Negative edges are mathematically illegal",
+        "Bellman-Ford rejects all negative weights",
+        "Negative cycles make sorting impossible"
+      ],
+      "correctIndex": 0,
+      "explanation": "A path that traverses a negative cycle repeatedly can have arbitrarily low cost; shortest-path is undefined."
+    },
+    {
+      "id": "q12",
+      "stem": "Segmented Least Squares recurrence: OPT(j) = min over i <= j of e(i,j) + c + OPT(i-1). What does c represent?",
+      "choices": [
+        "The number of segments",
+        "A constant cost per segment break",
+        "A fitting error",
+        "The data point count"
+      ],
+      "correctIndex": 1,
+      "explanation": "c is the segmentation penalty added each time a new segment begins. Without it, every point would become its own segment."
+    },
+    {
+      "id": "q13",
+      "stem": "Which problem from this week uses a 2D 'two prefixes' DP shape?",
+      "choices": [
+        "Bellman-Ford",
+        "RNA secondary structure",
+        "LCS",
+        "Segmented Least Squares"
+      ],
+      "correctIndex": 2,
+      "explanation": "LCS's subproblem is OPT(i, j) = LCS of X[1..i] with Y[1..j] — both prefix indices."
+    },
+    {
+      "id": "q14",
+      "stem": "Which problem from this week uses an interval DP shape?",
+      "choices": [
+        "Bellman-Ford",
+        "RNA secondary structure",
+        "Kadane",
+        "Weighted Interval Scheduling"
+      ],
+      "correctIndex": 1,
+      "explanation": "RNA and matrix-chain are interval DPs; pairing splits an interval into two strictly-smaller intervals."
+    },
+    {
+      "id": "q15",
+      "stem": "If a problem requires choosing a 'break point' anywhere inside a range, which DP shape suits it?",
+      "choices": [
+        "1D prefix",
+        "2D prefix",
+        "Interval over (i, j)",
+        "Item-capacity"
+      ],
+      "correctIndex": 2,
+      "explanation": "Splitting at every internal break point is the interval-DP signature; matrix-chain and RNA are the canonical examples."
+    },
+    {
+      "id": "q16",
+      "stem": "Space-optimised LCS that returns only the value (not the sequence) can run in:",
+      "choices": [
+        "O(1)",
+        "O(min(n, m))",
+        "O(nm)",
+        "O(n + m)"
+      ],
+      "correctIndex": 1,
+      "explanation": "Only the current and previous row are needed; O(min(n, m)) extra space suffices when you keep the shorter dimension."
+    },
+    {
+      "id": "q17",
+      "stem": "How many times is each e(i, j) computed in the Segmented Least Squares DP?",
+      "choices": [
+        "Once (memoised)",
+        "O(n) times",
+        "O(n^2) times",
+        "Never"
+      ],
+      "correctIndex": 0,
+      "explanation": "Pre-compute each e(i, j) once into a table; the DP reuses it, keeping total cost manageable."
+    },
+    {
+      "id": "q18",
+      "stem": "What is the base case for the LCS DP?",
+      "choices": [
+        "OPT(0, 0) = 1",
+        "OPT(0, j) = 0 and OPT(i, 0) = 0",
+        "OPT(0, 0) = max(X[0], Y[0])",
+        "OPT(0, j) = j"
+      ],
+      "correctIndex": 1,
+      "explanation": "Empty prefix has zero common subsequence length."
+    },
+    {
+      "id": "q19",
+      "stem": "How can Bellman-Ford detect a negative cycle?",
+      "choices": [
+        "Run one extra iteration; if any distance improves, a negative cycle is reachable",
+        "Sort edges by weight",
+        "Run BFS from each vertex",
+        "Check for self-loops"
+      ],
+      "correctIndex": 0,
+      "explanation": "After n-1 iterations any shortest path is final; a subsequent improvement implies a negative cycle on a reachable path."
+    },
+    {
+      "id": "q20",
+      "stem": "Why is the RNA DP base case OPT(i, j) = 0 when j - i < 4?",
+      "choices": [
+        "Bases are zero-indexed",
+        "Biological loop-length constraint requires at least 4 unpaired bases between (i, j)",
+        "Strings of length < 4 cannot be parsed",
+        "Memory limits"
+      ],
+      "correctIndex": 1,
+      "explanation": "RNA pairings require a minimum loop length (commonly 4) — pairs (i, j) too close cannot exist."
+    },
+    {
+      "id": "q21",
+      "stem": "Matrix-chain multiplication's optimal parenthesisation depends on:",
+      "choices": [
+        "The values inside the matrices",
+        "The dimensions p_0, ..., p_n",
+        "Whether matrices are square",
+        "Matrix ordering"
+      ],
+      "correctIndex": 1,
+      "explanation": "Multiplication cost p_{i-1} p_k p_j depends only on the dimension chain, not on entry values."
+    },
+    {
+      "id": "q22",
+      "stem": "Bellman-Ford with push-based relaxation uses what space?",
+      "choices": [
+        "O(n)",
+        "O(m)",
+        "O(mn)",
+        "O(n^2)"
+      ],
+      "correctIndex": 0,
+      "explanation": "Only the current distance vector needs to be stored; relax along edges in place, O(n) space."
+    },
+    {
+      "id": "q23",
+      "stem": "Which best describes 'non-crossing' base pairs in RNA?",
+      "choices": [
+        "No two pairs (i, j), (k, l) interleave (no i < k < j < l)",
+        "All pairs are unique bases",
+        "Pairs only between adjacent positions",
+        "Pairs cannot share an endpoint"
+      ],
+      "correctIndex": 0,
+      "explanation": "Non-crossing is the formal constraint that lets interval DP decouple subproblems."
+    },
+    {
+      "id": "q24",
+      "stem": "Edit distance DP between two strings of lengths n, m runs in:",
+      "choices": [
+        "O(n + m)",
+        "O(n log m)",
+        "O(nm)",
+        "O(n^2 m^2)"
+      ],
+      "correctIndex": 2,
+      "explanation": "Edit distance has the same 2D prefix shape as LCS — O(nm) time and space."
+    },
+    {
+      "id": "q25",
+      "stem": "Which is NOT a recognised subproblem shape from Week 5?",
+      "choices": [
+        "1D prefix",
+        "2D prefix",
+        "Interval",
+        "Sparse adjacency"
+      ],
+      "correctIndex": 3,
+      "explanation": "Sparse adjacency is not a DP subproblem shape; the recognised shapes are prefixes (1D or 2D), intervals, and (item, capacity)."
+    }
+  ]
+}

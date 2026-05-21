@@ -1,0 +1,416 @@
+---
+title: "Week 10 — Containers and Microservices"
+unit: COMP4349
+week: 10
+type: overview
+status: done
+---
+
+Week 10 lifts the abstraction from VMs to containers and from monoliths to microservices. The exam wants you to (1) contrast containers vs VMs vs microVMs precisely, (2) explain Docker's image/registry/container model, (3) reason about ECS task definitions and dynamic port mapping with ALB target groups, and (4) compare ECS vs EKS vs Fargate vs Lambda. Internalise the architecture diagram of an ECS service behind an ALB.
+
+## Operating-system-level virtualisation (containers)
+
+In Week 3 we covered server virtualisation — full guest OS on top of a hypervisor. **Containers** are a thinner alternative. Wikipedia's definition: "Operating-system-level virtualization, also known as containerization, refers to an operating system feature in which the kernel allows the existence of multiple isolated user-space instances."
+
+Each container looks like a real computer from the inside, but all containers on the host share **one kernel**. There is no guest OS to boot, no hypervisor between the container and the hardware. The kernel uses two features to maintain the isolation illusion: **namespaces** for visibility and **cgroups** for resource limits.
+
+## Linux namespaces — the visibility partition
+
+The Linux kernel exposes several **namespace** kinds. Each container gets its own private instance of each kind:
+
+- **Mount (mnt) namespace** — independent filesystem hierarchy. The container's `/` is some directory on the host; the container can't see files outside it.
+- **PID namespace** — independent process IDs. Process 1 inside the container might be PID 1 in its namespace but PID 4321 on the host. When PID 1 inside dies, all child processes die — and the container exits.
+- **User (uid) namespace** — independent user IDs. UID 0 (root) inside a container can map to an unprivileged UID on the host, so "root in the container" is not actually root on the host.
+- **Network namespace** — independent loopback, interfaces, routing.
+- **UTS namespace** — independent hostname.
+- **IPC namespace** — independent shared memory, semaphores.
+- **Cgroup namespace** — virtualised view of cgroup tree.
+
+The host kernel manages all of this with negligible overhead.
+
+## cgroups — the resource limit
+
+**Control groups (cgroups)** are a separate kernel feature that limits and meters resource usage by group of processes:
+
+- **CPU** — cap CPU shares or absolute time.
+- **Memory** — cap RAM and swap.
+- **Block I/O** — cap throughput and IOPS.
+- **Network** — via `tc` qdisc and namespace.
+- **PIDs** — cap maximum process count.
+
+Without cgroups, one runaway container could starve every other container on the host. cgroups stop the noisy-neighbour problem.
+
+## Container runtimes
+
+The component that wires namespaces and cgroups together is a **container runtime**:
+
+- **Low-level runtimes** that just start containers: `runc` (the reference OCI implementation), `crun`, `gVisor`, `kata-containers`, `LXC`.
+- **High-level runtimes** that add image management, build, push/pull: **Docker (containerd)**, **podman**.
+
+Container runtime is to containers what a hypervisor is to VMs.
+
+## Containers vs virtual machines
+
+```text
+Application                       Application
+Bins/Libs                         Bins/Libs
+                                  Guest OS
+Container runtime ◄──────────►    Hypervisor
+Host OS kernel                    Host OS / bare metal
+Hardware                          Hardware
+```
+
+Compare:
+
+| Property | Container | VM |
+|---|---|---|
+| Guest OS | None — shares host kernel | Full guest kernel + userland |
+| Start time | Milliseconds | Seconds to minutes |
+| Image size | MBs | GBs |
+| Density per host | Hundreds | Tens |
+| Isolation | Namespace + cgroup (medium) | Hypervisor + dedicated CPU (strong) |
+| Use case | Microservices, dev/prod parity | Multi-tenant strangers, OS isolation |
+
+Pitfall: containers share the host kernel — they cannot run a different OS. A Linux container needs a Linux host; a Windows container needs a Windows host. "Docker Desktop on macOS" runs a hidden Linux VM underneath.
+
+Performance: a container's CPU and RAM cost is the application plus a small percentage; a VM costs the guest OS too (often hundreds of MBs of RAM idle).
+
+## Docker — the dominant ecosystem
+
+**Docker** is the most famous container toolchain. Three core concepts:
+
+- **Image** — a read-only template; OS layer + dependencies + application. Defined by a **Dockerfile**.
+- **Registry** — where images live. Public: Docker Hub. AWS: **Amazon Elastic Container Registry (ECR)**.
+- **Container** — a running instance of an image; the image plus a thin writable layer on top.
+
+### Dockerfile and image layers
+
+A Dockerfile is a sequence of instructions:
+
+```dockerfile
+FROM amazonlinux:2023
+RUN dnf install -y nginx
+COPY app.tar.gz /opt/
+RUN tar -xzf /opt/app.tar.gz -C /opt/
+EXPOSE 80
+CMD ["nginx", "-g", "daemon off;"]
+```
+
+Each instruction creates a **layer** (a content-addressable diff filesystem). Layers are cached and shared between images — two images that both `FROM amazonlinux:2023` share that layer.
+
+```text
+Image layers (read-only):
+   ┌──────────────────────────────┐
+   │ Layer 4: CMD ["nginx"...]    │
+   ├──────────────────────────────┤
+   │ Layer 3: extracted /opt/app  │
+   ├──────────────────────────────┤
+   │ Layer 2: nginx package       │
+   ├──────────────────────────────┤
+   │ Layer 1: amazonlinux:2023    │
+   └──────────────────────────────┘
+Container writable layer (thin):
+   ┌──────────────────────────────┐
+   │ runtime writes go here       │
+   └──────────────────────────────┘
+```
+
+The writable layer is **ephemeral** — deleted when the container exits. Don't rely on it for persistence.
+
+```bash
+docker build -t orders:1.0 .
+docker run -d -p 8080:80 --name orders orders:1.0
+docker exec -it orders /bin/bash
+docker push 123456789012.dkr.ecr.ap-southeast-2.amazonaws.com/orders:1.0
+```
+
+### Persistence — volumes, bind mounts, tmpfs
+
+Three ways to escape the ephemeral writable layer:
+
+- **Volumes** — Docker-managed directory on the host. Best default for persistent data. `docker run -v mydata:/var/lib/mysql ...`
+- **Bind mounts** — mount any host path. Useful for dev (`-v $(pwd):/app`) but couples the container to host layout.
+- **tmpfs** — in-memory only; secrets that should never touch disk.
+
+In cloud, persistence is usually a managed service: containers themselves stay stateless, talk to RDS / DynamoDB / S3 for state.
+
+### Networking — host, bridge, none, overlay
+
+Docker creates a virtual network per container:
+
+- **bridge** (default) — Docker maintains a virtual bridge; the container has a private IP; ports are exposed to the host via NAT (`-p host:container`).
+- **host** — no isolation; container uses the host's network namespace. Lowest overhead, no port mapping.
+- **none** — no networking at all.
+- **overlay** — multi-host network for Docker Swarm/Kubernetes.
+
+```bash
+docker run -d -p 10000:80 nginx
+docker run -d -p 10001:80 nginx
+# Two containers, two host ports, both forward to container port 80
+```
+
+## ECR — Amazon Elastic Container Registry
+
+ECR is AWS's managed Docker registry. Images live in repositories with per-repo IAM policies. Authentication via the AWS CLI:
+
+```bash
+aws ecr get-login-password --region ap-southeast-2 | \
+  docker login --username AWS --password-stdin 123456789012.dkr.ecr.ap-southeast-2.amazonaws.com
+docker tag orders:1.0 123456789012.dkr.ecr.ap-southeast-2.amazonaws.com/orders:1.0
+docker push 123456789012.dkr.ecr.ap-southeast-2.amazonaws.com/orders:1.0
+```
+
+ECR scans images for known vulnerabilities (`aws ecr describe-image-scan-findings`) and supports image signing.
+
+## Microservices — the architectural shift
+
+A **monolith** is one application bundling all functionality and all deployment in a single artefact. **Microservices** decompose it into many small services, each:
+
+- Owned by a small team.
+- Independently deployable.
+- Exposes a network API (usually REST/HTTP or gRPC).
+- Has its own data store.
+
+Benefits:
+
+- Independent scaling — only resize the bottleneck service.
+- Independent deployment — release the cart service without touching billing.
+- Technology choice per service — Python here, Go there.
+- Failure isolation — a bug in image-resize doesn't kill the checkout flow.
+
+Costs:
+
+- Network calls instead of in-process calls — latency, error modes, distributed tracing complexity.
+- Operational overhead — many services, many deployments, many dashboards.
+- Distributed data — no easy joins, need patterns like CQRS and saga.
+
+Rule of thumb: don't start with microservices. Start with a well-factored monolith; extract services when the seams become painful.
+
+## 12-factor app principles
+
+The **12-factor app** (heroku, 2011) is the canonical guide for cloud-native services. The 12 factors:
+
+1. **Codebase** — one codebase tracked in version control, many deploys.
+2. **Dependencies** — explicit declaration and isolation (no system-wide installs).
+3. **Config** — store config in environment variables, not in code.
+4. **Backing services** — treat databases, caches, queues as attached resources accessed by URL.
+5. **Build, release, run** — strict separation of these phases.
+6. **Processes** — execute as one or more stateless processes.
+7. **Port binding** — export services via port binding.
+8. **Concurrency** — scale out via the process model.
+9. **Disposability** — fast startup and graceful shutdown.
+10. **Dev/prod parity** — keep environments as similar as possible.
+11. **Logs** — treat logs as event streams; the app just writes to stdout/stderr.
+12. **Admin processes** — run one-off admin tasks as processes.
+
+Containerised microservices on ECS/Kubernetes follow 12-factor almost by construction.
+
+## Amazon ECS — Elastic Container Service
+
+**Amazon Elastic Container Service (ECS)** is AWS's container orchestrator. Concepts:
+
+- **Cluster** — a logical group of compute (EC2 instances or Fargate capacity).
+- **Task definition** — JSON spec for one or more containers: image, CPU, memory, ports, environment, IAM role, log driver. Like a Kubernetes Pod spec.
+- **Task** — a running instance of a task definition.
+- **Service** — keeps a desired number of tasks running; integrates with ALB and Auto Scaling.
+
+```json
+{
+  "family": "orders",
+  "containerDefinitions": [{
+    "name": "app",
+    "image": "123.dkr.ecr.../orders:1.0",
+    "memory": 512,
+    "cpu": 256,
+    "portMappings": [{ "containerPort": 3000, "hostPort": 0, "protocol": "tcp" }],
+    "logConfiguration": {
+      "logDriver": "awslogs",
+      "options": {
+        "awslogs-group": "/ecs/orders",
+        "awslogs-region": "ap-southeast-2",
+        "awslogs-stream-prefix": "ecs"
+      }
+    }
+  }]
+}
+```
+
+### Compute options — EC2 launch type, Fargate, External
+
+- **EC2 launch type** — ECS schedules tasks onto EC2 instances you manage (in an Auto Scaling Group). You patch the OS, pay for the instances, get more control.
+- **Fargate** — serverless: AWS runs the containers; you pay per-second per vCPU + per GB. No instances to manage. Slightly more expensive per vCPU-hour but cheaper operationally.
+- **External** (ECS Anywhere) — run ECS tasks on your on-prem servers.
+
+Most new services should default to Fargate unless you have specific needs (custom kernel modules, lowest cost at scale, GPU access).
+
+### Dynamic port mapping with ALB
+
+A subtle but exam-tested feature. With `hostPort: 0` in the task definition, ECS assigns a random ephemeral host port for each task. Many tasks on the same EC2 instance can share the same `containerPort` (e.g. 3000) because the host port differs.
+
+The ALB target group is registered as `(instance:port)` pairs that ECS updates as tasks come and go.
+
+```text
+EC2 instance with 3 tasks
+   container A ─► host port 32768 → container 3000
+   container B ─► host port 32769 → container 3000
+   container C ─► host port 32770 → container 3000
+
+ALB target group:
+   instance-i-1:32768
+   instance-i-1:32769
+   instance-i-1:32770
+
+ALB health checks:
+   GET instance-i-1:32768/health
+   GET instance-i-1:32769/health
+   GET instance-i-1:32770/health
+```
+
+### ECS service auto-scaling
+
+Two layers of scaling:
+
+- **Service Auto Scaling** — add/remove tasks based on a CloudWatch metric (CPU, memory, ALB request count per target).
+- **Cluster Auto Scaling** (EC2 launch type only) — add/remove EC2 instances when tasks can't be placed because of insufficient capacity. Uses an ASG with a capacity provider.
+
+With Fargate, only Service Auto Scaling exists — capacity is unlimited from your perspective.
+
+### ECS vs EC2-based ASG comparison
+
+| Pattern | EC2 + ALB | ECS + ALB |
+|---|---|---|
+| Unit deployed | EC2 instance | ECS task / container |
+| Spec | Launch template | Task definition |
+| Scaling mechanism | ASG | ECS service desired count |
+| Replacement | ASG launches new instance | ECS launches new task |
+| Image | AMI | Container image (ECR) |
+| Density | One app per instance | Many tasks per instance |
+
+ECS is finer-grained and faster to scale because launching a task is seconds, not minutes.
+
+## Amazon EKS — managed Kubernetes
+
+**Amazon Elastic Kubernetes Service (EKS)** is AWS's managed Kubernetes control plane (covered in depth in Week 11). EKS runs the upstream Kubernetes API; you bring your own clusters, with worker nodes on EC2 or Fargate.
+
+ECS vs EKS:
+
+- **ECS** is simpler, AWS-native, deeply integrated (ALB, IAM, ECR, CloudWatch). Better choice if you don't already use Kubernetes.
+- **EKS** is portable to other clouds (same `kubectl`), much larger ecosystem (Helm, Istio, ArgoCD), more complex. Better choice if you've standardised on Kubernetes or are multi-cloud.
+
+Fargate works with both.
+
+## Service discovery
+
+Microservices need to find each other. Options:
+
+- **ECS Service Discovery** — each service registers in AWS Cloud Map; clients resolve a DNS name (`orders.local`) via Route 53.
+- **ECS Service Connect** — newer, transparent service-to-service via a proxy sidecar.
+- **AWS App Mesh** — Envoy-based service mesh: traffic shifting, mTLS, observability across services.
+- **DNS via ALB** — every service has its own ALB; clients call by ALB DNS.
+
+## Resilience patterns for microservices
+
+When you decompose into many small services, you inherit a set of patterns from the distributed-systems playbook:
+
+- **Circuit breaker** — stop hammering a failing downstream; open the breaker; retry occasionally. Libraries: resilience4j, Polly.
+- **Bulkhead** — partition resources (thread pools, connections) per downstream so one failure doesn't drown the others.
+- **Retry with exponential backoff + jitter** — retry transient failures with growing waits; add random jitter to prevent synchronised retry storms.
+- **Timeouts** — every network call must have a timeout. Default-no-timeout is a foot-gun.
+- **Idempotency** — covered in Week 9.
+- **Sidecar** — auxiliary process in the same Pod/Task that handles cross-cutting concerns (logging, mTLS, service mesh). Used heavily in service-mesh deployments.
+
+## Inter-service communication
+
+The lecture covered three styles:
+
+- **Synchronous HTTP/gRPC** — calling another service and waiting. Use an ALB or service mesh between them. Simple but couples availability.
+- **Message queue** (SQS) — submit work for async processing.
+- **Event bus** (EventBridge, SNS) — broadcast events; services choose what to subscribe to.
+
+Prefer async wherever the consumer doesn't need an immediate answer — it improves availability.
+
+## Container security checklist
+
+- Don't run containers as root (`USER appuser`).
+- Use minimal base images (distroless, alpine, scratch when possible).
+- Scan images in CI and ECR.
+- Sign images and verify signatures.
+- Don't bake secrets into images; use Secrets Manager / Parameter Store + IAM.
+- Use a task IAM role (similar to EC2 instance role) for AWS API access.
+- Limit container privileges (`ReadOnlyRootFilesystem`, drop Linux capabilities).
+- Network: place tasks in private subnets, security groups limit ingress.
+
+## Common exam traps
+
+- "Container vs VM" — container shares host kernel; VM has its own guest kernel.
+- "MicroVM (Firecracker)" — used by Fargate and Lambda; stronger isolation than container, lower overhead than full VM. Covered more in Week 12.
+- "Image vs container" — image is the template; container is a running instance plus a writable layer.
+- "Dynamic port mapping" — `hostPort: 0` lets multiple tasks share an EC2 instance and the same container port; ALB tracks the ephemeral host ports.
+- "ECS task definition vs service" — task def is the spec; service maintains the desired count.
+- "Fargate vs EC2 launch type" — Fargate hides instances; EC2 launch type makes you manage them.
+- "ECS vs EKS" — ECS simpler, AWS-native; EKS portable, broader ecosystem.
+- "12-factor app" — config in env, stateless processes, logs to stdout.
+- "Service discovery options" — Cloud Map, Service Connect, App Mesh, ALB DNS.
+- "Container exits when PID 1 dies" — yes; that's why the main process must run as PID 1, not in a subshell.
+- "Persistence in containers" — writable layer is ephemeral; use volumes or attached managed stores.
+
+## ECS task scheduling — placement strategies and constraints
+
+When ECS launches a task on the EC2 launch type it picks an instance to place it on. Three placement **strategies** stacked in order:
+
+- **binpack** — pack tasks onto the fewest instances. Minimises EC2 cost; risk of cascading failure if the instance dies.
+- **spread** — spread across an attribute (e.g. AZ, instance ID). Best for HA.
+- **random** — random placement.
+
+Plus **constraints**: `distinctInstance` (no two tasks on the same instance), `memberOf` (attribute expressions like `attribute:ecs.instance-type =~ c5.*`).
+
+On Fargate, placement is invisible to you — AWS handles it.
+
+## ECS service deployment options
+
+- **Rolling update** (default) — ECS launches `minimumHealthyPercent` and `maximumPercent` constraints to control how many tasks can be down vs surplus during deploy.
+- **Blue/green via CodeDeploy** — provisions a second target group, shifts traffic gradually (linear, canary, all-at-once). Rollback by shifting traffic back. The right choice for production.
+- **External deployment** — drive the rollout from CI/CD; ECS just reports state.
+
+## CodePipeline + ECS — typical CD setup
+
+```text
+Source (CodeCommit/GitHub) ──► Build (CodeBuild)
+                                   │
+                                   ▼  builds image, pushes to ECR
+                              Approval (manual, optional)
+                                   │
+                                   ▼
+                              Deploy (CodeDeploy ECS / ECS rolling update)
+                                   │
+                                   ▼
+                              Production task set serving traffic
+```
+
+CodeBuild's `buildspec.yml` builds and pushes the image; CodeDeploy updates the service with the new image tag. CodeDeploy hooks let you run pre-traffic and post-traffic tests during the blue/green shift.
+
+## Container observability — CloudWatch and beyond
+
+- **Logs** — `awslogs` log driver in the task definition sends container stdout/stderr to CloudWatch Logs. Per-task or per-service log streams.
+- **CloudWatch Container Insights** — pre-built dashboard with CPU/memory/network per task and service; opt-in per cluster.
+- **Distributed tracing** — AWS X-Ray with the X-Ray daemon as a sidecar (or via App Mesh Envoy).
+- **Open standards** — OpenTelemetry collector as a sidecar to ship metrics/traces to whichever backend (Datadog, Honeycomb, AMG/AMP).
+
+## When *not* to use containers
+
+Containers solve packaging and deployment; they don't solve every problem:
+
+- **Single-tenant high-isolation needs** — VM-grade or microVM-grade isolation. Use EC2 or Lambda (Firecracker).
+- **Custom kernel modules** (eBPF programs, specialised filesystems) — needs full VM.
+- **GPU workloads at scale** — EC2 G/P, or ECS/EKS on GPU node types, or SageMaker.
+- **Extremely simple static workloads** — sometimes a Lambda or S3+CloudFront is simpler than a container.
+
+## Sidecar patterns and the rise of service mesh
+
+A **sidecar** is an auxiliary container co-located in a task/Pod with the main app container. Common sidecars:
+
+- **Logging agent** (Fluent Bit) — tail logs and forward.
+- **Service proxy** (Envoy) — handle mTLS, retries, traffic shifting, observability.
+- **Secrets injector** — pull secrets from Secrets Manager / Parameter Store on startup.
+
+A **service mesh** (AWS App Mesh, Istio, Linkerd) is a fleet of sidecar proxies coordinated by a control plane. Adds cross-service mTLS, traffic policies, observability, retries — without the app code needing to know.

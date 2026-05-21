@@ -1,0 +1,182 @@
+{
+  "unit": "COMP4349",
+  "week": 8,
+  "topic": "Cloud Automation (Infrastructure as Code)",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "Which AWS service is the native Infrastructure-as-Code tool?",
+      "choices": ["CodeDeploy", "CloudFormation", "Systems Manager", "Step Functions"],
+      "correctIndex": 1,
+      "explanation": "CloudFormation is AWS's declarative IaC service; templates in YAML/JSON describe resources to provision."
+    },
+    {
+      "id": "q2",
+      "stem": "CloudFormation is best described as which paradigm?",
+      "choices": ["Imperative", "Declarative", "Functional", "Object-oriented"],
+      "correctIndex": 1,
+      "explanation": "CFN describes the desired end state; AWS computes how to reach it."
+    },
+    {
+      "id": "q3",
+      "stem": "Before applying changes, CloudFormation can show what will change via:",
+      "choices": ["Change sets", "Lambda diff", "S3 versioning", "IAM Access Analyzer"],
+      "correctIndex": 0,
+      "explanation": "A change set previews additions, removals, and replacements before execution."
+    },
+    {
+      "id": "q4",
+      "stem": "Terraform's equivalent of a CFN change set is:",
+      "choices": ["terraform init", "terraform plan", "terraform apply", "terraform destroy"],
+      "correctIndex": 1,
+      "explanation": "`terraform plan` generates an execution plan describing actions to add/change/destroy."
+    },
+    {
+      "id": "q5",
+      "stem": "Which CloudFormation feature deploys the same stack to multiple accounts and Regions?",
+      "choices": ["Nested stacks", "StackSets", "Change sets", "Drift detection"],
+      "correctIndex": 1,
+      "explanation": "StackSets propagate a single template to many accounts/Regions, often used for landing-zone guard rails."
+    },
+    {
+      "id": "q6",
+      "stem": "Which CFN intrinsic returns a logical reference (often the primary identifier of a resource)?",
+      "choices": ["!Ref", "!Join", "!Sub", "!Equals"],
+      "correctIndex": 0,
+      "explanation": "`!Ref` resolves to the resource's primary identifier (e.g. bucket name, instance id, parameter value)."
+    },
+    {
+      "id": "q7",
+      "stem": "Which intrinsic substitutes variables into a string with ${} syntax?",
+      "choices": ["!Join", "!Sub", "!Select", "!Ref"],
+      "correctIndex": 1,
+      "explanation": "`!Sub` performs variable substitution like `!Sub \"arn:aws:s3:::${BucketName}\"`."
+    },
+    {
+      "id": "q8",
+      "stem": "Idempotency in IaC means:",
+      "choices": ["Templates must be encrypted", "Re-applying the same template with the same inputs produces no further changes", "Resources can only be created once", "Templates run only once per Region"],
+      "correctIndex": 1,
+      "explanation": "Declarative IaC converges to the desired state; if state already matches, apply is a no-op — that's idempotency."
+    },
+    {
+      "id": "q9",
+      "stem": "CFN 'drift detection' is used to:",
+      "choices": ["Detect IAM violations", "Compare actual resource state to the template and flag manual changes", "Audit S3 buckets", "Roll back failed updates"],
+      "correctIndex": 1,
+      "explanation": "Drift detection surfaces changes made outside CloudFormation (e.g. console clicks) so they can be remediated."
+    },
+    {
+      "id": "q10",
+      "stem": "If a CFN stack creation fails partway, the default behaviour is:",
+      "choices": ["Leave partial resources", "Roll back, deleting any resources already created", "Retry indefinitely", "Switch to imperative mode"],
+      "correctIndex": 1,
+      "explanation": "On failure, CFN rolls back the stack by default; you can disable rollback for debugging."
+    },
+    {
+      "id": "q11",
+      "stem": "Which CFN section is mandatory in every template?",
+      "choices": ["Parameters", "Outputs", "Resources", "Conditions"],
+      "correctIndex": 2,
+      "explanation": "Only the Resources section is required; the others are optional."
+    },
+    {
+      "id": "q12",
+      "stem": "Terraform state is typically stored in:",
+      "choices": ["A local file only", "An S3 backend with DynamoDB for state locking (a common pattern)", "Hardcoded in HCL", "CloudWatch Logs"],
+      "correctIndex": 1,
+      "explanation": "Production Terraform uses a remote backend (S3 + DynamoDB lock table for AWS) so teams share state safely."
+    },
+    {
+      "id": "q13",
+      "stem": "Which is true of CloudFormation vs Terraform?",
+      "choices": ["CFN is multi-cloud; Terraform is AWS-only", "Terraform is multi-cloud via providers; CFN is AWS-only", "Both manage state locally", "Both are open source"],
+      "correctIndex": 1,
+      "explanation": "Terraform spans cloud providers via its provider plugin system; CFN is AWS-specific."
+    },
+    {
+      "id": "q14",
+      "stem": "AWS CDK lets you write infra in languages like TypeScript and synthesise to:",
+      "choices": ["Terraform HCL", "CloudFormation templates", "Kubernetes manifests", "Pulumi YAML"],
+      "correctIndex": 1,
+      "explanation": "CDK synthesises CFN templates from typed code, gaining language abstractions while reusing CFN's engine."
+    },
+    {
+      "id": "q15",
+      "stem": "AWS SAM is best described as:",
+      "choices": ["A CFN extension that simplifies serverless app templates", "A replacement for Terraform", "An IDE", "A monitoring service"],
+      "correctIndex": 0,
+      "explanation": "SAM extends CFN with shorthand transforms for Lambda, API Gateway, DynamoDB and a local CLI for invoking functions."
+    },
+    {
+      "id": "q16",
+      "stem": "Why prefer CloudFormation YAML over JSON?",
+      "choices": ["YAML supports comments and is easier to read", "JSON is not supported", "JSON cannot reference parameters", "AWS charges more for JSON"],
+      "correctIndex": 0,
+      "explanation": "Both are valid, but YAML supports comments and anchors and is generally more readable for humans."
+    },
+    {
+      "id": "q17",
+      "stem": "Which CFN property prevents a resource from being deleted when the stack is deleted?",
+      "choices": ["DependsOn", "DeletionPolicy: Retain", "UpdateReplacePolicy: Delete", "Condition"],
+      "correctIndex": 1,
+      "explanation": "`DeletionPolicy: Retain` keeps the resource (e.g. S3 bucket or RDS) when the stack is deleted — preventing accidental data loss."
+    },
+    {
+      "id": "q18",
+      "stem": "Cross-stack referencing in CFN is achieved via:",
+      "choices": ["Hardcoded ARNs", "Outputs + Exports / !ImportValue", "Nested stacks only", "It is not possible"],
+      "correctIndex": 1,
+      "explanation": "One stack exports an Output; another imports via !ImportValue. Use sparingly because exports lock stacks together."
+    },
+    {
+      "id": "q19",
+      "stem": "Which IaC pattern lets you parameterise an environment so the same template can deploy dev, staging, prod?",
+      "choices": ["Hardcoded resource names", "Parameters with conditions/mappings", "Separate templates per env with duplication", "Manual edits"],
+      "correctIndex": 1,
+      "explanation": "Parameters (plus Mappings/Conditions) let one template deploy multiple environments without code duplication."
+    },
+    {
+      "id": "q20",
+      "stem": "A 'replace' update in CFN happens when:",
+      "choices": ["Any property changes", "A property change requires the underlying resource to be recreated (e.g. DBInstanceIdentifier)", "The stack is renamed", "Tags change"],
+      "correctIndex": 1,
+      "explanation": "Some property changes can't be done in place; CFN creates a new resource and deletes the old — watch for data loss."
+    },
+    {
+      "id": "q21",
+      "stem": "Which Terraform command initialises providers and the backend?",
+      "choices": ["terraform plan", "terraform init", "terraform apply", "terraform fmt"],
+      "correctIndex": 1,
+      "explanation": "`terraform init` downloads providers and configures the backend (state)."
+    },
+    {
+      "id": "q22",
+      "stem": "Which best motivates Infrastructure as Code?",
+      "choices": ["Lower AWS bills automatically", "Repeatable, reviewable, version-controlled infrastructure", "Replaces IAM", "Removes the need for testing"],
+      "correctIndex": 1,
+      "explanation": "IaC makes infrastructure repeatable, peer-reviewable, and recoverable — the same benefits as application code in version control."
+    },
+    {
+      "id": "q23",
+      "stem": "An AWS::SSM::Parameter::Value<String> parameter in CFN pulls its value from:",
+      "choices": ["A local file", "SSM Parameter Store at stack deploy time", "S3", "CloudFormation exports"],
+      "correctIndex": 1,
+      "explanation": "Such parameters resolve to the live SSM Parameter Store value when the stack is created/updated."
+    },
+    {
+      "id": "q24",
+      "stem": "Which approach is MOST aligned with 'cattle, not pets'?",
+      "choices": ["SSHing in to manually patch a long-lived server", "Treating servers as immutable: deploy a new AMI rather than mutate the running one", "Naming instances after team members", "Backing up only critical pets"],
+      "correctIndex": 1,
+      "explanation": "Immutable infrastructure (replace, don't mutate) underpins reproducibility and rollback — the cattle mindset."
+    },
+    {
+      "id": "q25",
+      "stem": "Which CFN feature provides modular templates inside a larger stack?",
+      "choices": ["StackSets", "Nested stacks (AWS::CloudFormation::Stack)", "Change sets", "Drift detection"],
+      "correctIndex": 1,
+      "explanation": "Nested stacks let you compose a parent template from child stacks, each a separate template file."
+    }
+  ]
+}

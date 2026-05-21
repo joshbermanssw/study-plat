@@ -1,0 +1,272 @@
+{
+  "unit": "COMP4347",
+  "week": 3,
+  "topic": "Advanced HTML/CSS and client-side JS",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "fetch('/api/x') resolves with a Response when:",
+      "choices": [
+        "Only on HTTP 200",
+        "On any successful network round trip, regardless of HTTP status",
+        "Only when the body is valid JSON",
+        "Never — it always rejects"
+      ],
+      "correctIndex": 1,
+      "explanation": "fetch only rejects on network errors. 4xx and 5xx still resolve; you must check response.ok or response.status."
+    },
+    {
+      "id": "q2",
+      "stem": "In event delegation, attaching a single listener to a parent works because of:",
+      "choices": ["The capture phase", "Bubbling — events propagate from target up to ancestors", "Event throttling", "Shadow DOM"],
+      "correctIndex": 1,
+      "explanation": "By default handlers fire on bubble. A click on a deep child reaches every ancestor listener unless someone calls stopPropagation."
+    },
+    {
+      "id": "q3",
+      "stem": "What is the order of execution?\n\nconsole.log(1);\nsetTimeout(() => console.log(2), 0);\nPromise.resolve().then(() => console.log(3));\nconsole.log(4);",
+      "choices": ["1 2 3 4", "1 4 2 3", "1 4 3 2", "4 1 3 2"],
+      "correctIndex": 2,
+      "explanation": "Sync first (1, 4). Microtasks (Promise) run before macrotasks (setTimeout), so 3 before 2."
+    },
+    {
+      "id": "q4",
+      "stem": "Which API is safer when inserting untrusted user input into the DOM?",
+      "choices": ["innerHTML", "outerHTML", "insertAdjacentHTML", "textContent"],
+      "correctIndex": 3,
+      "explanation": "textContent treats the input as raw text and never parses tags or scripts, eliminating an XSS sink."
+    },
+    {
+      "id": "q5",
+      "stem": "Which loop runs N fetches in parallel?",
+      "choices": [
+        "for (const id of ids) await fetch(`/u/${id}`);",
+        "await Promise.all(ids.map(id => fetch(`/u/${id}`)));",
+        "ids.forEach(async id => await fetch(`/u/${id}`));",
+        "while (ids.length) await fetch(`/u/${ids.shift()}`);"
+      ],
+      "correctIndex": 1,
+      "explanation": "Mapping to promises then Promise.all starts them all at once. The for-of with await is strictly sequential."
+    },
+    {
+      "id": "q6",
+      "stem": "Inside a delegated handler, `e.target` refers to:",
+      "choices": [
+        "The element the listener was attached to",
+        "The element that actually received the event",
+        "The window object",
+        "Always the document"
+      ],
+      "correctIndex": 1,
+      "explanation": "e.target is the original target. e.currentTarget is the element the handler is bound to."
+    },
+    {
+      "id": "q7",
+      "stem": "Promise.all rejects when:",
+      "choices": [
+        "All input promises reject",
+        "The first input promise rejects",
+        "After a timeout",
+        "Never"
+      ],
+      "correctIndex": 1,
+      "explanation": "Promise.all short-circuits on the first rejection. Use Promise.allSettled to wait for every promise."
+    },
+    {
+      "id": "q8",
+      "stem": "What is logged?\n\nasync function f() { return 1; }\nf().then(v => console.log(v));",
+      "choices": ["1", "Promise{1}", "undefined", "TypeError"],
+      "correctIndex": 0,
+      "explanation": "async functions always return a promise. Returning 1 resolves it to 1, which the .then receives."
+    },
+    {
+      "id": "q9",
+      "stem": "Which selector returns a live HTMLCollection (auto-updating)?",
+      "choices": [
+        "document.querySelectorAll('.x')",
+        "document.getElementsByClassName('x')",
+        "document.querySelector('.x')",
+        "Array.from(document.querySelectorAll('.x'))"
+      ],
+      "correctIndex": 1,
+      "explanation": "getElementsByClassName/TagName return live HTMLCollections that mutate with the DOM. querySelectorAll returns a static NodeList."
+    },
+    {
+      "id": "q10",
+      "stem": "How do you cancel a fetch request?",
+      "choices": [
+        "Call fetch.cancel()",
+        "Use AbortController and pass its signal to fetch",
+        "Throw inside the then",
+        "Set a small timeout"
+      ],
+      "correctIndex": 1,
+      "explanation": "const c = new AbortController(); fetch(url, { signal: c.signal }); c.abort(); is the standard pattern."
+    },
+    {
+      "id": "q11",
+      "stem": "Which is true about `e.preventDefault()` vs `e.stopPropagation()`?",
+      "choices": [
+        "They are aliases for each other",
+        "preventDefault cancels the default browser action; stopPropagation halts further capture/bubble",
+        "Both stop the event from being delivered to any handler",
+        "preventDefault only works on form submit"
+      ],
+      "correctIndex": 1,
+      "explanation": "Different jobs: prevent the browser doing its default (link nav, form submit) vs stop the event continuing through the tree."
+    },
+    {
+      "id": "q12",
+      "stem": "Which is the safest way to set HTML from a string of trusted markup, but still get DOM efficiency?",
+      "choices": [
+        "innerHTML +=",
+        "Repeated appendChild calls",
+        "DocumentFragment with cloned templates",
+        "Setting style.innerHTML"
+      ],
+      "correctIndex": 2,
+      "explanation": "Build inside a DocumentFragment, then append once — single reflow. innerHTML += is the worst because it re-parses the whole subtree."
+    },
+    {
+      "id": "q13",
+      "stem": "What does `await` do?",
+      "choices": [
+        "Blocks the entire thread until the promise settles",
+        "Pauses the async function and yields control until the promise settles",
+        "Converts a value to a promise",
+        "Schedules a callback for the next tick"
+      ],
+      "correctIndex": 1,
+      "explanation": "await suspends only the async function's frame. The event loop continues to run other tasks."
+    },
+    {
+      "id": "q14",
+      "stem": "What is logged?\n\ntry { await Promise.reject(new Error('boom')); } catch (e) { console.log(e.message); }\n\n(assume top-level await is allowed)",
+      "choices": ["boom", "Error", "undefined", "Unhandled rejection"],
+      "correctIndex": 0,
+      "explanation": "await on a rejected promise throws inside the async context, which the surrounding try/catch handles."
+    },
+    {
+      "id": "q15",
+      "stem": "An event listener attached with `{ capture: true }` runs:",
+      "choices": [
+        "Only once",
+        "During the capture phase, before the target phase",
+        "After bubbling",
+        "Only inside Shadow DOM"
+      ],
+      "correctIndex": 1,
+      "explanation": "Capture listeners run on the way down from window to target — before any bubble listeners on descendants."
+    },
+    {
+      "id": "q16",
+      "stem": "What is the difference between `el.classList.add('x')` and `el.className = 'x'`?",
+      "choices": [
+        "They are identical",
+        "classList.add appends to existing classes; setting className replaces them all",
+        "classList.add throws if class exists",
+        "className is read-only"
+      ],
+      "correctIndex": 1,
+      "explanation": "classList is a token-aware API; className is the raw string and overwrites everything previously there."
+    },
+    {
+      "id": "q17",
+      "stem": "Why call `e.target.closest('.item')` in a delegated handler?",
+      "choices": [
+        "To find an ancestor (or the element itself) matching the selector",
+        "To stop propagation",
+        "To clone the element",
+        "To prevent default"
+      ],
+      "correctIndex": 0,
+      "explanation": "closest walks up from the target to find the nearest matching element, so clicks on inner spans still resolve to the .item row."
+    },
+    {
+      "id": "q18",
+      "stem": "Which fetch option sends cookies to a cross-origin request?",
+      "choices": [
+        "credentials: 'include'",
+        "mode: 'cors'",
+        "headers: { Cookie: '...' }",
+        "withCredentials: true"
+      ],
+      "correctIndex": 0,
+      "explanation": "Cross-origin fetch omits cookies by default. credentials: 'include' opts in; the server must also send Access-Control-Allow-Credentials."
+    },
+    {
+      "id": "q19",
+      "stem": "What is logged?\n\nPromise.resolve(1).then(v => v + 1).then(v => console.log(v));",
+      "choices": ["1", "2", "[object Promise]", "undefined"],
+      "correctIndex": 1,
+      "explanation": "Each .then receives the previous resolved value. 1 + 1 = 2 flows to the next then."
+    },
+    {
+      "id": "q20",
+      "stem": "Which is the correct way to read a JSON response body?",
+      "choices": [
+        "res.body",
+        "res.json() (returns a Promise)",
+        "JSON.parse(res)",
+        "res.text() always"
+      ],
+      "correctIndex": 1,
+      "explanation": "Response.json() is async because the body may stream. await res.json() gives you the parsed object."
+    },
+    {
+      "id": "q21",
+      "stem": "Which is correct about innerHTML and XSS?",
+      "choices": [
+        "innerHTML auto-escapes input",
+        "Assigning user-controlled strings to innerHTML can execute scripts via tags like <img onerror=...>",
+        "innerHTML is safe if you trim whitespace",
+        "innerHTML cannot run scripts"
+      ],
+      "correctIndex": 1,
+      "explanation": "innerHTML parses the string as HTML. Even though <script> tags inserted that way don't execute, attribute event handlers do."
+    },
+    {
+      "id": "q22",
+      "stem": "What does Promise.allSettled return?",
+      "choices": [
+        "The first resolved value",
+        "An array of { status, value | reason } objects, one per input promise",
+        "A boolean",
+        "Throws on any rejection"
+      ],
+      "correctIndex": 1,
+      "explanation": "allSettled waits for every promise and gives you a per-input object describing whether it fulfilled or rejected and with what."
+    },
+    {
+      "id": "q23",
+      "stem": "What problem does the 'sequence number guard' pattern solve in search-as-you-type?",
+      "choices": [
+        "Network errors",
+        "Out-of-order responses where a slow earlier request overwrites the latest results",
+        "XSS",
+        "Cookie leakage"
+      ],
+      "correctIndex": 1,
+      "explanation": "Without a guard, a late-returning earlier request can overwrite the most recent UI. A monotonic sequence id lets you discard stale responses."
+    },
+    {
+      "id": "q24",
+      "stem": "Which DOM method runs a CSS selector and returns the FIRST match?",
+      "choices": [
+        "document.find()",
+        "document.querySelector()",
+        "document.getElementById() — same thing",
+        "document.matches()"
+      ],
+      "correctIndex": 1,
+      "explanation": "querySelector takes a CSS selector and returns the first matching element or null."
+    },
+    {
+      "id": "q25",
+      "stem": "An async function `f()` is called. What does `typeof f()` return?",
+      "choices": ["'function'", "'object'", "'promise'", "'undefined'"],
+      "correctIndex": 1,
+      "explanation": "An async function returns a Promise, and typeof Promise is 'object'."
+    }
+  ]
+}

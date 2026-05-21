@@ -1,0 +1,131 @@
+---
+title: "Week 12 — Industry speakers"
+unit: COMP4347
+week: 12
+type: overview
+status: done
+---
+
+## How to read an industry-speaker week
+
+**Industry talks are anecdote-rich and framework-poor.** Don't try to take notes in the textbook style. Instead, listen for three things: the war story, the principle the speaker has internalised, and the disagreement with the textbook.
+
+There's no new examinable content this week in the strict sense. But the questions you'll be asked in your first job interview *are* taken from this kind of talk, not from chapter 7 of the textbook. So this is the cheapest week of the unit to score well in, and the most expensive week to ignore.
+
+I'll pull together the themes that almost always come up across guest talks in software-engineering capstone units. Treat each section as a checklist: *Did your speaker say something about this? What was their take?*
+
+## Architecture at scale
+
+**The architecture you draw on a whiteboard is rarely the architecture in production.** That's the single biggest gap between this unit's textbook and any working system.
+
+Three patterns show up over and over:
+
+- **Microservices, but fewer than you'd think.** Most "microservice" companies you've heard of run 5-30 services, not 500. Each service maps to a team. Conway's law isn't a quote — it's an operating constraint.
+- **Monorepo vs polyrepo is a tooling question, not an architecture question.** Google and Meta run monorepos at huge scale because they built the tooling (Bazel, Buck). If you don't have a Bazel team, your monorepo will fall over at ~50 engineers. Polyrepos make CI easy and refactors hard.
+- **The "scaling story" is usually a database story.** The web tier scales by adding boxes. The database doesn't. Most company-defining engineering decisions in the last decade are about how to avoid sharding a Postgres database or how to recover from having to.
+
+**The first question to ask any architecture diagram:** where's the single point of failure? It's almost always either the database or the load balancer. Speakers who've been on-call know this in their bones.
+
+## Observability — logs, metrics, traces
+
+Observability is the practice of **being able to answer questions about your system that you didn't anticipate before you shipped it**.
+
+The "three pillars" framing (logs, metrics, traces) is now the industry consensus:
+
+- **Logs** are records of discrete events. Useful for "what happened at 03:14?" Cheap to write, expensive to search at scale.
+- **Metrics** are numbers over time. Useful for "is anything weird right now?" Cheap to query, lose all per-request detail.
+- **Traces** are causal chains across services. Useful for "where did the latency in request X come from?" The newest of the three; OpenTelemetry has won as the standard.
+
+**The principle:** if you can't see it, you can't fix it. The corollary: every line of code is an opportunity to leave a breadcrumb. Speakers will tell you about an incident where they spent four hours of downtime because *nobody had thought to log the timeout value*.
+
+**Alerting** is the consumer side of observability. The hard problem isn't writing alerts — it's writing alerts that don't fire when nothing's wrong. A team with 40 alerts firing per day has effectively zero alerts; everyone has learned to ignore them. **Page on user-visible symptoms, not on causes.**
+
+## On-call and incident response
+
+The on-call rotation is **the moment the abstract "we run a service" becomes concrete**. You carry a pager. At 2am it goes off. You have ten minutes to start mitigating, an hour to fix, and a week to write the postmortem.
+
+Things speakers wish they'd known as graduates:
+
+- **Runbooks are the difference between a 5-minute outage and a 5-hour outage.** Every alert should link to a runbook with the first three steps. Writing the runbook is part of shipping the feature.
+- **Mitigate first, diagnose later.** Roll back, drain traffic, scale up — buy yourself time. *Then* find the root cause.
+- **The blameless postmortem is not optional.** If engineers fear being blamed, they hide information, and the next outage gets worse. Big tech runs on this principle.
+
+The five-whys structure of a postmortem: keep asking "why?" until you reach a system-level cause, never a person-level one. *"Alice deployed the bad config"* is not a root cause. *"Our config deploy system had no validation step"* is.
+
+## Security in production — beyond OWASP
+
+You did OWASP Top 10 earlier in the unit. **Industry speakers add the parts the OWASP list doesn't capture:** that real incidents are mostly mundane.
+
+Common shapes of real incidents:
+
+- **A credential in a public repository.** Bots scan GitHub continuously. A leaked AWS key is exploited in minutes — sometimes seconds.
+- **An IAM policy that's too permissive.** "Allow * on *" is the second-most-common cloud breach pattern. Least-privilege is a habit, not a feature.
+- **A vendor's vendor got popped.** Supply-chain attacks (Log4Shell, SolarWinds, xz-utils) compromise libraries you trust transitively. SBOMs (software bills of materials) and dependency scanning are now industry table stakes.
+- **Phishing of an engineer.** The attacker doesn't break your TLS — they trick someone with prod access. Phishing-resistant MFA (hardware keys, passkeys) is a hard requirement at serious shops.
+
+**The security mindset speakers reinforce:** *assume breach*. Don't ask "how do I keep them out?"; ask "when they're in, what can they reach, and how fast will I notice?" Defence in depth, blast-radius reduction, and detection-first design follow from this.
+
+## The hiring lens — what employers actually look for
+
+This is the part of the week worth most to your career. **Speakers tell you what they look for in a graduate hire.** The consensus list is remarkably consistent:
+
+- **Can you communicate?** Can you describe a system you built? Can you explain a bug to a non-technical PM? This trumps almost everything else after the first 90 days.
+- **Can you read code?** Senior engineers spend more time reading code than writing it. Graduates who can navigate an unfamiliar codebase with `grep`, `git log`, and a debugger are immediately more useful than those who can only write greenfield.
+- **Are you curious about how things actually work?** "I noticed the page was slow, so I opened the Network tab" beats "I implemented binary search in Rust" most days.
+- **Do you have any production sense?** This means: do you think about logging, error handling, edge cases, monitoring, deployability — or just about whether your code compiles?
+
+A specific pattern: **the "tell me about a bug you fixed" question.** Speakers love this question because it reveals all the above in two minutes. Have one rehearsed. The structure: *symptom → investigation → root cause → fix → what you learned*.
+
+## Cost as a first-class concern (FinOps)
+
+**Engineers who don't understand cost are increasingly expensive engineers.** Cloud bills used to be the CFO's problem; now they're a feature on your dashboard.
+
+What speakers from companies-with-actual-bills will say:
+
+- **Most of your AWS bill is data egress and idle compute.** Not the line items you'd guess. Read your bill.
+- **Performance and cost converge.** A 10× faster query is roughly a 10× cheaper query. Performance budgets and cost budgets are the same conversation.
+- **The free tier is a marketing tool, not an architecture choice.** Lambda at scale costs more than EC2; managed Postgres costs more than self-hosted; "serverless" is great at the bottom and terrifying at the top.
+- **Spot instances and reserved capacity** are how production teams claw back 50-80% of compute spend. Treat compute as a market, not a utility.
+
+The cultural shift this represents: **engineers are now expected to estimate cost the way they estimate latency**. If you can answer "what's the p99 of this endpoint?" you should also be able to answer "what's the marginal cost per request?"
+
+## AI and LLMs in the development workflow
+
+This part of the talk is the one most likely to be out of date by the time you're working. Take it as a snapshot.
+
+What's already settled, as of 2026:
+
+- **Code assistants are table stakes.** Copilot, Cursor, Claude Code, and the like are now in nearly every engineering org. Refusing to use them is no longer a defensible position.
+- **The skill being hired for has shifted.** Less "can you remember the Python `itertools` API?", more "can you specify a problem precisely enough for a tool to solve it, and verify the result?"
+- **Review is the new bottleneck.** When generating code is free, reading code carefully is the scarce resource. Strong code-review skills are *more* valuable, not less.
+- **LLMs in production** (RAG, function-calling, agents) are still a moving target. Evaluations, prompt regressions, hallucination handling, and cost-per-request are the four hard problems every team is solving.
+
+**The metaskill:** know what your tool is bad at. LLMs are bad at counting, at code that doesn't appear on the internet, at adversarial conditions, and at saying "I don't know." Build workflows that compensate.
+
+## What industry adds to the textbook
+
+If you go back through the unit chapter by chapter, here's what speakers reliably add that the textbook can't:
+
+- **Chapter on requirements** — *real* requirements are political, contradictory, and revealed only by shipping something wrong. The user studies in the textbook are idealised.
+- **Chapter on architecture** — the architecture you design is a hypothesis. You confirm or disconfirm it by running it. Diagrams without telemetry are fiction.
+- **Chapter on design patterns** — the patterns you'll actually use day-to-day are *retry*, *timeout*, *idempotency key*, *feature flag*, and *circuit breaker*. Singleton and Visitor will not save you.
+- **Chapter on testing** — coverage percentage is a lagging indicator at best and a perverse incentive at worst. The tests that matter are the ones that catch the kinds of bugs your team makes.
+- **Chapter on DevOps/CI-CD** — the goal is not "automated deploys", it's "small, frequent, safe changes." Trunk-based development and feature flags beat long-lived branches.
+- **Chapter on security** — OWASP gets you the obvious bugs; culture and tooling stop the non-obvious ones.
+- **Chapter on ethics** — the textbook frames ethics as case studies; in practice, ethics shows up as five-minute decisions about logging, retention, dark patterns, and shipping deadlines.
+
+The shorter version: **the textbook teaches you the words; industry teaches you the weight of them.**
+
+## Exam focus
+
+There's almost certainly no examinable content unique to this week. But if examiners *do* pull a quote from a guest lecture, it'll appear as a short-answer prompt of the form *"Define X as discussed by the guest speaker"* or *"Give an example of Y from industry practice."*
+
+The safest revision strategy:
+
+1. Re-watch any recorded talks; for each, jot one sentence on the speaker's main claim.
+2. Memorise the three-pillars-of-observability framing.
+3. Know what a blameless postmortem is and why it exists.
+4. Have one example of an industry pattern that contradicts the textbook (any from the previous section).
+5. Be able to define **runbook**, **SLO**, **postmortem**, **blast radius**, **least privilege**, **feature flag**.
+
+That's it. Use the time you'd otherwise have spent on this week to revise the weeks where the questions actually live: requirements, architecture, testing, and security.

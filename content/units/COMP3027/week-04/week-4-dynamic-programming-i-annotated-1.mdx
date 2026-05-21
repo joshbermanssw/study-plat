@@ -19,7 +19,7 @@ Lecture 4 introduces Dynamic Programming as "smart recursion" over overlapping s
 
 - **Max-sum contiguous subarray (Kadane):** OPT[i] = max(OPT[i-1] + A[i], 0); O(n) bottom-up.
 - **Weighted Interval Scheduling:** sort by finish time, define p(j) = latest job compatible with j; OPT(j) = max(w_j + OPT(p(j)), OPT(j-1)). Naïve recursion is Θ(φ^n); memoisation gives O(n log n) (O(n) after sort).
-- **Longest Increasing Subsequence:** L[i] = 1 + max{L[j] : j < i, X[j] < X[i]}; O(n^2), improvable to O(n log n).
+- **Longest Increasing Subsequence:** L[i] = 1 + max&#123;L[j] : j &lt; i, X[j] &lt; X[i]&#125;; O(n^2), improvable to O(n log n).
 - **0/1 Knapsack:** add a second variable — OPT[i, w] = max(OPT[i-1, w], b_i + OPT[i-1, w − w_i]). Runs in O(nW) — pseudo-polynomial because W is exponential in the input bit-length; decision Knapsack is NP-complete.
 - **Recovery:** trace back through the table to reconstruct the chosen set.
 

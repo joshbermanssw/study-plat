@@ -1,0 +1,307 @@
+{
+  "unit": "INFO4444",
+  "week": 9,
+  "topic": "Commercialisation III: Capital & fundraising",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "A startup raises $2M at a $8M pre-money valuation. The new investor's ownership is:",
+      "choices": [
+        "10%",
+        "20%",
+        "25%",
+        "40%"
+      ],
+      "correctIndex": 1,
+      "explanation": "Post-money = $8M + $2M = $10M. Ownership = $2M / $10M = 20%. The founders are diluted from 100% to 80%."
+    },
+    {
+      "id": "q2",
+      "stem": "If a company has a pre-money valuation of $15M and raises $5M, the post-money valuation is:",
+      "choices": [
+        "$10M",
+        "$15M",
+        "$20M",
+        "$25M"
+      ],
+      "correctIndex": 2,
+      "explanation": "Post-money = pre-money + investment = $15M + $5M = $20M."
+    },
+    {
+      "id": "q3",
+      "stem": "Which investor type typically writes the SMALLEST cheques and invests EARLIEST?",
+      "choices": [
+        "Late-stage growth VC",
+        "Series A VC",
+        "Seed fund",
+        "Friends, family, and fools (FFF) / pre-seed angels"
+      ],
+      "correctIndex": 3,
+      "explanation": "FFF/pre-seed angels typically invest under $500k at the earliest stage, often pre-MVP, on the basis of team and idea."
+    },
+    {
+      "id": "q4",
+      "stem": "A SAFE (Simple Agreement for Future Equity) is best described as:",
+      "choices": [
+        "Debt with interest and a maturity date.",
+        "An agreement that converts to equity at the next priced round, with no interest and no maturity — a Y Combinator innovation now dominant in seed.",
+        "A trademark licensing agreement.",
+        "A patent assignment."
+      ],
+      "correctIndex": 1,
+      "explanation": "SAFEs replaced convertible notes for many seed rounds because they removed interest and maturity, simplifying the instrument."
+    },
+    {
+      "id": "q5",
+      "stem": "A convertible note has a $5M valuation cap and a 20% discount. The next priced round is at $10M pre-money. The note converts at an effective pre-money of:",
+      "choices": [
+        "$10M",
+        "$8M",
+        "$5M",
+        "$2.5M"
+      ],
+      "correctIndex": 2,
+      "explanation": "Cap gives $5M; discount gives $10M × 80% = $8M. The note converts at the LOWER of the two = $5M. The cap is the binding term here."
+    },
+    {
+      "id": "q6",
+      "stem": "Standard VC fund economics are typically:",
+      "choices": [
+        "2% management fee, 20% carried interest above LP capital",
+        "5% management fee, 50% carried interest",
+        "1% management fee, 10% carried interest",
+        "0% management fee, 100% carried interest"
+      ],
+      "correctIndex": 0,
+      "explanation": "The classical '2 and 20' structure: 2% annual management fee on committed capital plus 20% of profits above LP returns."
+    },
+    {
+      "id": "q7",
+      "stem": "A '1x non-participating' liquidation preference means investors receive:",
+      "choices": [
+        "Nothing on exit until founders are paid.",
+        "1x their investment back before common shareholders, then they choose between taking the preference OR converting to common — but not both.",
+        "1x their investment plus their pro-rata share of remaining proceeds as common.",
+        "Twice their investment back."
+      ],
+      "correctIndex": 1,
+      "explanation": "1x non-participating: investors take the higher of (a) 1x preference or (b) converted-to-common pro-rata share. Standard founder-friendly term."
+    },
+    {
+      "id": "q8",
+      "stem": "A '1x PARTICIPATING' liquidation preference is more aggressive because:",
+      "choices": [
+        "Investors lose their preference entirely.",
+        "Investors get 1x preference AND then participate pro-rata in remaining proceeds — effectively double-dipping.",
+        "Investors must invest twice the original amount.",
+        "The founders get participating rights."
+      ],
+      "correctIndex": 1,
+      "explanation": "Participating preference returns the investor's capital first, then lets them share in remaining proceeds as if they were common — a less founder-friendly term."
+    },
+    {
+      "id": "q9",
+      "stem": "Founder shares typically vest over what schedule?",
+      "choices": [
+        "1 year, no cliff",
+        "4 years with a 1-year cliff",
+        "10 years with a 5-year cliff",
+        "All shares vest immediately at funding"
+      ],
+      "correctIndex": 1,
+      "explanation": "4-year vesting with a 1-year cliff is the industry standard. Protects against early founder departures destabilising the company."
+    },
+    {
+      "id": "q10",
+      "stem": "An option pool of 10-15% reserved for employees, carved out of PRE-money, has what effect on existing shareholders?",
+      "choices": [
+        "No effect — the pool dilutes only future investors.",
+        "Increases existing shareholders' ownership.",
+        "Dilutes existing shareholders, because the pool is created before the new investor's stake is calculated.",
+        "Requires regulatory approval."
+      ],
+      "correctIndex": 2,
+      "explanation": "Pre-money option pool expansion is a standard investor ask. It shifts dilution to existing shareholders and is sometimes called the 'option-pool shuffle'."
+    },
+    {
+      "id": "q11",
+      "stem": "Power-law returns in venture capital mean that:",
+      "choices": [
+        "Returns are normally distributed.",
+        "Most VC returns come from a small number of huge winners; many investments return zero or less.",
+        "Returns scale with the square root of investment size.",
+        "All investments return roughly the same."
+      ],
+      "correctIndex": 1,
+      "explanation": "Empirically, ~1-2 deals per fund produce most of the returns. The 'one fund-returner pays for the rest' rule of thumb. Shapes how VCs select and price."
+    },
+    {
+      "id": "q12",
+      "stem": "Mailchimp's $12B acquisition with NO venture capital raised is a famous example of:",
+      "choices": [
+        "Bootstrapping",
+        "Seed funding",
+        "Series A funding",
+        "Convertible debt"
+      ],
+      "correctIndex": 0,
+      "explanation": "Mailchimp self-funded from revenue and exited via acquisition by Intuit. Textbook bootstrapping case study."
+    },
+    {
+      "id": "q13",
+      "stem": "Which is NOT typically a Series A criterion?",
+      "choices": [
+        "Evidence of product-market fit.",
+        "A credible growth engine.",
+        "Profitability.",
+        "Founders who can hire a senior team."
+      ],
+      "correctIndex": 2,
+      "explanation": "Most Series A companies are not yet profitable. PMF + growth engine + team are the usual criteria."
+    },
+    {
+      "id": "q14",
+      "stem": "A startup goes through Seed at $5M post-money (20% sold), then Series A at $20M post-money (25% sold). Approximate cumulative founder ownership (ignoring option pools) is:",
+      "choices": [
+        "80%",
+        "60%",
+        "45%",
+        "25%"
+      ],
+      "correctIndex": 1,
+      "explanation": "After seed: 80% remaining. After Series A: 80% × (1 - 25%) = 60%. Cumulative dilution multiplies, not adds."
+    },
+    {
+      "id": "q15",
+      "stem": "A 'full-ratchet' anti-dilution clause means:",
+      "choices": [
+        "Modest adjustment for a down round.",
+        "If a future round prices lower, the prior investor's conversion price is re-set to the new round's price entirely — heavily punitive to founders and common shareholders.",
+        "No adjustment for down rounds.",
+        "Adjustment only after three down rounds."
+      ],
+      "correctIndex": 1,
+      "explanation": "Full-ratchet is the most aggressive anti-dilution: prior investors are made whole as if they had invested at the down-round price. Broad-based weighted average is the founder-friendlier standard."
+    },
+    {
+      "id": "q16",
+      "stem": "Which Australian VC firm is known for backing CSIRO-affiliated deep tech?",
+      "choices": [
+        "Blackbird Ventures",
+        "Square Peg",
+        "Main Sequence Ventures",
+        "Tiger Global"
+      ],
+      "correctIndex": 2,
+      "explanation": "Main Sequence is the CSIRO-affiliated deep-tech fund. Blackbird, Square Peg, and AirTree are general-stage Australian VCs."
+    },
+    {
+      "id": "q17",
+      "stem": "Pro-rata rights in a term sheet give investors:",
+      "choices": [
+        "The right to veto future rounds.",
+        "The right to participate in future rounds to maintain their ownership percentage.",
+        "The right to a board seat.",
+        "The right to set the valuation."
+      ],
+      "correctIndex": 1,
+      "explanation": "Pro-rata rights let existing investors maintain their ownership by participating in subsequent rounds. Highly prized by VCs in winning portfolio companies."
+    },
+    {
+      "id": "q18",
+      "stem": "Y Combinator and Techstars are best classified as:",
+      "choices": [
+        "Late-stage growth funds",
+        "Accelerators that provide small cheques and intensive mentorship to pre-seed startups",
+        "Private equity firms",
+        "Investment banks"
+      ],
+      "correctIndex": 1,
+      "explanation": "Accelerators provide small standard-terms investments (typically $125k-$500k via SAFE) plus 3-month structured programmes and demo-day exposure."
+    },
+    {
+      "id": "q19",
+      "stem": "A startup raises $4M at $16M pre-money. The new investor's ownership is:",
+      "choices": [
+        "10%",
+        "20%",
+        "25%",
+        "33%"
+      ],
+      "correctIndex": 1,
+      "explanation": "Post-money = $20M. New investor = $4M / $20M = 20%."
+    },
+    {
+      "id": "q20",
+      "stem": "Which funding stage is typically the FIRST round with a formal valuation negotiated?",
+      "choices": [
+        "Bootstrap",
+        "Pre-seed via SAFEs (often capped, no immediate priced valuation)",
+        "Priced seed round or Series A — depending on whether the firm uses SAFEs at seed",
+        "Series D"
+      ],
+      "correctIndex": 2,
+      "explanation": "If SAFEs are used at seed, the first PRICED round (with a negotiated valuation) is often Series A. Some startups do a priced seed and negotiate valuation earlier."
+    },
+    {
+      "id": "q21",
+      "stem": "Drag-along rights on an exit allow:",
+      "choices": [
+        "A minority shareholder to block a sale.",
+        "A majority shareholder to force minorities to sell their shares on the same terms in an acquisition.",
+        "Employees to accelerate vesting.",
+        "Investors to claim multiple liquidation preferences."
+      ],
+      "correctIndex": 1,
+      "explanation": "Drag-along ensures a deal can close: when the majority approves, minorities are 'dragged' to sell on identical terms. Standard in most term sheets."
+    },
+    {
+      "id": "q22",
+      "stem": "Tag-along (co-sale) rights protect:",
+      "choices": [
+        "Founders against losing control.",
+        "Minority shareholders by letting them sell pro-rata alongside a majority shareholder who is selling.",
+        "Employees during layoffs.",
+        "The company against patent litigation."
+      ],
+      "correctIndex": 1,
+      "explanation": "Tag-along is the converse of drag-along: if the majority sells, minorities have the right to join the sale on the same terms."
+    },
+    {
+      "id": "q23",
+      "stem": "An 'acqui-hire' is best described as:",
+      "choices": [
+        "An IPO.",
+        "An acquisition primarily intended to obtain the target's team, often with minimal return for shareholders.",
+        "A leveraged buyout.",
+        "A secondary share sale."
+      ],
+      "correctIndex": 1,
+      "explanation": "Acqui-hires value the people, not the product. Typical outcomes: founder/key engineer retention packages; modest investor return."
+    },
+    {
+      "id": "q24",
+      "stem": "A startup raises $10M at $40M pre-money with a 10% option pool TO BE CREATED PRE-MONEY. The new investor's ownership is:",
+      "choices": [
+        "20%",
+        "25%",
+        "10%",
+        "30%"
+      ],
+      "correctIndex": 0,
+      "explanation": "Post-money = $50M. New investor = $10M / $50M = 20%. The 10% option pool dilutes existing shareholders, not the new investor (it is taken from pre-money)."
+    },
+    {
+      "id": "q25",
+      "stem": "The classical 'fund-returner' rule of thumb in VC is that:",
+      "choices": [
+        "Every investment must return the entire fund.",
+        "A single very-large outcome must be capable of returning the entire fund's committed capital — otherwise the math doesn't work given power-law returns.",
+        "Funds aim for 1.0x return overall.",
+        "All investments are expected to break even."
+      ],
+      "correctIndex": 1,
+      "explanation": "Given power-law returns and a typical 20-deal portfolio, each investment must be capable (in success) of returning the whole fund. Shapes VC ticket sizing and target ownership."
+    }
+  ]
+}

@@ -19,7 +19,14 @@ function walkMdx(dir: string, base = ""): { rel: string; abs: string }[] {
     const rel = base ? `${base}/${entry}` : entry;
     const stat = fs.statSync(abs);
     if (stat.isDirectory()) out.push(...walkMdx(abs, rel));
-    else if (entry.endsWith(".mdx") || entry.endsWith(".md")) out.push({ rel, abs });
+    else if (entry.endsWith(".mdx") || entry.endsWith(".md")) {
+      // Skip reserved underscore files except the two we know how to handle:
+      //   _unit.mdx  — unit overview (handled separately)
+      //   _teach.mdx — synthesised into an "AI OVERVIEW" pseudo-note per week
+      if (entry.startsWith("_") && entry !== "_unit.mdx" && entry !== "_unit.md" &&
+          entry !== "_teach.mdx" && entry !== "_teach.md") continue;
+      out.push({ rel, abs });
+    }
   }
   return out;
 }
@@ -30,6 +37,24 @@ function parseNote(unit: string, rel: string, raw: string): Note {
   // ISO-8601 timestamps) or plain strings — toDate() handles both.
   const fm = data as Record<string, unknown>;
   const slug = rel.replace(/\.mdx?$/, "");
+
+  // Synthesise the "AI OVERVIEW" pseudo-note from a _teach.mdx file.
+  if (slug.endsWith("/_teach")) {
+    const weekMatch = slug.match(/week-(\d+)/);
+    const week = weekMatch ? Number(weekMatch[1]) : undefined;
+    return {
+      title: typeof fm.title === "string" ? fm.title.replace(/^Week\s*\d+\s*[—-]\s*/i, "") : "AI Overview",
+      unit,
+      week,
+      type: "ai-overview",
+      status: "done",
+      order: -1,         // pin to the top of the week's note list
+      slug,
+      href: week != null ? `/${unit}/study/${week}` : `/${unit}`,
+      body: content,
+    };
+  }
+
   return {
     title: typeof fm.title === "string" ? fm.title : slug,
     unit,

@@ -1,0 +1,386 @@
+---
+title: "Week 5 — Cloud Networking"
+unit: COMP4349
+week: 5
+type: overview
+status: done
+---
+
+Week 5 is the most diagrammatic week of the course. You need to be able to sketch a three-tier VPC topology from memory — public ALB subnet, private application subnet, private database subnet — across two AZs, with route tables, IGW, NAT gateway, security groups, NACLs, and the right VPC endpoints. The exam loves CIDR maths and the "which IP is in which subnet" trick question, so practise those too.
+
+## IP addressing — CIDR fundamentals
+
+An IPv4 address is 32 bits, usually written as four dotted decimals, e.g. `10.0.0.0`. CIDR (Classless Inter-Domain Routing) notation appends `/N`, where N is the number of leading bits fixed as the **network identifier**; the remaining 32-N bits are the **host identifier**.
+
+```text
+192.0.2.0/24    →  network is 192.0.2  (24 bits), 256 addresses
+10.0.0.0/16     →  network is 10.0    (16 bits), 65 536 addresses
+10.0.0.0/28     →  network is 10.0.0.0 (28 bits), 16 addresses
+```
+
+The three private IPv4 ranges (RFC 1918), reserved for private networks:
+
+- `10.0.0.0/8` (10.0.0.0 – 10.255.255.255)
+- `172.16.0.0/12` (172.16.0.0 – 172.31.255.255)
+- `192.168.0.0/16` (192.168.0.0 – 192.168.255.255)
+
+These are the ranges you should use for VPC CIDR blocks.
+
+### Quick CIDR maths trick
+
+To check if an address X is in a CIDR Y/N, convert the network portion of X to binary and compare the leading N bits to Y. Example: is `10.0.200.0` in `10.0.192.0/20`?
+
+- `200` in binary = `11001000`
+- `192` in binary = `11000000`
+- The /20 means the first 20 bits are fixed: `10.0` plus the first 4 bits of the third octet (`1100`). Both 200 (`1100`-1000) and 192 (`1100`-0000) share `1100` in the top 4 bits — yes, 10.0.200.0 is inside 10.0.192.0/20.
+
+Pitfall: `10.0.200.0/20` is **not** a valid subnet because `10.0.200.0` is not aligned to a /20 boundary (which must end in `.0`, `.16`, `.32`, …, `.192`, `.208`, `.224`, `.240` for the third octet). The aligned /20 containing 10.0.200.0 is 10.0.192.0/20.
+
+## Amazon VPC — your private network on AWS
+
+A **Virtual Private Cloud (VPC)** is a logically-isolated network you define in an AWS Region. Key properties:
+
+- A VPC has a primary IPv4 CIDR block (between /16, 65 536 addresses, and /28, 16 addresses). IPv6 is optional.
+- The CIDR is **immutable** after creation (you can add secondary CIDRs but can't remove the original).
+- A VPC spans every AZ in its Region. Subnets, however, live in exactly one AZ.
+- Each AWS account gets a **default VPC** in every Region with /16 CIDR and a public subnet per AZ — convenient for sandboxing, but you should create explicit VPCs for production.
+
+```bash
+aws ec2 create-vpc --cidr-block 10.0.0.0/16 --tag-specifications \
+  'ResourceType=vpc,Tags=[{Key=Name,Value=prod-vpc}]'
+```
+
+### Subnets — slicing the VPC
+
+A subnet is a slice of the VPC CIDR, anchored to one AZ. Subnets cannot overlap. AWS reserves 5 IPs in every subnet:
+
+- `.0` — network address
+- `.1` — VPC router
+- `.2` — DNS
+- `.3` — reserved for future use
+- `.255` (or last) — broadcast
+
+So a /24 with 256 addresses has only **251 usable** for your resources. A /28 with 16 has only 11 usable.
+
+A subnet is **public** or **private** purely by its route table — there is no toggle. A public subnet has a route `0.0.0.0/0 → IGW`; a private subnet does not.
+
+### Default reserved IPs
+
+For `10.0.0.0/24`:
+
+- `10.0.0.0` — network
+- `10.0.0.1` — VPC router
+- `10.0.0.2` — DNS (`AmazonProvidedDNS`)
+- `10.0.0.3` — reserved
+- `10.0.0.255` — broadcast
+
+## Public vs private IPs
+
+Two types of public IPv4 on EC2:
+
+- **Auto-assigned public IPv4** — set per-subnet (`MapPublicIpOnLaunch`). The address comes from AWS's pool and **changes on stop/start**. Free.
+- **Elastic IP (EIP)** — explicitly allocated to your account; you can attach/detach it to any instance or NAT gateway. **Static** — survives stop/start. Small charge if not attached to a running resource (to discourage hoarding).
+
+The instance gets a **private IPv4** from the subnet CIDR; outbound connections to the internet hit the IGW which performs NAT to map the private IP to the public IP.
+
+### ENIs — Elastic Network Interfaces
+
+An **ENI** is a virtual NIC. You can attach/detach it across instances in the same AZ, and its private IP/MAC follows. ENIs are how Nitro plumbs VPC networking onto every instance. Each instance type allows a maximum number of ENIs and IPs.
+
+## VPC routing — the route table model
+
+A **route table** has entries `(destination CIDR, target)`. AWS uses **longest-prefix match**: the route with the most specific CIDR wins. The local route covers the VPC CIDR with target `local` and is always present — it can't be removed.
+
+Each VPC has exactly one **main route table**. Every subnet uses the main table unless explicitly associated with a custom table. Best practice: leave the main table minimal and use explicit per-subnet custom tables.
+
+```text
+Destination          Target                     Meaning
+10.0.0.0/16          local                      VPC traffic stays inside the VPC
+0.0.0.0/0            igw-0abc12345              public subnet: send everything else to the IGW
+0.0.0.0/0            nat-0xyz98765              private subnet: route via NAT GW for outbound
+pl-6da54007 (S3)     vpce-gw-0123abc            gateway endpoint for S3 (free)
+```
+
+### Gateways — the connection points
+
+- **Internet Gateway (IGW)** — horizontally-scaled, redundant, two-way internet access. One per VPC. No IP address itself. Performs NAT for instances with public IPs.
+- **NAT Gateway** — managed NAT for instances in private subnets to make **outbound** connections to the internet. Lives in a public subnet, has an Elastic IP. One per AZ for HA.
+- **Egress-only Internet Gateway** — IPv6 equivalent of NAT GW. Allows outbound IPv6, blocks unsolicited inbound.
+- **VPN Gateway** — IPsec VPN endpoint on the AWS side for site-to-site VPN.
+- **Customer Gateway** — the on-prem end of the VPN.
+- **Direct Connect** — dedicated private fibre between your data centre and AWS (1/10/100 Gbps). For high-throughput, low-jitter hybrid.
+- **Transit Gateway** — hub-and-spoke router connecting many VPCs and on-prem networks. Scales beyond the limits of VPC peering.
+- **VPC peering** — point-to-point connection between two VPCs. No transitive routing.
+
+### Public subnet pattern
+
+```text
+EC2 (10.0.1.5) ←── public IP via auto-assign or EIP
+   │
+   │ route 0.0.0.0/0 → igw-id
+   ▼
+Internet Gateway
+   │
+   ▼
+Internet
+```
+
+### Private subnet outbound pattern
+
+```text
+EC2 (10.0.2.5) in private subnet
+   │ route 0.0.0.0/0 → nat-gw-id
+   ▼
+NAT Gateway (10.0.1.10, public IP via EIP) in public subnet
+   │ route 0.0.0.0/0 → igw-id
+   ▼
+Internet Gateway → Internet
+```
+
+The internet can't initiate connections to 10.0.2.5; 10.0.2.5 can initiate outbound (e.g. `apt update`) via the NAT.
+
+Pitfall: NAT gateways are **AZ-scoped**. If you have private subnets in AZ-a and AZ-b and only one NAT GW in AZ-a, instances in AZ-b traverse the inter-AZ link (paid bandwidth) and lose internet access if AZ-a goes down. Deploy one NAT GW per AZ for HA.
+
+## Security layers — defence in depth
+
+AWS gives you multiple filtering layers; the exam loves comparing the two main ones.
+
+### Security groups — stateful, instance-level
+
+A **security group (SG)** is a virtual firewall attached to one or more ENIs (i.e. instances, RDS, load balancers). Rules are **allow-only** — there is no deny rule. Each rule specifies a source/destination, protocol, and port range.
+
+- **Stateful** — return traffic for an allowed connection is automatically permitted, regardless of outbound rules. Allow port 80 inbound, the response goes out without an explicit outbound rule.
+- Default SG: no inbound, all outbound allowed.
+- Sources can be CIDR (e.g. `0.0.0.0/0`), another SG, or a prefix list.
+
+```text
+Inbound:
+  TCP 443  source 0.0.0.0/0     ← HTTPS from anywhere
+  TCP 22   source 203.0.113.0/24 ← SSH from corp range
+  TCP 3306 source sg-app          ← MySQL only from the app SG
+```
+
+Using another SG as a source is more flexible than a CIDR — the SG-as-source rule follows the membership of that SG even as instances scale in/out.
+
+### Network ACLs — stateless, subnet-level
+
+A **Network ACL (NACL)** is attached to a subnet (not an instance). Rules can be **allow or deny**, evaluated in **rule-number order**, and the first match wins.
+
+- **Stateless** — return traffic must be explicitly allowed.
+- Default NACL: all inbound and outbound allowed.
+- Custom NACL: nothing allowed until you add rules.
+
+Use NACLs to block known-bad IPs at the subnet boundary, especially when you can't trust every instance to have its SG configured. Day-to-day filtering happens in SGs; NACLs are coarse extra protection.
+
+```text
+Rule  Type   Proto  Port   Source/Dest    Action
+100   HTTPS  TCP    443    0.0.0.0/0      ALLOW
+110   SSH    TCP    22     203.0.113.0/24 ALLOW
+*     All    All    All    0.0.0.0/0      DENY
+```
+
+Common stateless gotcha: you allowed inbound on port 443, but the *response* uses an ephemeral port (1024-65535). The NACL needs an outbound rule for that ephemeral range too, or the connection silently fails.
+
+### Side-by-side
+
+| Property | Security Group | NACL |
+|---|---|---|
+| Scope | Instance (ENI) | Subnet |
+| Rules | Allow only | Allow + Deny |
+| State | Stateful | Stateless |
+| Evaluation | All rules together | First match by rule number |
+| Default new | Deny inbound, allow outbound | All allow |
+
+## Bastion hosts and Session Manager
+
+For administrative SSH/RDP into private-subnet instances:
+
+- **Bastion host** — a small hardened EC2 in a public subnet. You SSH to the bastion, then jump to private instances. Lock down the bastion's SG to your office IP range; rotate SSH keys aggressively.
+- **AWS Systems Manager Session Manager** — preferred modern approach. The SSM agent on the instance maintains an outbound HTTPS connection to Systems Manager; you click "Start session" in the console and get a shell with no inbound port, no SSH key, full CloudTrail audit. No bastion needed.
+
+Pitfall: bastion hosts are a single point of failure and a high-value target. Migrate to Session Manager wherever possible.
+
+## VPC endpoints — keeping AWS-service traffic private
+
+Many AWS services (S3, DynamoDB, KMS, SQS) have public endpoints. From a private subnet, traffic to those endpoints traverses the NAT GW + IGW — slow, costly, and arguably less secure than necessary.
+
+**VPC endpoints** keep that traffic on the AWS network. Two flavours:
+
+- **Gateway endpoint** — for S3 and DynamoDB only. Configured as a target in the route table via a prefix list. **Free**.
+- **Interface endpoint** (PrivateLink) — for almost every other AWS service plus third-party SaaS. Provisions ENIs with private IPs in your subnet; you call the service via those private IPs (the DNS records resolve to them). **Billed** per ENI-hour + GB processed.
+
+```text
+Private subnet route table
+Destination         Target
+10.0.0.0/16         local
+pl-6da54007 (S3)    vpce-gw-S3
+pl-02cd2c6b (Dyn)   vpce-gw-Dynamo
+```
+
+The Interface endpoint also enables access from on-prem via Direct Connect/VPN — your hybrid network can hit S3 without going to the public internet.
+
+## VPC peering vs Transit Gateway
+
+- **VPC peering** is point-to-point. No transitive routing — if A peers B and B peers C, A cannot reach C unless you add A-C peering. Limited to two VPCs.
+- **Transit Gateway (TGW)** is a hub. Every VPC peers to the TGW; the TGW routes between them. Scales to thousands of VPCs and includes on-prem connections. Used by every multi-VPC enterprise deployment.
+
+## VPC Flow Logs — visibility
+
+**Flow Logs** capture metadata (5-tuple + bytes + ACCEPT/REJECT) for every IP packet that flows through ENIs, subnets, or the whole VPC. Sent to CloudWatch Logs or S3. Use for:
+
+- Debugging "why can't A reach B?" (rejected by SG, NACL, or routing?)
+- Security audits (which IPs scanned us?)
+- Cost allocation (which workload causes the cross-AZ traffic charges?)
+
+## Putting it together — the 3-tier VPC
+
+The exam wants you to draw this:
+
+```text
+VPC 10.0.0.0/16, two AZs
+
+  AZ-a                         AZ-b
+  ─────────────────            ─────────────────
+  Public subnet 10.0.1.0/24    Public subnet 10.0.2.0/24
+    [ALB ENI]                    [ALB ENI]
+    [NAT GW]                     [NAT GW]      ← one per AZ for HA
+       │                             │
+       │ route 0.0.0.0/0 → IGW       │
+       ▼                             ▼
+  ──── Internet Gateway ────
+
+  App subnet 10.0.11.0/24      App subnet 10.0.12.0/24
+    [EC2 web]                    [EC2 web]
+       │                             │
+       │ route 0.0.0.0/0 → NAT GW    │
+       ▼                             ▼
+
+  DB subnet 10.0.21.0/24       DB subnet 10.0.22.0/24
+    [RDS primary]                [RDS standby (Multi-AZ)]
+    (no internet route)          (no internet route)
+```
+
+Security groups:
+
+- `sg-alb` — allows 443 from `0.0.0.0/0`.
+- `sg-app` — allows 80 from `sg-alb`, 443 outbound to anywhere (for upstream APIs).
+- `sg-db` — allows 3306 from `sg-app` only.
+
+Route tables:
+
+- Public route table — `0.0.0.0/0 → IGW`, attached to both public subnets.
+- App route table — `0.0.0.0/0 → NAT GW in same AZ`. Two app subnets each have their own route table to their AZ's NAT.
+- DB route table — local only, plus VPC endpoints for S3/Secrets Manager/RDS.
+
+## Designing CIDR — leave room for the future
+
+A /16 gives 65 536 addresses; subnets typically /20-/24. A reasonable scheme:
+
+- VPC `10.0.0.0/16`
+- Public subnets `10.0.0.0/20` (AZ-a), `10.0.16.0/20` (AZ-b), `10.0.32.0/20` (AZ-c) — 4096 each
+- App subnets `10.0.48.0/20`, `10.0.64.0/20`, `10.0.80.0/20`
+- DB subnets `10.0.96.0/20`, `10.0.112.0/20`, `10.0.128.0/20`
+
+Pitfall: VPCs commonly need to peer with other VPCs (different accounts, acquired companies, third-party SaaS). Avoid using `10.0.0.0/16` everywhere — pick distinct ranges per VPC so peering doesn't collide.
+
+## Common exam traps
+
+- "Which subnet contains IP X?" — convert third/fourth octet to binary; check the leading N bits.
+- "Reserved IPs per subnet" — five (network, router, DNS, future, broadcast). 251 usable in a /24.
+- "Public vs private subnet" — route table decides; presence of `0.0.0.0/0 → IGW` makes it public.
+- "NAT GW direction" — outbound from private subnet only; cannot accept unsolicited inbound.
+- "Security group rule types" — allow-only, stateful.
+- "NACL rule types" — allow+deny, stateless, evaluated in number order.
+- "Why does my port-22 outbound work but inbound fail?" — possibly because SG outbound is allowed but inbound is missing; NACL might block ephemeral return ports.
+- "Cheapest way to reach S3 from private subnet" — gateway VPC endpoint (free). Not NAT GW + IGW.
+- "Reach DynamoDB privately from EC2 in private subnet" — gateway endpoint.
+- "Reach AWS Systems Manager privately" — Interface endpoint.
+- "Two VPCs need bidirectional comms with many more later" — Transit Gateway, not VPC peering.
+
+## DNS in the VPC — Route 53 Resolver
+
+Every VPC includes the **AmazonProvidedDNS** at `<VPC base + 2>` (e.g. `10.0.0.2` for `10.0.0.0/16`). EC2 instances configured with this resolver get:
+
+- Public DNS resolution for the internet.
+- Private DNS resolution for `*.compute.internal` (auto-generated names per instance).
+- Resolution of any **Route 53 private hosted zone** associated with the VPC.
+
+For hybrid networks, **Route 53 Resolver Endpoints** let on-prem DNS forward queries to AWS resolvers (inbound endpoints, for resolving `*.compute.internal` from on-prem) and AWS resolvers forward to on-prem DNS (outbound endpoints, for resolving `*.corp.example.com` from inside the VPC).
+
+Set the per-VPC flags `enableDnsSupport` and `enableDnsHostnames` to `true` for default behaviour; without `enableDnsHostnames`, EC2 instances don't get a public DNS name.
+
+## IPv6 in VPC
+
+AWS supports IPv6 alongside IPv4. Differences from IPv4:
+
+- AWS assigns IPv6 from a `/56` to each VPC; subnets are `/64`.
+- No NAT for IPv6 — every IPv6 address is globally routable. Use an **Egress-only Internet Gateway** to allow outbound IPv6 while blocking unsolicited inbound (the IPv6 analogue of a NAT gateway).
+- IPv6-only subnets exist (no IPv4) for very large workloads exhausting RFC1918 ranges.
+
+## Site-to-site VPN and Direct Connect
+
+When you need to connect on-prem networks to your VPC:
+
+- **AWS Site-to-Site VPN** — IPsec tunnels between an AWS **Virtual Private Gateway** (or Transit Gateway) and your **Customer Gateway**. Two tunnels per VPN for HA. Encrypted over the public internet. Bandwidth ~1.25 Gbps per tunnel.
+- **AWS Direct Connect** — dedicated private fibre between your data centre and an AWS Direct Connect location. 1, 10, or 100 Gbps. Lower jitter, higher throughput than VPN. Pair with a backup VPN for resilience.
+- **AWS Client VPN** — managed OpenVPN endpoint for end-user devices (laptops). Authenticates against IAM Identity Center, Active Directory, or mutual certs.
+
+## VPC Peering — point-to-point connectivity
+
+A **VPC peering connection** allows direct private IP routing between two VPCs (same or different accounts, same or different Regions). Key constraints:
+
+- **No transitive routing** — A↔B and B↔C does not give A↔C.
+- CIDRs must not overlap.
+- You must update route tables in both VPCs to send the peer's CIDR to the peering connection.
+
+For 3+ VPCs, use **Transit Gateway** — a managed hub that handles transitive routing.
+
+## VPC Flow Logs and Traffic Mirroring
+
+For visibility:
+
+- **VPC Flow Logs** — metadata about IP traffic (5-tuple + bytes + ACCEPT/REJECT). Sent to CloudWatch Logs or S3. Use cases: debug connectivity issues, audit traffic patterns, analyse cross-AZ data transfer cost.
+- **VPC Traffic Mirroring** — copy full packet content from an ENI to a mirror target (typically an NLB fronting your IDS/packet analyser). Use case: deep-packet inspection, intrusion detection, threat hunting.
+
+## Cost considerations in networking
+
+Data transfer is one of AWS's quieter but largest cost categories:
+
+- Data transfer **into AWS is free**.
+- Data transfer **out to the internet** is ~$0.09/GB after the free tier.
+- Data transfer **between AZs in the same Region** is $0.01/GB each direction.
+- Data transfer **between Regions** is ~$0.02/GB.
+- VPC peering uses cross-AZ pricing if AZs differ.
+- NAT Gateway charges $0.045/GB processed.
+- Interface VPC endpoints charge per ENI-hour + per-GB processed.
+
+Cost-minimising tips: place workloads talking to each other in the same AZ where latency permits; use gateway endpoints for S3/DynamoDB instead of NAT GW; consolidate cross-AZ chatter; choose Direct Connect over heavy VPN.
+
+## AWS Global Accelerator vs CloudFront
+
+Two services that improve global latency from different angles:
+
+- **CloudFront** — content delivery network; caches HTTP/HTTPS responses at edge locations. Used for static and dynamic web content. Pay per GB transferred.
+- **AWS Global Accelerator** — anycast static IPs that route traffic over the AWS backbone to the nearest healthy regional endpoint (ALB, NLB, EC2). Used for non-HTTP protocols (gaming, IoT) and for active-active multi-region failover. Pay per hour + per GB.
+
+CloudFront for caches; Global Accelerator for non-cacheable global traffic.
+
+## Network Firewall and traffic inspection
+
+For deep packet inspection, IDS/IPS, and per-VPC traffic policy enforcement, AWS offers:
+
+- **AWS Network Firewall** — managed stateful firewall with Suricata rule support. Used between VPC and the rest of the world.
+- **AWS WAF** — L7 web filtering at ALB/CloudFront/API Gateway.
+- **AWS Shield** — DDoS protection at the edge.
+- **Third-party appliances** behind a **Gateway Load Balancer**.
+
+## DNS — Route 53 features
+
+Beyond simple A records:
+
+- **Routing policies** — simple, weighted, latency-based, geolocation, geoproximity, failover, multivalue answer.
+- **Health checks** — Route 53 monitors endpoints and removes them from DNS responses.
+- **Private hosted zones** — internal DNS for VPCs.
+- **Resolver rules** — forward queries to on-prem DNS via resolver endpoints (covered above).
+
+For multi-Region active-active, use a latency-based or weighted routing policy with health checks on each ALB.

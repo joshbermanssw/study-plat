@@ -1,0 +1,302 @@
+{
+  "unit": "COMP4347",
+  "week": 9,
+  "topic": "Client-side frameworks (continued)",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "Two siblings need to share a piece of state. The simplest correct fix is:",
+      "choices": [
+        "Use Redux",
+        "Lift the state to their nearest common ancestor and pass it down via props",
+        "Use document.body as state",
+        "Duplicate it in both"
+      ],
+      "correctIndex": 1,
+      "explanation": "Lifting state up is the cheapest, lowest-coupling solution. Reach for Context/Redux only when the sharing spans many layers."
+    },
+    {
+      "id": "q2",
+      "stem": "Why might a Context Provider cause widespread unnecessary re-renders?",
+      "choices": [
+        "Context disables memoisation",
+        "Every consumer re-renders when the value reference changes; passing a new object literal each render does this",
+        "Context is deprecated",
+        "Consumers always re-render on every keystroke"
+      ],
+      "correctIndex": 1,
+      "explanation": "Inline {a, b} as value is a new object each render. Wrap with useMemo so the reference is stable unless inputs change."
+    },
+    {
+      "id": "q3",
+      "stem": "Which is the source of truth for a controlled input?",
+      "choices": [
+        "The DOM element",
+        "React state (the value prop)",
+        "localStorage",
+        "The server"
+      ],
+      "correctIndex": 1,
+      "explanation": "Controlled means React owns the value. Each keystroke updates state which feeds back as the input's value."
+    },
+    {
+      "id": "q4",
+      "stem": "What's the best element for an interactive 'Save' control?",
+      "choices": [
+        "<div onClick>",
+        "<button type=\"button\" onClick>",
+        "<a href=\"#\" onClick>",
+        "<span tabindex=\"0\" onClick>"
+      ],
+      "correctIndex": 1,
+      "explanation": "Buttons are keyboard-focusable, fire on space/enter, and are announced as buttons. Anchors imply navigation."
+    },
+    {
+      "id": "q5",
+      "stem": "ARIA attribute aria-describedby is used to:",
+      "choices": [
+        "Hide a control",
+        "Link a control to an element that describes it (e.g. an error or help message)",
+        "Mark a region as live",
+        "Set focus order"
+      ],
+      "correctIndex": 1,
+      "explanation": "aria-describedby points to one or more IDs whose contents the AT will announce alongside the control's name and role."
+    },
+    {
+      "id": "q6",
+      "stem": "A Redux reducer must be:",
+      "choices": [
+        "Async",
+        "Pure — same inputs produce same output, no side effects",
+        "An instance method",
+        "Bound to React"
+      ],
+      "correctIndex": 1,
+      "explanation": "Reducers are deterministic transformations of state. Side effects belong in middleware (thunk, saga) or effects."
+    },
+    {
+      "id": "q7",
+      "stem": "Which is the right tool for client-side caching of server data with auto-refetch on focus?",
+      "choices": [
+        "useState",
+        "Redux only",
+        "A data-fetching library like TanStack Query or SWR",
+        "Context only"
+      ],
+      "correctIndex": 2,
+      "explanation": "Server-state libraries handle cache keys, staleness, refetch, retries, and invalidation — concerns you'd reinvent badly with useState/Redux."
+    },
+    {
+      "id": "q8",
+      "stem": "Uncontrolled inputs read their values via:",
+      "choices": [
+        "useState",
+        "refs (useRef) at submit time",
+        "Context",
+        "Redux store"
+      ],
+      "correctIndex": 1,
+      "explanation": "Uncontrolled = DOM owns the value. Use a ref to read it when needed, typically on submit."
+    },
+    {
+      "id": "q9",
+      "stem": "Which is a sound reason to NOT use Redux?",
+      "choices": [
+        "App is small with localised state and minor sharing — boilerplate cost exceeds benefit",
+        "App is large with many cross-cutting actions",
+        "You need time-travel debugging",
+        "You need middleware for analytics"
+      ],
+      "correctIndex": 0,
+      "explanation": "Redux earns its keep at scale. For small apps, useState + Context is simpler and equally correct."
+    },
+    {
+      "id": "q10",
+      "stem": "Which is the recommended way to indicate a form input is invalid for accessibility?",
+      "choices": [
+        "Color the border red only",
+        "Add aria-invalid=\"true\" and link to the error message via aria-describedby",
+        "Hide the input",
+        "Use a tooltip on hover"
+      ],
+      "correctIndex": 1,
+      "explanation": "Programmatic state (aria-invalid) and an associated message (aria-describedby) make the error perceivable to screen readers."
+    },
+    {
+      "id": "q11",
+      "stem": "Removing the focus ring with `outline: none` and providing no replacement is:",
+      "choices": [
+        "A required best practice",
+        "An accessibility violation — keyboard users lose visual focus indication",
+        "Recommended for performance",
+        "Required by HTML5"
+      ],
+      "correctIndex": 1,
+      "explanation": "Visible focus is essential for keyboard navigation. Always provide a clear alternative if you suppress the default."
+    },
+    {
+      "id": "q12",
+      "stem": "What does `role=\"alert\"` do?",
+      "choices": [
+        "Triggers a JS alert()",
+        "Causes the element's contents to be announced by screen readers immediately when they appear/change",
+        "Adds an icon",
+        "Validates the form"
+      ],
+      "correctIndex": 1,
+      "explanation": "role=\"alert\" is an implicit aria-live=\"assertive\" region for time-sensitive messages."
+    },
+    {
+      "id": "q13",
+      "stem": "WCAG AA minimum contrast for normal-sized body text is:",
+      "choices": ["2:1", "3:1", "4.5:1", "7:1"],
+      "correctIndex": 2,
+      "explanation": "Body text must hit 4.5:1 against its background. Large text (18pt or 14pt bold) needs only 3:1. AAA is 7:1."
+    },
+    {
+      "id": "q14",
+      "stem": "Why prefer Context over prop-drilling 6+ levels deep?",
+      "choices": [
+        "Performance",
+        "Maintainability — Context broadcasts to a subtree without each intermediate component needing to know about the prop",
+        "Smaller bundle",
+        "Required by React"
+      ],
+      "correctIndex": 1,
+      "explanation": "Deep drilling couples every layer to the data shape. Context exposes the value where needed only."
+    },
+    {
+      "id": "q15",
+      "stem": "A modal dialog opens. Best a11y practice is to:",
+      "choices": [
+        "Do nothing",
+        "Move focus into the dialog, trap focus inside, and restore focus to the trigger on close",
+        "Hide the rest of the page with display:none",
+        "Disable the keyboard"
+      ],
+      "correctIndex": 1,
+      "explanation": "Focus management is the heart of accessible modals: enter, trap, restore on close, and Escape to dismiss."
+    },
+    {
+      "id": "q16",
+      "stem": "A Context value `{ theme, setTheme }` is recreated each render. Best fix?",
+      "choices": [
+        "Move it outside the component",
+        "Wrap it with useMemo({ theme, setTheme }, [theme, setTheme])",
+        "Add useCallback to both",
+        "There's no problem"
+      ],
+      "correctIndex": 1,
+      "explanation": "useMemo on the value object stabilises the reference so consumers don't re-render when nothing they care about changed."
+    },
+    {
+      "id": "q17",
+      "stem": "Which is true about `<label htmlFor=\"email\">Email</label><input id=\"email\" />`?",
+      "choices": [
+        "Cosmetic only",
+        "Associates the label so clicking focuses the input AND screen readers announce 'Email' as the input's accessible name",
+        "Forbidden in JSX",
+        "Affects validation"
+      ],
+      "correctIndex": 1,
+      "explanation": "Labels carry both UX (click-target expansion) and accessibility (accessible name) benefits."
+    },
+    {
+      "id": "q18",
+      "stem": "Why is validating on blur often preferred over validating on every keystroke?",
+      "choices": [
+        "Less code",
+        "It avoids showing errors while the user is still typing and reduces re-render churn",
+        "Required by HTML",
+        "It is faster"
+      ],
+      "correctIndex": 1,
+      "explanation": "Mid-typing errors feel hostile. Blur (and submit) signal 'I'm done with this field', when feedback is welcome."
+    },
+    {
+      "id": "q19",
+      "stem": "Svelte differs from React in that:",
+      "choices": [
+        "It is server-side only",
+        "It compiles components to imperative JS at build time with no virtual DOM at runtime",
+        "It uses jQuery internally",
+        "It cannot do components"
+      ],
+      "correctIndex": 1,
+      "explanation": "Svelte shifts work to compile time. The output is small, fast surgical DOM updates without a vDOM diff."
+    },
+    {
+      "id": "q20",
+      "stem": "Best place for a 'skip to main content' link?",
+      "choices": [
+        "Footer",
+        "First focusable element on the page, visible on focus",
+        "Hidden permanently",
+        "Inside the main content"
+      ],
+      "correctIndex": 1,
+      "explanation": "Keyboard/screen-reader users tab once and skip past repeated navigation. Visibility on focus is enough."
+    },
+    {
+      "id": "q21",
+      "stem": "Which is correct about Vue 3 reactivity?",
+      "choices": [
+        "It uses class components",
+        "Proxies wrap reactive state so reads track dependencies and writes notify subscribers",
+        "It uses the React reconciler",
+        "It cannot batch updates"
+      ],
+      "correctIndex": 1,
+      "explanation": "Vue 3 uses Proxy-based reactivity. Each property read inside an effect registers the dependency."
+    },
+    {
+      "id": "q22",
+      "stem": "What problem does React Hook Form solve?",
+      "choices": [
+        "Routing",
+        "Provides form state, validation, and submission with uncontrolled inputs to minimise re-renders",
+        "Adds styling",
+        "Adds server-side rendering"
+      ],
+      "correctIndex": 1,
+      "explanation": "RHF registers uncontrolled inputs and only re-renders when needed (errors, watch). Excellent perf for big forms."
+    },
+    {
+      "id": "q23",
+      "stem": "A Context Provider re-rendering every input keystroke is best fixed by:",
+      "choices": [
+        "Removing Context",
+        "Splitting Context into stable and frequently-changing parts, or memoising the value",
+        "Using class components",
+        "Using innerHTML"
+      ],
+      "correctIndex": 1,
+      "explanation": "Two contexts (auth, theme) instead of one mega-context limits the blast radius of unrelated updates."
+    },
+    {
+      "id": "q24",
+      "stem": "A button with only an icon needs:",
+      "choices": [
+        "Nothing extra",
+        "An accessible name via aria-label or visually-hidden text",
+        "A tooltip only",
+        "A title attribute alone (sufficient)"
+      ],
+      "correctIndex": 1,
+      "explanation": "Screen readers need a text name. aria-label or visually-hidden text inside the button provides it; title alone is unreliable."
+    },
+    {
+      "id": "q25",
+      "stem": "Which is correct about Angular vs React on architecture?",
+      "choices": [
+        "Both are libraries",
+        "Angular is an opinionated full framework (DI, routing, forms, RxJS); React is a view library leaving cross-cutting choices to you",
+        "Angular has no TypeScript support",
+        "React enforces module structure"
+      ],
+      "correctIndex": 1,
+      "explanation": "Angular ships a complete stack and conventions. React picks the rendering battle and lets the ecosystem fill the rest."
+    }
+  ]
+}

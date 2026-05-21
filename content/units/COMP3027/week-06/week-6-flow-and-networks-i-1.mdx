@@ -18,7 +18,7 @@ fileContentType: application/pdf
 Lecture 6 introduces network flow theory — the first "reduce a harder problem to an easier algorithmic primitive" technique. Flow network = directed G with capacities c(e), source s, sink t.
 
 - **s-t flow:** f(e) ≤ c(e) (capacity) and Σ in = Σ out at every internal vertex (conservation); value |f| = net flow out of s.
-- **s-t cut (A, B):** s ∈ A, t ∈ B; capacity cap(A, B) = Σ_{e out of A} c(e) (outgoing edges only).
+- **s-t cut (A, B):** s ∈ A, t ∈ B; capacity cap(A, B) = Σ_&#123;e out of A&#125; c(e) (outgoing edges only).
 - **Flow-value lemma:** for any flow f and any cut (A, B), value f = net flow across (A, B). Corollary: |f| ≤ cap(A, B) for every flow / cut pair (weak duality).
 - **Max-Flow Min-Cut (strong duality):** max s-t flow value = min s-t cut capacity. Proved constructively via Ford-Fulkerson on the residual graph: augment along an s-t path while one exists; on termination the set A reachable from s in G_f certifies a cut of capacity = |f|.
 - **Ford-Fulkerson runtime:** O(mF) for integer capacities (F = max flow value); Edmonds-Karp (BFS augmenting paths) gives O(m^2 n) and integrality of the optimal flow.

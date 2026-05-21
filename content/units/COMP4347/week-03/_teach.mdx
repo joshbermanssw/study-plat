@@ -1,0 +1,804 @@
+---
+title: "Week 3 — CSS Layout + Interactive JS (DOM and events)"
+unit: COMP4347
+week: 3
+type: overview
+status: done
+---
+
+## What this week is really about
+
+Week 3 is a **two-half week**. The first half finishes CSS by teaching you **layout** — how to control where every box sits on the page, and how to make that layout adapt to phones, tablets, and ultrawide monitors. The second half flips to JavaScript and asks how the page changes **after** it loads — how scripts read the HTML tree, edit it, and react to clicks, submits, and keystrokes.
+
+Ori frames the whole lecture around two big choices.
+
+**For layout:** every CSS layout you'll ever write is either **coordinate-based** ("X sits 30px from the left of its parent") or **flow-based** ("X stacks rightwards after its siblings"). One uses the `position` property; the other uses `display`. Most real layouts mix both.
+
+**For interactivity:** the browser parses HTML into a **tree** called the **DOM**. JavaScript can read that tree, change it, and listen for **events** — signals fired when the user does something. Three operations cover almost everything: select a node, edit a node, and bind a handler that runs when something happens.
+
+This is also the week where the two languages start to overlap. CSS selectors come back as the argument to `document.querySelector`. Classes come back as `element.classList`. **The mental shift is from "writing markup" to "manipulating a live document".**
+
+## Layout, defined
+
+**The layout of an element is where that object sits on a webpage, especially relative to other objects.** That's the whole concept. Everything in this half of the lecture is one tool for expressing that "where".
+
+Ori lists four typical layout requirements:
+
+- "X must be in the centre of its parent Y, horizontally."
+- "X must start 30px from the left of its parent Y."
+- "The height of X must take up a third of the height of its parent Y."
+- "The children of Y must each have equal width and together fill all the available space."
+
+These look simple, and they hide a trap. **"X is in the centre" is ambiguous.** Does X *start* at the centre of Y, or is X's centre at the centre of Y? Those are different layouts, and the CSS to express them is different. **Be precise about which edge or point you're aligning.** When a layout bug looks impossible, this is usually the question you forgot to answer.
+
+## Coordinate-based vs flow-based layout
+
+Every CSS layout falls into one of two families. **Knowing which family you're in tells you which properties to reach for.**
+
+```text
+Coordinate-based                    Flow-based
+─────────────────                  ───────────
+"30px from the left"                "after the previous element"
+"50% of the parent"                 "wrap when you run out of room"
+Uses CSS  position                  Uses CSS  display
+top / bottom / left / right         flex, grid, block, inline
+```
+
+**Coordinate-based** arranges elements by distance — usually relative to an ancestor — using exact pixel measurements or percentages. The tool is the `position` property and the four side offsets (`top`, `bottom`, `left`, `right`). Use it when something needs to **sit at a fixed spot**, like a tooltip pinned to a button, or a sticky header.
+
+**Flow-based** arranges elements by relationship and order. Each element's position depends on what comes before it in the HTML. The tool is the `display` property — `block`, `inline`, `flex`, `grid`. Use it when you want the browser to **figure out the spacing for you**, which is most of the time.
+
+**The two mix freely.** A typical app shell uses a flex container for the toolbar (flow), with one item inside the toolbar using `position: absolute` for a notification badge (coordinate). The container is in charge of stacking; the badge breaks out of the stack to sit on top of an icon.
+
+## Coordinate-based layout and the `position` property
+
+To position an element X with coordinates, you set some combination of `top`, `bottom`, `left`, and `right`. But **`top: 10px` means nothing on its own** — 10px from *what*? The answer depends on `position`.
+
+There are five values of `position`. The first two are the ones you'll write most often.
+
+**`position: static`** — the default. Side offsets are ignored. The element sits wherever flow puts it.
+
+**`position: relative`** — the element starts where flow would have put it, then the side offsets nudge it from there.
+
+```css
+#example {
+  position: relative;
+  top: 10px;
+  left: 10px;
+}
+```
+
+This says: "shift the element 10px down and 10px to the right of where it would have been." The element still **takes up its original space in the flow** — siblings don't move to fill the gap. For `position: relative`, `top` supersedes `bottom` and `left` supersedes `right` when both are set.
+
+**`position: absolute`** — the element is **removed from the flow entirely**. Side offsets are measured from the **closest ancestor with a `position` value** other than `static`. If no such ancestor exists, the offsets are measured from the `<html>` element.
+
+```text
+parent { position: relative; left: 100px; }
+  └── child { position: absolute; left: 50px; }   → child sits 150px from window
+```
+
+That nesting trick — **set `position: relative` on the parent so children can `position: absolute` themselves within it** — is the single most common positioning pattern on the web. Tooltips, badges, dropdowns, modals all use it.
+
+**`position: fixed`** — like absolute, but measured from the **viewport**, not an ancestor. The element stays in place when the user scrolls. Use it for sticky headers, floating action buttons, cookie banners.
+
+**`position: sticky`** — a hybrid. The element behaves like `relative` until it would scroll out of view, then it behaves like `fixed`. Use it for section headers that pin to the top of the screen as you scroll through a long list.
+
+**Combining `top` with `bottom` (or `left` with `right`) auto-sets the size.** If you set both `top: 0` and `bottom: 0` on an absolutely positioned element, its height stretches to fill the parent — no `height` needed.
+
+### Overlap and `z-index`
+
+Coordinate-based layouts can overlap. When two elements sit on top of each other, the **z-index** property decides which one is visible. **Higher z-index draws on top.**
+
+```css
+.modal-overlay  { position: fixed; z-index: 10; }
+.modal-content  { position: fixed; z-index: 11; }
+```
+
+z-index only applies to elements with a non-static `position`. A bare `<div>` with `z-index: 999` does nothing.
+
+## Hiding elements: three options that differ in subtle ways
+
+Sometimes you need an element gone. There are **three different CSS ways to hide one**, and choosing the wrong one is a classic source of bugs.
+
+| CSS | Takes space? | Interactive? |
+|---|---|---|
+| `display: none` | No | No |
+| `visibility: hidden` | Yes | No |
+| `opacity: 0` | Yes | **Yes** |
+
+**`display: none`** removes the element from the layout entirely. Siblings shift up to fill the gap. The element can't be clicked, can't be focused, isn't read by screen readers.
+
+**`visibility: hidden`** hides the pixels but keeps the box. Layout is unchanged, but the element can't be clicked.
+
+**`opacity: 0`** makes the element fully transparent. Layout is unchanged, **and the element is still interactive** — invisible buttons are a notorious accessibility trap. If you've ever clicked something you couldn't see, this is probably why.
+
+The exam answer: if you're toggling something on and off (a dropdown, a tab pane), prefer `display: none`. Reserve `opacity` for fades and `visibility` for the rare case where you need to reserve the space.
+
+## Flow-based layout 1: Flexbox
+
+**Flexbox is one-dimensional layout** — a single row or a single column of items. You make any element a flex container by setting `display: flex`. Its direct children become **flex items** that lay out along a **main axis**.
+
+```css
+.toolbar {
+  display: flex;
+  flex-direction: row;     /* main axis is horizontal — the default */
+}
+
+.column {
+  display: flex;
+  flex-direction: column;  /* main axis is vertical */
+}
+```
+
+**There are always two axes.** Whichever one `flex-direction` picks is the **main axis**. The perpendicular one is the **cross axis**. Almost every flex property aligns items on one axis or the other.
+
+```text
+flex-direction: row                  flex-direction: column
+┌───┬───┬───┬───┐                    ┌───┐
+│ 1 │ 2 │ 3 │ 4 │  → main axis       │ 1 │
+└───┴───┴───┴───┘                    ├───┤
+        ↓ cross axis                 │ 2 │
+                                     ├───┤
+                                     │ 3 │  ↓ main axis
+                                     └───┘
+                                       → cross axis
+```
+
+### Sizing flex items: `flex`, `flex-basis`, `flex-grow`, `flex-shrink`
+
+A flex item can have an **absolute size** (`width: 200px`) or a **flex size** that automatically fills the available space. The flex sizing is what makes layout responsive without media queries.
+
+**`flex: 1`** says "grow on the main axis to fill the available space." If three siblings all have `flex: 1`, they each get one-third. If one has `flex: 2` and the others `flex: 1`, the larger one gets 50% and the others 25% each. The numbers are ratios, not pixels.
+
+```css
+.row > .item { flex: 1; }     /* each takes 1 / total share */
+.row > .hero { flex: 2; }     /* this one is twice as wide */
+```
+
+`flex: 1` is shorthand for `flex-grow: 1` (when used with a single argument). The full triple is `flex: <grow> <shrink> <basis>`.
+
+**`flex-basis`** is the **initial size** the browser tries to give the item before any growing or shrinking. `flex-basis: 20%` means "start at 20% of the container's main-axis size."
+
+**`flex-grow`** is how aggressively the item should claim extra space when there's room left over. `0` means "don't grow"; `1` means "grow proportionally with siblings."
+
+**`flex-shrink`** is the mirror image: how aggressively to give space back when the row would overflow. `0` means "I refuse to shrink"; `1` is the default.
+
+A picture helps. With three items of `flex-basis: 20%` in a 600px container, the basis adds up to 360px, leaving 240px of slack. If they all have `flex-grow: 1`, each gets an extra 80px and ends up at 200px wide. If only one has `flex-grow: 1`, it absorbs all 240px and the others stay at 120px.
+
+### Wrapping
+
+By default a flex container puts all items on a single line, even if that means they overflow. Set `flex-wrap: wrap` and the items move to a new line in the cross direction when they run out of room. Combined with `flex-basis`, this is how you build responsive grids without writing media queries.
+
+```css
+.gallery {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+.gallery > .card {
+  flex: 1 1 240px;   /* grow, shrink, basis 240px */
+}
+```
+
+Each card starts at 240px and grows to fill the row. When the row can't fit any more, the next card wraps to a new line. **Resize the window and the layout reshapes itself.**
+
+### Alignment: `justify-content`, `align-items`, `align-content`
+
+These three properties are the most asked-about in exams because their names sound the same. Keep them straight:
+
+- **`justify-content`** positions items along the **main axis** (the one `flex-direction` picks).
+- **`align-items`** positions items along the **cross axis** (the perpendicular one).
+- **`align-content`** positions whole stacks (entire wrapped rows) along the cross axis. Only matters when `flex-wrap: wrap` produced multiple rows.
+
+```css
+.row {
+  display: flex;
+  justify-content: space-between;   /* spread items along main axis */
+  align-items: center;              /* centre each item on cross axis */
+}
+```
+
+Common `justify-content` values: `flex-start`, `flex-end`, `center`, `space-between`, `space-around`, `space-evenly`. Common `align-items` values: `stretch` (default), `flex-start`, `flex-end`, `center`, `baseline`.
+
+**The classic "centre this thing both ways" recipe:**
+
+```css
+.centred {
+  display: flex;
+  justify-content: center;   /* horizontal */
+  align-items: center;       /* vertical */
+}
+```
+
+Two lines, no margins, works regardless of content size. This pattern is the reason flexbox is a course-staple.
+
+## Flow-based layout 2: CSS Grid
+
+**Grid is like flex, but two-dimensional.** Where flex stacks items along one axis, grid lays out rows **and** columns simultaneously. Where flex sizes items based on their own basis/grow, grid uses a **template** the container declares up front.
+
+```css
+.dashboard {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  grid-template-rows: auto 1fr auto;
+  gap: 16px;
+}
+```
+
+That says: two columns (a fixed 240px sidebar, then the rest of the width as `1fr` — one fraction of the leftover space), and three rows (header sized to content, body taking the leftover, footer sized to content). The `gap` adds 16px between every cell.
+
+**`fr` is the grid equivalent of `flex-grow`.** It means "one fraction of the leftover space after fixed sizes are accounted for." `grid-template-columns: 1fr 2fr 1fr` gives the middle column twice as much room as each side column.
+
+**`repeat()` saves typing for repetitive templates.**
+
+```css
+.gallery { grid-template-columns: repeat(4, 1fr); }
+.gallery { grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); }
+```
+
+The second line is the responsive recipe — "as many 240px-or-bigger columns as fit." Resize the window and the column count changes automatically.
+
+### Placing items: span, areas
+
+By default items fill the grid cells in order. You can place an item explicitly with `grid-column` and `grid-row`:
+
+```css
+.hero { grid-column: 1 / span 2; grid-row: 1 / 2; }
+```
+
+That makes `.hero` occupy two columns starting at column 1, in the first row.
+
+For complex layouts, **named areas** are clearer than indices:
+
+```css
+.dashboard {
+  display: grid;
+  grid-template-columns: 240px 1fr;
+  grid-template-areas:
+    "nav  header"
+    "nav  main"
+    "nav  footer";
+}
+.sidebar { grid-area: nav; }
+.topbar  { grid-area: header; }
+.content { grid-area: main; }
+.footer  { grid-area: footer; }
+```
+
+You can **see the layout** in the CSS itself. Move the strings around to rearrange the page.
+
+### Flex or grid? The decision rule
+
+**Flex for one dimension, grid for two.** A row of items that wraps? Flex. A page shell with header/sidebar/main/footer that line up in both directions? Grid. The two compose: a grid cell can be a flex container, and a flex item can be a grid container.
+
+## Responsive design: media queries
+
+Different screens want different layouts. A three-column dashboard on a desktop should become a single stacked column on a phone. **Media queries are CSS's mechanism for applying different rules in different conditions.**
+
+A media query is a CSS selector that targets **device features or browser window states**. The common ones:
+
+- **`min-width`** / **`max-width`** — viewport width, in CSS pixels.
+- **`orientation: portrait`** / **`orientation: landscape`** — taller than wide vs the reverse.
+- **`hover: hover`** / **`hover: none`** — does the device have a hover-capable pointer?
+- **`pointer: fine`** / **`pointer: coarse`** — mouse vs touchscreen.
+
+```css
+.layout { display: grid; grid-template-columns: 240px 1fr; }
+
+@media (max-width: 720px) {
+  .layout { grid-template-columns: 1fr; }   /* single column on phones */
+}
+```
+
+**The mobile-first approach** writes the small-screen styles as the default, then layers on larger styles with `min-width` queries. This tends to be cleaner because the base styles work everywhere and the queries only add complexity.
+
+```css
+.layout { grid-template-columns: 1fr; }            /* phones */
+@media (min-width: 720px)  { .layout { grid-template-columns: 1fr 1fr; } }     /* tablets */
+@media (min-width: 1024px) { .layout { grid-template-columns: 240px 1fr; } }   /* desktops */
+```
+
+### Common breakpoints
+
+There's no single right answer, but the W3Schools-style ranges Ori references are typical:
+
+- **Extra small (mobile)** — up to 576px.
+- **Small (large mobile / small tablet)** — 576–768px.
+- **Medium (tablet)** — 768–992px.
+- **Large (small desktop)** — 992–1200px.
+- **Extra large (desktop)** — 1200px+.
+
+**Pick breakpoints based on where your design breaks, not based on devices.** A "tablet" breakpoint that's tied to a specific iPad will be wrong by the time the next iPad ships.
+
+### Alternative: CSS functions `min()`, `max()`, `clamp()`
+
+When the issue isn't device type but a **continuous width constraint**, CSS functions are cleaner than media queries:
+
+```css
+.card { width: min(400px, 90%); }              /* never bigger than 400, never overflow */
+.heading { font-size: clamp(1rem, 2.5vw, 2rem); }   /* min, ideal, max */
+```
+
+`clamp(MIN, IDEAL, MAX)` scales smoothly between two bounds, so text gets bigger as the viewport grows but never below `MIN` or above `MAX`. **One line of CSS replaces three media queries.**
+
+## Relative units for responsive sizing
+
+Pick the right unit and a lot of responsive work disappears.
+
+- **`px`** — absolute screen pixels. Fixed regardless of context.
+- **`%`** — relative to the parent's same property.
+- **`em`** — relative to the **current element's** font-size.
+- **`rem`** — relative to the **root** (`<html>`) font-size. The one to reach for when you want consistent sizing.
+- **`vw`** / **`vh`** — 1% of the viewport width / height. Useful for hero sections.
+
+**Why prefer `rem` over `px` for font-size?** Users can change the default font-size in their browser, and `rem` scales with that preference. `px` doesn't. Sites built in `px` stay tiny when a user enlarges defaults — a quiet accessibility failure.
+
+## The DOM: HTML as a tree
+
+That's the CSS half done. The JS half starts with the same idea Week 2 introduced: **every HTML document is a tree.**
+
+```text
+                       <body>
+            ┌─────────────┼──────────────┐
+          <p>          <h1>           <div>
+        ┌───┴───┐                       │
+       text  <strong>                  <p>
+              │                  ┌─────┴─────┐
+            text                text       <span>
+                                              │
+                                            text
+```
+
+**The DOM (Document Object Model) is an API for representing this tree to JavaScript.** The browser parses your HTML into a tree of objects; JS reads and edits those objects; the page updates without a reload. The tree is the **single source of truth** — JS sees the tree, not your `.html` file.
+
+The vocabulary from Week 2 carries over: **parent, child, sibling, descendant, ancestor.** CSS selectors talk in those words and so does DOM traversal.
+
+The root is `document`. From there, `document.documentElement` is `<html>`, `document.head` is `<head>`, and `document.body` is `<body>`.
+
+### When does the script run?
+
+Here's a gotcha worth burning in. A `<script>` tag runs **as soon as the browser parses it**. If you put a `<script>` before a `<p>` in the HTML and the script tries to read that `<p>`, you'll get `null` — the paragraph doesn't exist in the DOM yet.
+
+```html
+<script>
+  const p = document.getElementById("demo");
+  console.log(p);   // null — <p> hasn't been parsed yet
+</script>
+
+<p id="demo">Hello</p>
+```
+
+Two fixes. **Move the script to the bottom of `<body>`** so the elements exist before the script runs. Or **wait for the `DOMContentLoaded` event**, which fires once the whole document is parsed:
+
+```js
+document.addEventListener("DOMContentLoaded", () => {
+  const p = document.getElementById("demo");
+  console.log(p);   // works
+});
+```
+
+`window.onload` is a related but slower signal — it waits for **everything**, including images and stylesheets. Use `DOMContentLoaded` unless you specifically need the images measured.
+
+## Reading the DOM: selecting elements
+
+To change something, you have to find it first. There are two families of selection methods: **single-node queries** and **list queries**.
+
+### Single-node queries
+
+| Function | What it returns |
+|---|---|
+| `document.getElementById(id)` | The element with that id, or `null`. |
+| `document.querySelector(selector)` | The first element matching a CSS selector, or `null`. |
+| `element.querySelector(selector)` | The first matching **descendant** of `element`. |
+
+`querySelector` takes a regular CSS selector — exactly what you learned in Week 2. `#id`, `.class`, `tag`, descendant combinators, attribute selectors, pseudo-classes, all of it.
+
+```js
+document.getElementById("submit");
+document.querySelector("#submit");                       // same thing
+document.querySelector(".card .title");                  // descendant
+document.querySelector("input[type='email']");           // attribute
+document.querySelector("li:nth-child(3)");               // pseudo-class
+```
+
+**Use `querySelector` by default.** It's one method to remember, it accepts the full CSS selector syntax, and it composes with your existing knowledge.
+
+### List queries
+
+| Function | What it returns |
+|---|---|
+| `document.getElementsByClassName(name)` | A **live** `HTMLCollection` of elements with that class. |
+| `document.getElementsByTagName(tag)` | A live `HTMLCollection` of elements with that tag. |
+| `document.getElementsByName(name)` | A `NodeList` of elements with that `name` attribute (forms). |
+| `document.querySelectorAll(selector)` | A **static** `NodeList` of every matching element. |
+
+The same methods exist on individual elements (`element.querySelectorAll(...)`) and restrict the search to descendants.
+
+**The live-vs-static distinction matters.** A live `HTMLCollection` auto-updates when the DOM changes — add a matching element, the collection grows by one. A static `NodeList` is a snapshot taken at the moment you called the method. The classic bug:
+
+```js
+const lis = document.getElementsByTagName("li");   // LIVE
+for (let i = 0; i < lis.length; i++) {
+  lis[i].remove();      // skips every other item — the collection shrinks as we remove
+}
+
+const lis2 = document.querySelectorAll("li");      // static
+for (const li of lis2) {
+  li.remove();          // works as expected
+}
+```
+
+`NodeList` can be iterated with `for...of` and has `.forEach`. To use array methods (`.map`, `.filter`), spread it: `[...nodes]` or `Array.from(nodes)`.
+
+## Essential node properties
+
+Once you've selected a node, these properties let you walk the tree or read its data.
+
+| Property | What it gives you |
+|---|---|
+| `parentNode` / `parentElement` | The parent. `parentElement` returns `null` if the parent isn't an element. |
+| `childNodes` | A `NodeList` of all children, **including text and comment nodes.** |
+| `children` | An `HTMLCollection` of element children only. |
+| `firstChild` / `lastChild` | First and last child (any type). |
+| `firstElementChild` / `lastElementChild` | First and last element child. |
+| `nextSibling` / `previousSibling` | Adjacent nodes (any type). |
+| `nextElementSibling` / `previousElementSibling` | Adjacent elements. |
+| `nodeName` | Tag name in uppercase (`"DIV"`, `"P"`) or `"#text"` for text nodes. |
+| `nodeType` | `1` for element, `3` for text, `8` for comment. |
+| `attributes` | A collection of the node's attributes. |
+
+**Prefer the `*Element*` variants** in application code. The plain versions return text nodes that mostly contain whitespace from your indentation, which is almost never what you want.
+
+## innerText vs innerHTML vs textContent
+
+There are three ways to read or write the text content of an element, and they differ in important ways.
+
+**`innerHTML`** collects all the HTML inside the element — tags and all — as a string. Reading it gives you the markup. Writing it **re-parses the string as HTML** and replaces the element's contents.
+
+**`innerText`** builds up all the visible text, excluding tags. It's CSS-aware — `display: none` content is skipped.
+
+**`textContent`** is the plain-DOM version of innerText. It returns every character of every text node inside the element, regardless of CSS. It's faster than innerText and is the one to use most of the time.
+
+```html
+<p id="demo">Hello <strong>world</strong></p>
+```
+
+```js
+const p = document.getElementById("demo");
+p.innerHTML;     // "Hello <strong>world</strong>"
+p.innerText;     // "Hello world"
+p.textContent;   // "Hello world"
+```
+
+**The danger with `innerHTML = string`:** if the string contains HTML, it's parsed and inserted. If the string came from user input, you've just executed whatever HTML (and event handlers) that user wanted. **Use `textContent` for any data you didn't write yourself.** The exam wording for this is **XSS — cross-site scripting** — and Week 11 covers it in detail.
+
+## Adding to the DOM
+
+There are two ways to insert new HTML into the page. **The string-based way is fast to type but discouraged.**
+
+```js
+const list = document.getElementById("todos");
+list.innerHTML += `<li>${userInput}</li>`;    // DANGEROUS if userInput is untrusted
+```
+
+Why is this discouraged? Three reasons:
+
+1. **It gets messy.** Building HTML by string concatenation produces hard-to-read code.
+2. **It's hard to ensure the HTML is valid.** A missing quote or unclosed tag fails silently.
+3. **It can be hacked.** If `userInput` is `<img src=x onerror="steal()">`, the script runs.
+
+**The recommended way is programmatic construction** — build the elements one at a time with JS functions:
+
+```js
+const li = document.createElement("li");
+li.textContent = "Walk the dog";
+li.classList.add("todo");
+li.dataset.id = "42";
+list.appendChild(li);
+```
+
+This is cleaner, less likely to produce invalid HTML, and **safe by default** — `textContent` doesn't parse HTML, so no XSS.
+
+### Node insertion methods
+
+| Method | What it does |
+|---|---|
+| `parent.appendChild(node)` | Adds `node` as the last child of `parent`. |
+| `parent.insertBefore(node, reference)` | Inserts `node` before `reference` in `parent`. |
+| `parent.replaceChild(newNode, oldNode)` | Swaps `oldNode` for `newNode`. |
+| `parent.removeChild(node)` | Removes `node` from `parent`. |
+| `node.remove()` | Removes `node` from its parent. (Simpler — no parent reference needed.) |
+
+Newer methods are easier still:
+
+```js
+parent.append(node1, node2, "and a string");   // append any number; strings become text nodes
+parent.prepend(node);                          // insert as first child
+oldNode.replaceWith(newNode);
+parent.replaceChildren(...newKids);            // clear and refill in one operation
+```
+
+**Nesting works the way you'd expect** — you can build a subtree of elements and append the root once:
+
+```js
+const card = document.createElement("div");
+card.classList.add("card");
+
+const title = document.createElement("h2");
+title.textContent = "Hello";
+card.appendChild(title);
+
+const body = document.createElement("p");
+body.textContent = "World";
+card.appendChild(body);
+
+document.body.appendChild(card);
+```
+
+Wrap repeated construction in a function to keep the code clean — `createCard(title, body)` is reusable; building each card inline is not.
+
+## Modifying styles
+
+Two ways to change how an element looks from JavaScript.
+
+**The direct way: write to `element.style.*`.**
+
+```js
+const tag = document.getElementById("specificTag");
+tag.style.backgroundColor = "#FFFF00";
+tag.style.borderWidth = "3px";
+```
+
+This writes inline styles, which have very high specificity. It works but it's noisy and it scatters styling decisions across your JS.
+
+**The better way: toggle classes and keep the styles in CSS.**
+
+```js
+tag.className = "highlighted";            // replaces all classes
+tag.classList.add("highlighted");         // adds one
+tag.classList.remove("highlighted");      // removes
+tag.classList.toggle("highlighted");      // flips
+```
+
+`classList` is the modern API. Use `add`, `remove`, `toggle`, `contains`, and `replace`. It never duplicates classes and never leaves stray whitespace, both of which `className += " foo"` happily does.
+
+## Events: signals you can listen to
+
+**An event is a signal triggered by user action or browser activity.** Clicks, key presses, form submissions, the page finishing loading — anything that "happens" generates an event. An **event handler** is a function you register so that it runs every time a particular event fires.
+
+```js
+button.addEventListener("click", (event) => {
+  console.log("clicked!", event.target);
+});
+```
+
+That hooks `button` so that every click runs your function. The function receives an **event object** as its argument, with information about what happened — which element was clicked, which key was pressed, the mouse coordinates, etc.
+
+### Common events
+
+| Event | Fires on | Triggered when |
+|---|---|---|
+| `load` | `window` | The page is fully loaded — HTML parsed, images and styles fetched, layout computed. |
+| `DOMContentLoaded` | `document` | The HTML is parsed, but external resources may still be loading. Faster than `load`. |
+| `click` | Most elements | Mouse down + mouse up complete on the same element. |
+| `submit` | `<form>` | The user pressed the submit button. |
+| `change` | `<input>`, `<select>` | The input lost focus with a changed value (for text), or the selected option changed. |
+| `input` | `<input>`, `<textarea>` | Every single keystroke that changes the value. |
+| `keyup` / `keydown` | Any focused element | A key was released / pressed. |
+| `mouseenter` / `mouseleave` | Any element | The mouse pointer crossed the boundary. |
+| `focus` / `blur` | Form fields | The element gained / lost focus. |
+
+The event object has a few properties worth knowing immediately:
+
+- **`event.target`** — the element the event originated on. For a click, the element clicked.
+- **`event.currentTarget`** — the element the handler is bound to. Same as `target` for direct listeners; different for delegated ones.
+- **`event.type`** — the event name as a string (`"click"`, `"submit"`).
+- For key events: **`event.key`** — the key character (`"Enter"`, `"a"`, `"ArrowUp"`).
+
+### Two syntaxes for registering handlers
+
+**The property syntax:**
+
+```js
+window.onload = function () { /* ... */ };
+button.onclick = function () { /* ... */ };
+```
+
+Each event has one property slot. Assigning a second handler **overwrites the first**.
+
+**The `addEventListener` syntax:**
+
+```js
+window.addEventListener("load", function () { /* ... */ });
+button.addEventListener("click", function () { /* ... */ });
+```
+
+`addEventListener` supports **multiple handlers per event** on the same element — they all fire, in attach order. It also supports options like `{ once: true }` (auto-detach after firing once) and a third phase (capture, covered below).
+
+**Prefer `addEventListener`.** The property syntax is older and a single-slot architecture causes silent bugs when two parts of the code both want to listen.
+
+## A worked example: a button that toggles a paragraph
+
+Putting the pieces together — selection, content reading, classList, and an event handler.
+
+```html
+<button id="toggle">Show details</button>
+<p id="details" class="hidden">All the secret information.</p>
+
+<style>
+  .hidden { display: none; }
+</style>
+```
+
+```js
+const btn = document.getElementById("toggle");
+const para = document.getElementById("details");
+
+btn.addEventListener("click", () => {
+  const isHidden = para.classList.toggle("hidden");
+  btn.textContent = isHidden ? "Show details" : "Hide details";
+});
+```
+
+Step by step.
+
+1. **Select the two elements** you want to interact with. Use `getElementById` because they have unique IDs.
+2. **Register a click handler** on the button with `addEventListener`.
+3. Inside the handler, **toggle the `hidden` class** on the paragraph. `classList.toggle` returns the new state — `true` if the class is now present.
+4. **Update the button label** based on the new state.
+
+Notice what's not in the code: no inline styles, no `innerHTML`, no `style.display = "none"`. The CSS owns the visual rule; the JS only flips a class. This separation is the recommended pattern.
+
+## Event bubbling, capture, and `stopPropagation`
+
+When you click a deeply-nested element, the event doesn't just fire on that element — **it travels through the whole ancestor chain**. There are three phases:
+
+1. **Capture** — the event travels from `window` down through every ancestor to the target.
+2. **Target** — the event fires on the actual element clicked.
+3. **Bubble** — the event travels back up from the target to `window`.
+
+By default, `addEventListener` fires on the **bubble** phase. Pass `{ capture: true }` as the third argument to fire on capture instead.
+
+```html
+<div id="outer">
+  <div id="inner">
+    <button id="btn">Click</button>
+  </div>
+</div>
+```
+
+```js
+outer.addEventListener("click", () => console.log("outer bubble"));
+outer.addEventListener("click", () => console.log("outer capture"), true);
+inner.addEventListener("click", () => console.log("inner bubble"));
+btn  .addEventListener("click", () => console.log("button"));
+
+// Clicking the button logs:
+//   outer capture
+//   button
+//   inner bubble
+//   outer bubble
+```
+
+**`event.stopPropagation()` halts the journey at the current phase.** Call it from a handler and no ancestor handlers will fire. Use it sparingly — it hides events from analytics, accessibility tools, and any framework-level handlers that needed them.
+
+**`event.preventDefault()` is a different lever.** It cancels the **default browser behaviour** for the event — the form submission, the link navigation, the right-click menu. It does **not** stop the event from continuing to other handlers. Stopping propagation and preventing the default are independent.
+
+```js
+form.addEventListener("submit", (e) => {
+  e.preventDefault();           // stop the page from reloading
+  sendDataViaFetch(form);
+});
+```
+
+## Event delegation: one listener for many elements
+
+**Event delegation means binding a single handler on an ancestor and letting the bubble phase route every descendant's events through it.** Instead of N listeners for N items, you have one.
+
+```html
+<ul id="todos">
+  <li data-id="1">Walk the dog <button data-action="delete">×</button></li>
+  <li data-id="2">Write essay  <button data-action="delete">×</button></li>
+  <li data-id="3">Buy milk     <button data-action="delete">×</button></li>
+</ul>
+```
+
+```js
+document.getElementById("todos").addEventListener("click", (e) => {
+  const btn = e.target.closest("button[data-action='delete']");
+  if (!btn) return;             // the click landed somewhere else inside the list
+  const id = btn.closest("li").dataset.id;
+  deleteTodo(id);
+});
+```
+
+The pattern is always: **`e.target.closest(selector)` to find the row, early-return if nothing matched, then read `dataset` for the identifier.** `closest` walks up from the element (inclusive) and returns the first ancestor that matches the selector. It's the reason delegation is robust even when the user clicks an icon inside the button.
+
+Two upsides over per-element listeners:
+
+- **It works for elements that don't exist yet.** Add a new `<li>` to the list and clicks on it just work.
+- **Lower memory footprint and a single source of truth.** All the click behaviour for the list lives in one function.
+
+The corresponding `data-*` attribute API is worth learning at the same time. **`element.dataset` mirrors `data-*` attributes as a plain object**, with kebab-case names converted to camelCase. Writing to a property writes the attribute back.
+
+```html
+<button data-user-id="42" data-action="delete">×</button>
+```
+
+```js
+btn.dataset.userId;       // "42"  — always a string
+btn.dataset.action;       // "delete"
+btn.dataset.userId = "43";   // writes data-user-id="43"
+```
+
+This is how delegated handlers find the row identifier without per-element listeners or hidden inputs.
+
+## JS extras the lecture flags
+
+Two small JavaScript features Ori calls out because they show up everywhere in event-handling code.
+
+### Arrow functions
+
+**Arrow functions are a compact syntax for defining functions.**
+
+```js
+// Traditional
+function add(a, b) { return a + b; }
+
+// Arrow — explicit body
+const add = (a, b) => { return a + b; };
+
+// Arrow — implicit return for a single expression
+const add = (a, b) => a + b;
+
+// Single-argument shorthand — no parentheses
+const double = x => x * 2;
+```
+
+Arrow functions look interchangeable with `function` expressions, but there are two real differences.
+
+**Hoisting.** A `function` declaration is hoisted — you can call it on a line before its definition. An arrow function assigned to a variable is not — calling it before the assignment throws `ReferenceError`.
+
+**`this` binding.** Inside a regular function, `this` is whatever called the function (the element on a handler, the object on a method, etc.). Inside an arrow function, `this` is whatever it was in the surrounding scope. **Arrow functions don't have their own `this`.** This matters when you write event handlers as object methods — `this` inside the arrow handler is the outer `this`, not the element that fired the event. Use `event.currentTarget` instead.
+
+### Alternative handler syntax
+
+The two ways of attaching a handler are equivalent in most code.
+
+```js
+// Property syntax — one handler per slot
+button.onclick = function (e) { /* ... */ };
+
+// addEventListener — multiple handlers, options, capture
+button.addEventListener("click", function (e) { /* ... */ });
+```
+
+The property syntax uses **the event name with `on` prefixed** (`onclick`, `onsubmit`, `onload`). The `addEventListener` syntax uses the bare event name (`"click"`, `"submit"`, `"load"`). **The two attach mechanisms coexist** — `onclick` plus an `addEventListener("click", ...)` both fire on the same click.
+
+## Common exam patterns
+
+The patterns the lecturer hints at, in priority order. Be able to do each in under three minutes.
+
+1. **Pick coordinate vs flow for a description.** "Sticky header that follows scroll" → coordinate (`position: sticky` or `fixed`). "Three cards in a row that wrap on mobile" → flow (flex with wrap). "Centre this thing both ways" → flow (flex with justify-content + align-items).
+
+2. **Explain the three ways to hide an element** and pick the right one for a scenario. Toggling a dropdown that should reclaim its space → `display: none`. A spinner that reserves its slot → `visibility: hidden`. A fade-in animation → `opacity` interpolated over time.
+
+3. **Predict where `position: absolute` measures from.** Walk up the ancestor chain to the first element with non-static `position`. If none, the `<html>` element. **Setting `position: relative` on the parent is how you anchor an absolute child.**
+
+4. **Sketch `grid-template-columns` for a given layout.** "Sidebar plus content" → `240px 1fr`. "Four equal columns" → `repeat(4, 1fr)`. "Responsive cards, min 240px each" → `repeat(auto-fill, minmax(240px, 1fr))`.
+
+5. **Justify a `flex: 1` answer.** Given three siblings with `flex: 1`, `flex: 2`, `flex: 1`, compute their share — each `1` is one fraction, total 4 fractions, so 25% / 50% / 25%.
+
+6. **Write a media query** that switches a grid from two columns to one below 720px. `@media (max-width: 720px) { .grid { grid-template-columns: 1fr; } }`. Bonus: state whether this is mobile-first or desktop-first.
+
+7. **Distinguish `innerHTML`, `innerText`, and `textContent`.** Reading: same text content with different whitespace rules. Writing `innerHTML` parses HTML; writing `textContent` does not. **The XSS risk only exists with `innerHTML`.**
+
+8. **Read a CSS selector and write the matching `querySelector` call.** `.card .title` → `document.querySelector(".card .title")`. The selector syntax is unchanged from CSS.
+
+9. **Trace event bubbling and capture order.** Given handlers on the window, an outer div, an inner div, and a button, list the firing order when the button is clicked. Capture goes window-down, bubble goes button-up.
+
+10. **Spot the `event.target` vs `event.currentTarget` bug** in a delegated handler. The icon inside the button vs the button itself. Fix with `closest`.
+
+11. **Live vs static collections.** `getElementsByClassName` returns live; `querySelectorAll` returns a static snapshot. The exam loves "what does the iteration print" questions that hinge on which one was used and whether the loop mutated the DOM.
+
+12. **Convert a string-based DOM insertion to programmatic construction.** Given `list.innerHTML += "<li>" + name + "</li>"`, rewrite using `createElement`, `textContent`, and `appendChild`. Explain why it's safer (XSS) and cleaner.

@@ -1,0 +1,187 @@
+{
+  "unit": "COMP4349",
+  "week": 2,
+  "topic": "Cloud Storage",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "Which AWS storage service is a distributed object store with a flat bucket+key namespace?",
+      "choices": ["EBS", "EFS", "S3", "FSx"],
+      "correctIndex": 2,
+      "explanation": "S3 is the canonical object store: flat namespace, key-addressed, accessed via HTTPS API."
+    },
+    {
+      "id": "q2",
+      "stem": "Amazon S3 is designed for what durability?",
+      "choices": ["99.9%", "99.99%", "99.999999% (eight nines)", "99.999999999% (eleven nines)"],
+      "correctIndex": 3,
+      "explanation": "S3 advertises 11 nines of durability by storing data across at least 3 AZs within a Region."
+    },
+    {
+      "id": "q3",
+      "stem": "After December 2020, S3 provides what consistency model?",
+      "choices": ["Eventual consistency for all operations", "Strong read-after-write for all PUT/GET/LIST/DELETE", "Linearizable with multi-region quorum", "Causal consistency only"],
+      "correctIndex": 1,
+      "explanation": "S3 now provides strong read-after-write consistency by default for all operations."
+    },
+    {
+      "id": "q4",
+      "stem": "A bucket has versioning enabled. A client DELETEs an object without specifying a version ID. What happens?",
+      "choices": ["The object is permanently removed", "A delete marker is added; previous versions remain retrievable by version ID", "Versioning is automatically disabled", "An error is returned"],
+      "correctIndex": 1,
+      "explanation": "Without a version ID, S3 adds a delete marker. The object is hidden from default reads but versions can still be fetched explicitly."
+    },
+    {
+      "id": "q5",
+      "stem": "Which storage class is cheapest for data accessed perhaps once a year that may take 12+ hours to retrieve?",
+      "choices": ["S3 Standard-IA", "S3 Glacier Instant Retrieval", "S3 Glacier Flexible Retrieval", "S3 Glacier Deep Archive"],
+      "correctIndex": 3,
+      "explanation": "Deep Archive is the cheapest at-rest tier, with retrieval typically 12-48 hours."
+    },
+    {
+      "id": "q6",
+      "stem": "Which storage class stores data in only a SINGLE AZ?",
+      "choices": ["S3 Standard", "S3 Standard-IA", "S3 One Zone-IA", "S3 Intelligent-Tiering"],
+      "correctIndex": 2,
+      "explanation": "One Zone-IA is single-AZ, trading availability for ~20% lower cost than Standard-IA."
+    },
+    {
+      "id": "q7",
+      "stem": "What does S3 Cross-Region Replication require?",
+      "choices": ["Versioning enabled on source only", "Versioning enabled on both source AND destination", "An EC2 instance acting as relay", "A VPC endpoint"],
+      "correctIndex": 1,
+      "explanation": "CRR requires versioning on both buckets and an IAM role granting replication permissions."
+    },
+    {
+      "id": "q8",
+      "stem": "By default, when an object is deleted in a source bucket, what happens to the destination bucket in CRR?",
+      "choices": ["The delete is replicated immediately", "The delete marker is NOT replicated by default", "Replication is paused", "The destination object is renamed"],
+      "correctIndex": 1,
+      "explanation": "Delete markers are not replicated unless you explicitly enable delete-marker replication."
+    },
+    {
+      "id": "q9",
+      "stem": "EBS volumes have which key locality constraint?",
+      "choices": ["Region-scoped, attachable to any instance in the Region", "AZ-scoped, attachable only within their Availability Zone", "Account-scoped, global attach", "Subnet-scoped"],
+      "correctIndex": 1,
+      "explanation": "An EBS volume lives in one AZ and can only attach to instances in that AZ; to move it, snapshot and copy."
+    },
+    {
+      "id": "q10",
+      "stem": "EC2 Instance Store is best described as:",
+      "choices": ["Network-attached and persistent across stop/terminate", "Physically attached, very fast, ephemeral", "Object storage local to the host", "A shared NFS volume"],
+      "correctIndex": 1,
+      "explanation": "Instance store is on the host's local disks — fastest but wiped on stop or terminate."
+    },
+    {
+      "id": "q11",
+      "stem": "Which service provides a managed POSIX file system accessible from many EC2 instances simultaneously over NFSv4.1?",
+      "choices": ["EBS", "S3", "EFS", "Instance Store"],
+      "correctIndex": 2,
+      "explanation": "EFS is the multi-attach NFS service. EBS gp3/io2 are normally single-attach block volumes."
+    },
+    {
+      "id": "q12",
+      "stem": "Which EBS volume type is the modern general-purpose SSD default?",
+      "choices": ["io2", "gp3", "st1", "sc1"],
+      "correctIndex": 1,
+      "explanation": "gp3 is the current default general-purpose SSD, offering baseline IOPS independent of size."
+    },
+    {
+      "id": "q13",
+      "stem": "A bucket policy uses the condition `aws:SecureTransport: true`. What does this enforce?",
+      "choices": ["MFA on every request", "All requests must use HTTPS (TLS)", "Encryption at rest with KMS", "Public access blocked"],
+      "correctIndex": 1,
+      "explanation": "`aws:SecureTransport` ensures requests arrive over TLS — encryption in transit."
+    },
+    {
+      "id": "q14",
+      "stem": "SSE-KMS differs from SSE-S3 because:",
+      "choices": ["SSE-KMS uses customer-managed (or AWS-managed) KMS keys with auditable usage", "SSE-KMS is cheaper", "SSE-S3 supports cross-account access", "SSE-KMS encrypts in transit, not at rest"],
+      "correctIndex": 0,
+      "explanation": "SSE-KMS gives you key control and CloudTrail logging of key usage; SSE-S3 uses opaque AWS-managed keys."
+    },
+    {
+      "id": "q15",
+      "stem": "What is the correct virtual-hosted-style URL for an object `pic.jpg` in bucket `acme` in `ap-southeast-2`?",
+      "choices": [
+        "https://s3.ap-southeast-2.amazonaws.com/acme/pic.jpg",
+        "https://acme.s3.ap-southeast-2.amazonaws.com/pic.jpg",
+        "https://acme.s3.amazonaws.com/ap-southeast-2/pic.jpg",
+        "https://pic.jpg.acme.s3.amazonaws.com"
+      ],
+      "correctIndex": 1,
+      "explanation": "Virtual-hosted style puts the bucket as a subdomain: `<bucket>.s3.<region>.amazonaws.com/<key>`."
+    },
+    {
+      "id": "q16",
+      "stem": "An S3 lifecycle rule should transition objects to Standard-IA after how many days minimum?",
+      "choices": ["0", "7", "30", "90"],
+      "correctIndex": 2,
+      "explanation": "Standard-IA has a 30-day minimum storage duration before transition or deletion charges; transitioning earlier is not cost-effective."
+    },
+    {
+      "id": "q17",
+      "stem": "Which AWS feature would you use to serve S3-hosted content with low global latency?",
+      "choices": ["Global Accelerator only", "CloudFront in front of S3", "Direct Connect", "Snowball Edge"],
+      "correctIndex": 1,
+      "explanation": "CloudFront is the CDN; it caches S3 content at edge locations close to users."
+    },
+    {
+      "id": "q18",
+      "stem": "Which storage class auto-moves objects between tiers based on access patterns?",
+      "choices": ["Standard-IA", "Intelligent-Tiering", "Glacier Flexible", "One Zone-IA"],
+      "correctIndex": 1,
+      "explanation": "S3 Intelligent-Tiering monitors access and moves objects between frequent/infrequent/archive tiers automatically."
+    },
+    {
+      "id": "q19",
+      "stem": "S3 bucket names must be:",
+      "choices": ["Unique within an account", "Unique within a Region", "Globally unique across all AWS accounts", "Any name; only keys must be unique"],
+      "correctIndex": 2,
+      "explanation": "Bucket names live in a global DNS-style namespace; once taken, no other account can use the same name."
+    },
+    {
+      "id": "q20",
+      "stem": "Which is the BEST choice for an HPC scratch filesystem requiring sub-millisecond latency and hundreds of GB/s throughput?",
+      "choices": ["EFS Standard", "S3 Standard", "FSx for Lustre", "EBS gp3"],
+      "correctIndex": 2,
+      "explanation": "FSx for Lustre is purpose-built for HPC scratch workloads with extreme throughput."
+    },
+    {
+      "id": "q21",
+      "stem": "EBS snapshots are stored where?",
+      "choices": ["On the source EC2 instance", "In S3 (managed, not directly visible)", "In EFS", "In the volume itself"],
+      "correctIndex": 1,
+      "explanation": "Snapshots are stored in S3 behind the scenes; you don't see them as objects in your buckets, but they inherit S3's durability."
+    },
+    {
+      "id": "q22",
+      "stem": "An object key looks like `photos/2026/cat.jpg`. In S3, what is `photos/2026/`?",
+      "choices": ["A real directory", "A prefix; S3 has a flat namespace", "A separate bucket", "A version ID"],
+      "correctIndex": 1,
+      "explanation": "S3 is flat; slashes in keys are just characters. Console UIs render prefixes as folders, but no real hierarchy exists."
+    },
+    {
+      "id": "q23",
+      "stem": "Which event source CANNOT be triggered by an S3 object upload?",
+      "choices": ["AWS Lambda", "SNS topic", "SQS queue", "EC2 instance reboot"],
+      "correctIndex": 3,
+      "explanation": "S3 Event Notifications target Lambda, SNS, SQS, or EventBridge — not arbitrary EC2 lifecycle actions."
+    },
+    {
+      "id": "q24",
+      "stem": "Block Public Access on a bucket overrides what?",
+      "choices": ["IAM identity policies", "Bucket policies and ACLs that would otherwise grant public access", "VPC endpoint policies", "KMS key policies"],
+      "correctIndex": 1,
+      "explanation": "Block Public Access is a guard rail that overrides bucket policies and ACLs which would otherwise expose the bucket publicly."
+    },
+    {
+      "id": "q25",
+      "stem": "Why might durability (11 nines) be higher than availability (4 nines) for S3 Standard?",
+      "choices": ["Numbers are arbitrary", "Durability counts data loss; availability counts ability to serve a request at any instant", "Availability is per-AZ, durability is per-Region", "They are the same thing"],
+      "correctIndex": 1,
+      "explanation": "Durability = will data still exist? Availability = can I reach it now? A network outage hurts availability but data is still safe."
+    }
+  ]
+}

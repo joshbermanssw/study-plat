@@ -1,0 +1,182 @@
+{
+  "unit": "COMP4349",
+  "week": 1,
+  "topic": "Cloud Computing Overview",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "Which document provides the canonical definition of cloud computing used in most syllabi?",
+      "choices": ["ISO 27001", "NIST SP 800-145", "RFC 2616", "PCI DSS v4"],
+      "correctIndex": 1,
+      "explanation": "NIST SP 800-145 defines the 5 essential characteristics, 3 service models, and 4 deployment models that the rest of the industry references."
+    },
+    {
+      "id": "q2",
+      "stem": "Which of the following is NOT one of the five NIST essential characteristics of cloud?",
+      "choices": ["Rapid elasticity", "Resource pooling", "Free tier billing", "Measured service"],
+      "correctIndex": 2,
+      "explanation": "A free tier is a business decision, not an essential characteristic. The five are on-demand self-service, broad network access, resource pooling, rapid elasticity, and measured service."
+    },
+    {
+      "id": "q3",
+      "stem": "An engineer deploys a web application by uploading code to AWS Elastic Beanstalk. Which service model is this?",
+      "choices": ["IaaS", "PaaS", "SaaS", "DBaaS"],
+      "correctIndex": 1,
+      "explanation": "Elastic Beanstalk manages the OS, runtime, and load balancer; you only provide the application. That's PaaS."
+    },
+    {
+      "id": "q4",
+      "stem": "Amazon EC2 is best classified as which service model?",
+      "choices": ["SaaS", "PaaS", "IaaS", "BPaaS"],
+      "correctIndex": 2,
+      "explanation": "EC2 gives you a virtual machine; you remain responsible for the OS, runtime, and application — the textbook definition of IaaS."
+    },
+    {
+      "id": "q5",
+      "stem": "Gmail is an example of which service model?",
+      "choices": ["IaaS", "PaaS", "SaaS", "FaaS"],
+      "correctIndex": 2,
+      "explanation": "End users consume Gmail as a finished application over the web. Google manages every layer below the UI — the SaaS model."
+    },
+    {
+      "id": "q6",
+      "stem": "Under the AWS shared responsibility model, which is the customer's responsibility on EC2?",
+      "choices": ["Physical data centre security", "Hypervisor patching", "Guest OS patching", "Network cable maintenance"],
+      "correctIndex": 2,
+      "explanation": "AWS is responsible for security *of* the cloud (facilities, hypervisor, network). The customer is responsible for security *in* the cloud, which includes guest OS patches on EC2."
+    },
+    {
+      "id": "q7",
+      "stem": "Which deployment model best fits a bank that must keep customer records in-country but wants burst capacity for monthly reporting?",
+      "choices": ["Pure public cloud", "Pure private cloud", "Hybrid cloud", "Community cloud"],
+      "correctIndex": 2,
+      "explanation": "Hybrid lets you keep regulated data in private infrastructure while bursting compute to public cloud — the textbook hybrid use case."
+    },
+    {
+      "id": "q8",
+      "stem": "Which pricing dimension is typically NOT charged on AWS?",
+      "choices": ["Data transfer OUT to the internet", "Data transfer IN to S3", "S3 GET requests", "EBS storage GB-month"],
+      "correctIndex": 1,
+      "explanation": "Inbound transfer to AWS is generally free; AWS makes money on egress, requests, and provisioned capacity."
+    },
+    {
+      "id": "q9",
+      "stem": "EC2 Spot Instances are best suited to which workload?",
+      "choices": ["Stateful primary database", "Latency-sensitive payment API", "Fault-tolerant batch processing", "Active Directory domain controller"],
+      "correctIndex": 2,
+      "explanation": "Spot can be reclaimed with 2 minutes' notice, so it suits stateless, fault-tolerant batch jobs that can resume — not stateful or always-on systems."
+    },
+    {
+      "id": "q10",
+      "stem": "How many pillars does the AWS Well-Architected Framework currently have?",
+      "choices": ["4", "5", "6", "7"],
+      "correctIndex": 2,
+      "explanation": "Six: operational excellence, security, reliability, performance efficiency, cost optimisation, and sustainability."
+    },
+    {
+      "id": "q11",
+      "stem": "Which characteristic captures the idea that customers can pay only for what they use?",
+      "choices": ["Resource pooling", "Measured service", "Broad network access", "On-demand self-service"],
+      "correctIndex": 1,
+      "explanation": "Measured service is the metering and billing characteristic — usage is observed and customers are charged accordingly."
+    },
+    {
+      "id": "q12",
+      "stem": "A startup's CFO wants to convert capital expenditure to operating expenditure. Which cloud benefit aligns with this?",
+      "choices": ["Vendor lock-in", "Capex to opex shift", "Geographic redundancy", "Open-source compatibility"],
+      "correctIndex": 1,
+      "explanation": "Replacing upfront hardware purchases with monthly cloud bills converts capex to opex — a standard finance argument for cloud migration."
+    },
+    {
+      "id": "q13",
+      "stem": "Which is the strongest argument for choosing a private cloud over public?",
+      "choices": ["Lower unit cost than AWS", "Strict data residency or regulatory control", "Better global reach", "More elasticity"],
+      "correctIndex": 1,
+      "explanation": "Public clouds usually win on cost, reach, and elasticity. Private clouds justify themselves when regulation, sovereignty, or deep customisation is required."
+    },
+    {
+      "id": "q14",
+      "stem": "Amazon RDS managed PostgreSQL is best described as which model?",
+      "choices": ["IaaS", "PaaS", "SaaS", "Bare-metal"],
+      "correctIndex": 1,
+      "explanation": "RDS manages OS, patching, backups, and the database engine; the customer manages schema and data. That's PaaS (sometimes called DBaaS, a PaaS subtype)."
+    },
+    {
+      "id": "q15",
+      "stem": "Which feature distinguishes cloud elasticity from traditional scalability?",
+      "choices": ["Higher peak capacity", "Manual provisioning at scale", "Automatic, bidirectional, fine-grained capacity changes", "Use of virtualisation"],
+      "correctIndex": 2,
+      "explanation": "Elasticity adds automatic, fine-grained scaling up AND down on demand — traditional scalability typically only scales up and requires manual intervention."
+    },
+    {
+      "id": "q16",
+      "stem": "An organisation uses both AWS and Azure for risk diversification. This is called:",
+      "choices": ["Hybrid cloud", "Multi-cloud", "Community cloud", "Edge cloud"],
+      "correctIndex": 1,
+      "explanation": "Multi-cloud means using more than one public provider. Hybrid is public + private."
+    },
+    {
+      "id": "q17",
+      "stem": "Which AWS service most closely matches the 'serverless compute' (FaaS) pattern?",
+      "choices": ["EC2", "ECS on EC2", "Lambda", "Elastic Beanstalk"],
+      "correctIndex": 2,
+      "explanation": "Lambda runs functions in response to events, scales to zero, and bills per millisecond — the canonical FaaS service."
+    },
+    {
+      "id": "q18",
+      "stem": "Which statement about Savings Plans / Reserved Instances is true?",
+      "choices": ["They are always cheaper than Spot", "They trade commitment for a discount of roughly 30-70%", "They guarantee zero downtime", "They are required for production workloads"],
+      "correctIndex": 1,
+      "explanation": "You commit to 1- or 3-year usage in exchange for a substantial discount. Spot can be even cheaper but without availability guarantees."
+    },
+    {
+      "id": "q19",
+      "stem": "A community cloud is best described as:",
+      "choices": ["Free cloud for non-profits", "Cloud shared by organisations with common requirements (e.g. government)", "Anyone can edit", "Open-source cloud software"],
+      "correctIndex": 1,
+      "explanation": "Community clouds serve groups of organisations with shared concerns such as regulators, healthcare networks, or government agencies."
+    },
+    {
+      "id": "q20",
+      "stem": "Which is NOT a typical downside of public cloud adoption?",
+      "choices": ["Vendor lock-in", "Egress data charges", "Loss of low-level hardware control", "Inability to scale beyond one server"],
+      "correctIndex": 3,
+      "explanation": "Inability to scale is the *opposite* of a cloud problem — the cloud's whole point is near-unlimited horizontal scale."
+    },
+    {
+      "id": "q21",
+      "stem": "Which AWS pricing model is best for a steady 24x7 production database that runs for 3 years?",
+      "choices": ["Spot Instances", "On-Demand", "3-year Reserved Instance or Savings Plan", "Free tier"],
+      "correctIndex": 2,
+      "explanation": "Long, predictable, always-on workloads should use 3-year commitments for the deepest discount."
+    },
+    {
+      "id": "q22",
+      "stem": "On-demand self-service primarily means:",
+      "choices": ["A human approves each provisioning request", "Customers can provision resources via API/console without provider intervention", "Resources auto-shutdown after 1 hour", "Self-managed billing dashboards"],
+      "correctIndex": 1,
+      "explanation": "Self-service means you spin up a VM or bucket via console/API in seconds without filing a ticket to the provider."
+    },
+    {
+      "id": "q23",
+      "stem": "Which workload is the worst fit for cloud's elasticity benefit?",
+      "choices": ["Holiday-traffic e-commerce site", "ML training that runs nightly", "On-prem mainframe payroll with steady, flat utilisation", "Live-event streaming platform"],
+      "correctIndex": 2,
+      "explanation": "Elasticity pays off when load varies. A steady-state mainframe workload doesn't benefit from scale-out/scale-in and may be cheaper on owned hardware."
+    },
+    {
+      "id": "q24",
+      "stem": "Amazon S3 is most accurately classified as:",
+      "choices": ["A file system", "A block storage service", "An object storage service", "A relational database"],
+      "correctIndex": 2,
+      "explanation": "S3 stores objects (key + metadata + bytes) in a flat namespace within buckets — the textbook object-storage definition."
+    },
+    {
+      "id": "q25",
+      "stem": "Which is a correct statement about Multi-AZ deployments?",
+      "choices": ["They protect against AWS Region failure", "They protect against single-AZ failure within a Region", "They are mandatory for all AWS workloads", "They double application latency"],
+      "correctIndex": 1,
+      "explanation": "AZs are isolated data-centre groups within a Region. Multi-AZ protects against the loss of one AZ; cross-Region replication is needed to survive a whole-Region outage."
+    }
+  ]
+}

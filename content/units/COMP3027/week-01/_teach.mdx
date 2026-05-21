@@ -1,0 +1,285 @@
+---
+title: "Week 1 — Introduction, Algorithms and Complexity"
+unit: COMP3027
+week: 1
+type: overview
+status: done
+---
+
+## What this week is really about
+
+Week 1 looks chill — some Big-O, a few growth rates, a max-subarray example — but it's quietly doing three serious jobs. You'll meet them again every single week, so it pays to nail them now.
+
+**The three jobs this week does:**
+
+1. **Sets up the three layers** — *problem*, *algorithm*, *analysis* — that every later topic hangs from.
+2. **Pins down what "efficient" means.** By Week 9 we'll talk about polynomial-time reductions; that only works if "polynomial-time" is precise.
+3. **Builds the asymptotic toolkit** — O, Θ, Ω, o, ω — so we can say "Dijkstra is Θ(m log n)" without lying about constants.
+
+Treat this week as the *grammar* of the unit. Every algorithm later gets specified as a problem, written as pseudocode, and analysed with a recurrence or counting argument. If you're shaky here, Weeks 2 (exchange arguments), 3 (master theorem), and 9 (reductions) will compound into real pain.
+
+So: read slowly, redo each definition on paper, verify every example by hand. You only need to do this once.
+
+## The three layers: problem, algorithm, analysis
+
+Here's the mental model you want.
+
+**A problem** is a (possibly infinite) set of (input, valid-output) pairs. *"Sort an array of n integers"* is a problem. It says *what* counts as a correct answer (a non-decreasing permutation). It says nothing about *how* you get there.
+
+**An algorithm** is a finite, mechanical recipe that, on every legal input, halts and produces a valid output. Mergesort and Quicksort are two *different* algorithms for the *same* sorting problem.
+
+**An implementation** is one rung lower again — the actual Python or C code on actual hardware.
+
+**An analysis** is a mathematical proof of two things:
+
+1. *Correctness* — on every legal input, the algorithm produces a valid output.
+2. *Resource bound* — usually an asymptotic upper bound on the worst-case number of basic operations as n grows.
+
+**Keep these layers separate.** Progress in algorithms happens at each layer independently. A new *algorithm* might solve an old *problem* faster (Karatsuba beats schoolbook multiplication). A new *analysis* might prove an old algorithm is faster than we thought (amortised union-find). A new *problem formulation* can re-cast a hard task as an easy one (image segmentation = min-cut, Week 7).
+
+Whenever a slide confuses you, ask: *which layer is this about?*
+
+## What does "efficient" actually mean?
+
+"Efficient = runs fast in practice" is a bad definition. It depends on the machine, the input, and the implementation — none of which are properties of the algorithm itself.
+
+So we use this convention (due to Edmonds and Cobham, around 1965):
+
+> **Definition.** An algorithm is *efficient* if, on every input of size n, it runs in at most p(n) basic operations for some fixed polynomial p — i.e. T(n) = O(n^k) for some constant k.
+
+**Why polynomial time? Two big wins.**
+
+1. **Efficient algorithms compose.** A polynomial of a polynomial is still a polynomial. So if you call an efficient subroutine from an efficient algorithm, the whole thing stays efficient — no surprise blow-ups.
+
+2. **The definition doesn't depend on the hardware.** This is the *Cobham-Edmonds thesis*: any reasonable computer can simulate any other with only polynomial slowdown. So "polynomial-time on a Turing machine" ≈ "polynomial-time on your laptop". That means our results are portable.
+
+Is it perfect? No. An n^100 algorithm is technically "efficient" but useless. But the line has held up for sixty years and it's what NP-hardness will be defined against in Week 9.
+
+## Asymptotic notation: O, Ω, Θ, o, ω
+
+These five symbols compare how two functions *grow* for large n. Constants and small-n weirdness get ignored.
+
+Let f and g be non-negative functions of n. Here's the family:
+
+| Symbol | Meaning in words | Formal definition |
+|--------|------------------|-------------------|
+| **f = O(g)** | f grows no faster than g | ∃ c &gt; 0, n₀ such that f(n) ≤ c·g(n) for all n ≥ n₀ |
+| **f = Ω(g)** | f grows at least as fast as g | ∃ c &gt; 0, n₀ such that f(n) ≥ c·g(n) for all n ≥ n₀ |
+| **f = Θ(g)** | f and g grow at the same rate | f = O(g) *and* f = Ω(g) |
+| **f = o(g)** | f grows *strictly* slower than g | lim f(n)/g(n) = 0 |
+| **f = ω(g)** | f grows *strictly* faster than g | lim f(n)/g(n) = ∞ |
+
+**Mnemonic.** O is "less-or-equal", Ω is "greater-or-equal", Θ is "equal", little-o is "strictly less", little-ω is "strictly greater".
+
+### Worked verification: 3n² + 100n + 7 = O(n²)
+
+We need to find a constant c and a threshold n₀ so the inequality holds.
+
+1. Pick n₀ = 100. Then 100n ≤ n² (since n ≥ 100), and 7 ≤ n².
+2. So for n ≥ 100: 3n² + 100n + 7 ≤ 3n² + n² + n² = 5n².
+3. Take c = 5. Done.
+
+Notice we never had to nail the *tightest* constants. We just needed *some* c and *some* n₀ that work.
+
+### Properties you should memorise
+
+- **Polynomials drop to the leading term.** f(n) = a_d n^d + ... + a₀ with a_d &gt; 0 means f = Θ(n^d).
+- **Log base doesn't matter.** logₐ n = Θ(log_b n) for any a, b &gt; 1.
+- **Polynomial beats logarithm. Exponential beats polynomial.** For any d &gt; 0 and b &gt; 1: log n = o(n^d), and n^d = o(b^n).
+- **Transitive.** f = O(g), g = O(h) ⇒ f = O(h).
+- **Sum rule.** O(f) + O(g) = O(max(f, g)). *Careful*: summing n functions each O(h) gives O(n·h), not O(h).
+- **Product rule.** f₁ = O(g₁), f₂ = O(g₂) ⇒ f₁·f₂ = O(g₁·g₂).
+
+## Best, worst, average case
+
+Let t(x) be the number of basic steps your algorithm takes on input x.
+
+- **Worst case:** T(n) = max over inputs of size n. *This is the default.* It holds for every input including adversarial ones, no distribution assumption needed.
+- **Best case:** T(n) = min over inputs of size n. Almost always boring (insertion sort is Θ(n) on an already-sorted array — so what).
+- **Average case:** expected value of t(x) under some input distribution. Meaningful only when the distribution is natural (e.g. random permutations for quicksort, giving Θ(n log n)).
+
+**Why worst case wins.** Worst-case bounds *compose* well with reductions. Average-case bounds don't, because the input distribution to your reduced problem is usually unknown.
+
+## A running example: maximum-sum contiguous subarray
+
+Given an array A[0..n−1] of integers (possibly negative), find indices i ≤ j that maximise A[i] + A[i+1] + ... + A[j]. We'll solve this four ways. Each one previews a paradigm of the unit.
+
+### Attempt 1: brute force, Θ(n³)
+
+```text
+naive(A):
+  best = (0, 0)
+  for i = 0 .. n-1:
+    for j = i .. n-1:
+      if sum(A[i..j]) > sum(A[best]):
+        best = (i, j)
+  return best
+```
+
+`sum(A[i..j])` is itself O(n). Three nested loops over O(n) work each ⇒ Θ(n³).
+
+### Attempt 2: prefix sums, Θ(n²)
+
+Precompute B[k] = A[0] + A[1] + ... + A[k−1]. Then sum(A[i..j]) = B[j+1] − B[i] in O(1). One factor of n gone.
+
+### Attempt 3: divide and conquer, Θ(n log n)
+
+Split the array in half. The best subarray is either entirely in the left, entirely in the right, or straddles the midpoint. The straddle case is O(n) (best-suffix-left + best-prefix-right). Recurrence: T(n) = 2T(n/2) + O(n) ⇒ T(n) = O(n log n).
+
+### Attempt 4: Kadane's algorithm, Θ(n)
+
+```text
+kadane(A):
+  M = A[0]; best = A[0]
+  for j = 1 .. n-1:
+    M = max(A[j], M + A[j])    # best subarray ending at j
+    best = max(best, M)
+  return best
+```
+
+**Why this works.** M(j) = "best subarray ending exactly at index j". Either we extend the previous best (M + A[j]), or we restart at A[j]. Take the max. The global answer is max over j of M(j).
+
+This is **optimal**: we must read all n inputs, so Ω(n) is a lower bound.
+
+The arc — Θ(n³) → Θ(n²) → Θ(n log n) → Θ(n) — is this whole unit in miniature: brute force, preprocessing, divide-and-conquer, dynamic programming.
+
+## Proof techniques you'll use every week
+
+Four workhorses. You'll need all of them.
+
+1. **Direct proof.** Chain implications from hypothesis to conclusion. Used for asymptotic identities ("leading term dominates").
+
+2. **Proof by contradiction.** Assume the conclusion is false, derive a contradiction. Standard tool for optimality proofs — e.g. Dijkstra: assume some vertex v is finalised with the wrong distance, contradict an edge relaxation.
+
+3. **Proof by induction.** Base case, then P(n) ⇒ P(n+1). Universal for recurrence correctness. Use *strong induction* (assume P(k) for all k ≤ n) when the recursion splits unevenly (quicksort, median-of-medians).
+
+4. **Exchange argument.** *The* greedy-correctness proof. Take any optimal solution OPT and transform it step-by-step into the greedy solution G, showing each swap doesn't make things worse. Conclude G is also optimal. Full worked example in Week 2.
+
+A fifth technique — **reduction** — runs Weeks 9–10. Reductions don't prove an algorithm correct; they relate the hardness of two problems.
+
+## Recurrence relations: three ways to solve them
+
+Recursive algorithms produce recurrences. You need all three solution methods.
+
+### 1. Substitution / induction
+
+Guess a closed form, verify by induction. For T(n) = 2T(n/2) + n, guess T(n) ≤ c·n·log n.
+
+- Inductive step: T(n) ≤ 2·c·(n/2)·log(n/2) + n = c·n·log n − c·n + n ≤ c·n·log n for c ≥ 1. Done.
+
+### 2. Recursion tree
+
+Draw the call tree, sum the work at each level, multiply by the number of levels.
+
+For T(n) = 2T(n/2) + n:
+
+```text
+level 0:                n           = n
+level 1:       n/2  +  n/2          = n
+level 2:    n/4 + n/4 + n/4 + n/4   = n
+...
+level log n:  every leaf does 1     = n
+```
+
+log₂ n levels × n work per level = Θ(n log n).
+
+### 3. Master theorem
+
+For T(n) = a·T(n/b) + f(n) with a ≥ 1, b &gt; 1, let p = log_b a.
+
+- **Case 1 (leaves dominate).** If f(n) = O(n<sup>p−ε</sup>) for some ε &gt; 0, then T(n) = Θ(n^p).
+- **Case 2 (balanced).** If f(n) = Θ(n^p · log^k n) for some k ≥ 0, then T(n) = Θ(n^p · log<sup>k+1</sup> n).
+- **Case 3 (root dominates).** If f(n) = Ω(n<sup>p+ε</sup>) and a·f(n/b) ≤ c·f(n) for some c &lt; 1 (regularity), then T(n) = Θ(f(n)).
+
+**Three worked examples** (we'll see these again in Week 3):
+
+| Recurrence | a, b | p = log_b a | f(n) | Case | Answer |
+|------------|------|-------------|------|------|--------|
+| Mergesort: 2T(n/2) + Θ(n) | 2, 2 | 1 | Θ(n) | 2 (k=0) | Θ(n log n) |
+| Karatsuba: 3T(n/2) + Θ(n) | 3, 2 | log₂ 3 ≈ 1.585 | Θ(n) | 1 | Θ(n<sup>log₂ 3</sup>) |
+| Strassen: 7T(n/2) + Θ(n²) | 7, 2 | log₂ 7 ≈ 2.807 | Θ(n²) | 1 | Θ(n<sup>log₂ 7</sup>) |
+
+## The Word RAM model
+
+When we say "T(n) steps", we mean steps in the **Word RAM model**:
+
+- Memory is an array of w-bit words (w = Θ(log n) is enough for indexing).
+- Each arithmetic op, memory access, comparison, and branch on a *single word* costs 1 step.
+
+**Why this matters: input size depends on representation.** An integer W takes O(log W) bits to encode. So if your algorithm takes "a number W" as input, you measure runtime against log W, not W. This is the difference between *polynomial* and *pseudo-polynomial* — we'll meet it again at Knapsack in Week 5.
+
+## Standard data structures you need cold
+
+Building blocks. Memorise the costs.
+
+| Structure | Operations | Cost |
+|-----------|------------|------|
+| Dynamic array | append (amortised), random access | O(1), O(1) |
+| Binary heap | insert, extract-min, build-heap | O(log n), O(log n), O(n) |
+| Balanced BST | insert/delete/search/succ/pred | O(log n) each |
+| Hash table | insert, lookup (expected) | O(1), O(1) |
+| Union-Find | union, find (with rank + path compression) | O(α(n)) amortised |
+| Adjacency list | iterate neighbours of v | O(deg(v)) |
+
+**Lesson.** Many "fast" algorithms in this unit are classical algorithms + the right data structure. Dijkstra with a binary heap is O((m+n) log n). With a Fibonacci heap, it drops to O(m + n log n).
+
+## Pseudocode: how to write it well
+
+We use Python-ish syntax: indentation for blocks, `for i = 1 to n`, English where convenient.
+
+**Two rules.**
+
+1. **Match precision to the proof.** If your correctness proof depends on the loop order, write the loop. If it depends only on what you compute, English is fine.
+
+2. **State invariants as comments.** Most correctness proofs are inductive loop-invariant arguments. Write the invariant when you draft pseudocode and the proof writes itself.
+
+Example — Bellman-Ford's relaxation pass:
+
+```text
+# Invariant after iteration k: for every vertex v reachable from s
+# via at most k edges, d[v] = shortest-path distance to v.
+for k = 1 .. n-1:
+  for each edge (u, v):
+    d[v] = min(d[v], d[u] + w(u, v))
+```
+
+The invariant *is* the correctness proof.
+
+## Ranking growth rates
+
+A classic exam exercise: rank these by growth.
+
+f₁ = n, f₂ = √n, f₃ = log n, f₄ = n log n, f₅ = n², f₆ = 2ⁿ, f₇ = log log n, f₈ = n<sup>1/3</sup>, f₉ = (log n)², f₁₀ = n!.
+
+**Slowest → fastest:** f₇ ≺ f₃ ≺ f₉ ≺ f₈ ≺ f₂ ≺ f₁ ≺ f₄ ≺ f₅ ≺ f₆ ≺ f₁₀.
+
+**Two subtle ones to watch.**
+
+- (log n)² vs n<sup>1/3</sup>. Any polynomial beats any polylogarithm, so (log n)² = o(n<sup>1/3</sup>).
+- 2ⁿ vs n!. By Stirling, n! ~ √(2πn)·(n/e)ⁿ, which grows faster than cⁿ for any c. So 2ⁿ = o(n!).
+
+**The hierarchy worth memorising:**
+
+```text
+log log n  ≺  log n  ≺  (log n)^k  ≺  n^α (α>0)  ≺  n  ≺  n log n
+           ≺  n^2    ≺  n^3 ≺ ...   ≺  2^n  ≺  3^n  ≺ ...  ≺  n!  ≺  n^n
+```
+
+## How this week feeds the rest
+
+- **Greedy (Week 2):** needs induction + exchange arguments.
+- **Divide and conquer (Week 3):** lives or dies by the master theorem.
+- **DP (Weeks 4–5):** smart recursion + memoisation + careful subproblem counting.
+- **Flows (Weeks 6–8):** reuses BFS, DFS, amortised analysis.
+- **NP (Weeks 9–10):** the polynomial-time line we drew here *is* the line between "tractable" and "hard".
+- **Approximation & online (Weeks 11–12):** swap "worst-case time" for "approximation ratio" or "competitive ratio" — same asymptotic vocabulary.
+
+## What to do this week
+
+1. Verify each Big-O identity above by producing explicit c and n₀.
+2. Solve T(n) = 2T(n/2) + Θ(n) three ways (substitution, tree, master). Confirm answers agree.
+3. Implement Kadane on [-2, 1, -3, 4, -1, 2, 1, -5, 4]. Expected max = 6, indices (3, 6).
+4. Derive build-heap cost from T(n) = 2T(n/2) + O(log n). Confirm O(n).
+5. Rank the eleven-tier ladder by limit computation.
+6. Simplify these: O(n²) + O(n log n) + O(n³), n·O(log n), O(n)². (Answers: O(n³), O(n log n), O(n²).)
+7. Skim the quiz to calibrate which definitions you can recite cold.

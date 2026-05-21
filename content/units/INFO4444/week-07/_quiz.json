@@ -1,0 +1,307 @@
+{
+  "unit": "INFO4444",
+  "week": 7,
+  "topic": "Commercialisation I: Startup vs traditional, lean startup, agile",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "Steve Blank defines a startup as:",
+      "choices": [
+        "Any small business with fewer than 50 employees.",
+        "A temporary organisation in search of a repeatable, scalable, profitable business model.",
+        "A company that has raised venture capital.",
+        "A technology company in its first year."
+      ],
+      "correctIndex": 1,
+      "explanation": "Blank's definition is exam-critical: a startup is in SEARCH of a business model. Once the model is found, it stops being a startup."
+    },
+    {
+      "id": "q2",
+      "stem": "The Build-Measure-Learn loop is most associated with:",
+      "choices": [
+        "Henry Chesbrough",
+        "Clayton Christensen",
+        "Eric Ries (Lean Startup)",
+        "Geoffrey Moore"
+      ],
+      "correctIndex": 2,
+      "explanation": "Ries codified the BML loop in The Lean Startup, drawing on Blank's Customer Development and Toyota's lean manufacturing."
+    },
+    {
+      "id": "q3",
+      "stem": "Which is the BEST definition of an MVP (Minimum Viable Product)?",
+      "choices": [
+        "A polished version 1 of the product.",
+        "The smallest product that lets you complete one Build-Measure-Learn loop with minimum effort and time.",
+        "A finished product launched to a small market.",
+        "The first feature of the product."
+      ],
+      "correctIndex": 1,
+      "explanation": "An MVP is defined by its function: to enable validated learning with the minimum waste. Polish and feature count are secondary."
+    },
+    {
+      "id": "q4",
+      "stem": "A 'Wizard of Oz' MVP is one in which:",
+      "choices": [
+        "The product appears automated to users but humans run the back-end manually.",
+        "Users design their own version of the product.",
+        "The product is delivered in three colours only.",
+        "Users vote on which features to build next."
+      ],
+      "correctIndex": 0,
+      "explanation": "Wizard of Oz MVPs preserve the user experience while avoiding the cost of automation — validating demand before investing in engineering."
+    },
+    {
+      "id": "q5",
+      "stem": "Instagram's origin from the check-in app Burbn is best described as which type of pivot?",
+      "choices": [
+        "Customer-segment pivot",
+        "Zoom-in pivot (a sub-feature becomes the whole product)",
+        "Platform pivot",
+        "Channel pivot"
+      ],
+      "correctIndex": 1,
+      "explanation": "Burbn had photo-sharing as one of many features. Zooming in on just that one feature produced Instagram — Ries's canonical zoom-in pivot."
+    },
+    {
+      "id": "q6",
+      "stem": "Steve Blank's Customer Development has four stages. They are:",
+      "choices": [
+        "Discovery, Validation, Creation, Company Building",
+        "Ideation, Funding, Launch, Growth",
+        "Build, Measure, Learn, Pivot",
+        "Plan, Execute, Review, Iterate"
+      ],
+      "correctIndex": 0,
+      "explanation": "The four Blank stages: Customer Discovery, Customer Validation, Customer Creation, Company Building. Stages 1-2 are 'search'; 3-4 are 'execution'."
+    },
+    {
+      "id": "q7",
+      "stem": "Which is a key failure mode of traditional product development for startups?",
+      "choices": [
+        "Too much customer interaction during product development.",
+        "Building a fully featured product against an untested spec and discovering after launch that the market does not want it.",
+        "Insufficient business planning.",
+        "Lack of patent protection."
+      ],
+      "correctIndex": 1,
+      "explanation": "Traditional product development assumes market validity. Lean startup makes market validation continuous — the hardest startup question is 'do they want it', not 'can we build it'."
+    },
+    {
+      "id": "q8",
+      "stem": "After a Build-Measure-Learn loop, a team that finds data invalidating its key hypothesis should:",
+      "choices": [
+        "Persevere with the same plan; the data will improve with time.",
+        "Pivot — a structured course correction keeping one foot in what worked, moving the other somewhere new.",
+        "Shut down the startup.",
+        "Hire more engineers."
+      ],
+      "correctIndex": 1,
+      "explanation": "Pivot vs persevere is the explicit decision after each BML loop. Pivots are structured, not panicked — they preserve learnings while changing direction."
+    },
+    {
+      "id": "q9",
+      "stem": "Which is NOT one of Ries's three engines of growth?",
+      "choices": [
+        "Sticky",
+        "Viral",
+        "Paid",
+        "Geographic"
+      ],
+      "correctIndex": 3,
+      "explanation": "Sticky, viral, and paid are the three engines. Geographic expansion is a channel/strategy, not an engine of growth in Ries's framework."
+    },
+    {
+      "id": "q10",
+      "stem": "Slack famously pivoted from:",
+      "choices": [
+        "A photo-sharing app",
+        "A multiplayer game (Glitch) — internal comms tool spun out and became the product",
+        "A dating site",
+        "A search engine"
+      ],
+      "correctIndex": 1,
+      "explanation": "Stewart Butterfield's team built internal comms while making Glitch. When the game failed, the internal tool was the surviving product. A famous pivot story."
+    },
+    {
+      "id": "q11",
+      "stem": "Dropbox's famous demo VIDEO before product launch was an example of:",
+      "choices": [
+        "A concierge MVP",
+        "A smoke-test / explainer-video MVP designed to validate demand before building the technically hard cross-platform sync.",
+        "Wizard of Oz",
+        "A pivot"
+      ],
+      "correctIndex": 1,
+      "explanation": "Dropbox shipped a video demo and watched the beta waitlist swell. They validated demand cheaply before tackling the engineering."
+    },
+    {
+      "id": "q12",
+      "stem": "Lean Startup is most APPROPRIATE in conditions of:",
+      "choices": [
+        "Stable, known markets with known products.",
+        "Extreme uncertainty about customer, product, and business model.",
+        "Heavy regulation only.",
+        "Pure infrastructure projects."
+      ],
+      "correctIndex": 1,
+      "explanation": "Lean startup is a methodology for extreme uncertainty. Stable, known contexts are better served by traditional planning and execution."
+    },
+    {
+      "id": "q13",
+      "stem": "Which is NOT a typical pivot type in Ries's taxonomy?",
+      "choices": [
+        "Zoom-in pivot",
+        "Customer-segment pivot",
+        "Engine-of-growth pivot",
+        "Marketing-spend pivot"
+      ],
+      "correctIndex": 3,
+      "explanation": "Ries names zoom-in, zoom-out, customer-segment, customer-need, platform, business-architecture, engine-of-growth, channel, and technology pivots. Marketing-spend is not one of them."
+    },
+    {
+      "id": "q14",
+      "stem": "Innovation accounting in Lean Startup means:",
+      "choices": [
+        "Filing tax returns for an early-stage startup.",
+        "Tracking cohort-based metrics that show whether the engine of growth is improving over time.",
+        "Auditing R&D expenses.",
+        "Counting patent filings."
+      ],
+      "correctIndex": 1,
+      "explanation": "Innovation accounting replaces traditional revenue/profit metrics in early stages with cohort metrics that reveal whether learning is converging."
+    },
+    {
+      "id": "q15",
+      "stem": "The Business Model Canvas (Osterwalder) has how many blocks?",
+      "choices": [
+        "Four",
+        "Seven",
+        "Nine",
+        "Twelve"
+      ],
+      "correctIndex": 2,
+      "explanation": "Nine blocks: customer segments, value propositions, channels, customer relationships, revenue streams, key resources, key activities, key partnerships, cost structure."
+    },
+    {
+      "id": "q16",
+      "stem": "Agile development and Lean Startup are related in that:",
+      "choices": [
+        "They are the same methodology under different names.",
+        "Agile is how engineering ships iteratively; Lean Startup is how the whole business validates market hypotheses iteratively. They complement.",
+        "Agile is for software; Lean Startup is for hardware.",
+        "Agile predates Lean Startup by decades."
+      ],
+      "correctIndex": 1,
+      "explanation": "Both share short cycles and feedback. They operate at different scopes — engineering execution vs business hypothesis testing. They combine well."
+    },
+    {
+      "id": "q17",
+      "stem": "Why would a founder choose a Wizard of Oz MVP over a fully automated MVP?",
+      "choices": [
+        "It is cheaper to scale.",
+        "It defers engineering work until the value proposition is validated; the team learns without committing to automation that may never be needed.",
+        "It is required for regulatory approval.",
+        "It generates higher initial revenue."
+      ],
+      "correctIndex": 1,
+      "explanation": "Wizard of Oz defers automation cost, lets the team observe user behaviour, and avoids building features that customers may not value."
+    },
+    {
+      "id": "q18",
+      "stem": "Which is the MOST APPROPRIATE engine of growth for a B2B SaaS product with low natural virality but strong retention?",
+      "choices": [
+        "Viral",
+        "Sticky",
+        "Paid",
+        "Hybrid of all three at once"
+      ],
+      "correctIndex": 1,
+      "explanation": "Sticky engine: low churn drives net growth even with modest acquisition. B2B SaaS often optimises retention (NPS, NRR) before scaling acquisition."
+    },
+    {
+      "id": "q19",
+      "stem": "Which is a strong argument that Lean Startup does NOT work for deep biotech / hardtech?",
+      "choices": [
+        "Biotech founders dislike methodologies.",
+        "Long, capital-intensive, regulated development cycles make rapid MVP-driven Build-Measure-Learn loops infeasible; an mRNA vaccine cannot be shipped to 'see if customers like it'.",
+        "Biotech is more profitable.",
+        "Biotech does not need customers."
+      ],
+      "correctIndex": 1,
+      "explanation": "Lean works best where iteration is cheap and fast. Biotech, fusion, aerospace, and similar hard-tech contexts require capital-heavy de-risking before any customer test."
+    },
+    {
+      "id": "q20",
+      "stem": "Customer Discovery (Blank stage 1) is primarily about:",
+      "choices": [
+        "Closing the first sales.",
+        "Getting out of the building to interview prospective customers and validate the problem and value proposition.",
+        "Scaling demand generation.",
+        "Building functional departments."
+      ],
+      "correctIndex": 1,
+      "explanation": "Stage 1 is hypothesis-testing on the problem and customer. Founders interview, observe, and refine — no scaling yet."
+    },
+    {
+      "id": "q21",
+      "stem": "A founder spends nine months building a polished mobile app, then launches and watches downloads stall at 200 users with eight months runway. The MOST appropriate lean-startup response is:",
+      "choices": [
+        "Spend the remaining budget on marketing.",
+        "Run customer interviews with users and non-users to identify the failed leap-of-faith hypothesis; consider a structured pivot (zoom-in, segment, channel); reduce burn to preserve optionality.",
+        "Quit immediately.",
+        "Raise more capital to extend the launch campaign."
+      ],
+      "correctIndex": 1,
+      "explanation": "The textbook lean response: diagnose what failed, pivot if needed, reduce burn, preserve runway for learning. More marketing on an unvalidated product wastes capital."
+    },
+    {
+      "id": "q22",
+      "stem": "A 'concierge MVP' (e.g. Food on the Table) is one in which:",
+      "choices": [
+        "The product is automated end-to-end from day one.",
+        "The founders manually deliver the service to a small number of users to learn what to build before automating.",
+        "Concierges in luxury hotels test the product.",
+        "Customers pay a premium for personalised onboarding."
+      ],
+      "correctIndex": 1,
+      "explanation": "Concierge MVPs prioritise learning over automation. Food on the Table founders personally helped families plan meals before automating the recommendation engine."
+    },
+    {
+      "id": "q23",
+      "stem": "Which best contrasts Lean Startup with traditional product development on the HYPOTHESES dimension?",
+      "choices": [
+        "Both make explicit hypotheses and test them.",
+        "Traditional product development bakes implicit untested hypotheses into the business plan; Lean Startup makes hypotheses explicit and tests them via experiments.",
+        "Traditional product development uses no hypotheses; Lean Startup does.",
+        "Lean Startup avoids hypotheses altogether."
+      ],
+      "correctIndex": 1,
+      "explanation": "The hypothesis difference is exam-critical: traditional plans treat assumptions as facts; lean treats them as testable hypotheses with falsification criteria."
+    },
+    {
+      "id": "q24",
+      "stem": "Which is the strongest argument FOR a five-year business plan in some contexts?",
+      "choices": [
+        "It accurately predicts startup outcomes.",
+        "In mature firms entering known markets with known products, a detailed plan is useful for execution coordination — Lean Startup is not always the right tool.",
+        "Investors always demand it.",
+        "It eliminates the need for customer discovery."
+      ],
+      "correctIndex": 1,
+      "explanation": "Lean is for uncertainty. Mature firms in known markets benefit from traditional planning. Choosing the right tool to the context is part of senior judgement."
+    },
+    {
+      "id": "q25",
+      "stem": "Which best summarises 'validated learning'?",
+      "choices": [
+        "Customers saying they like the product in interviews.",
+        "Empirical evidence — typically behaviour, not opinion — that demonstrates the team has discovered valuable truths about its present and future business prospects.",
+        "Passing internal QA tests.",
+        "Approval by an advisory board."
+      ],
+      "correctIndex": 1,
+      "explanation": "Validated learning is Ries's anchor concept: behaviour-based evidence about the business, not opinions, not vanity metrics. Cohort retention beats survey responses."
+    }
+  ]
+}

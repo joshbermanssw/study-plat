@@ -1,0 +1,430 @@
+---
+title: "Week 4 — Dynamic Programming I"
+unit: COMP3027
+week: 4
+type: overview
+status: done
+---
+
+## What DP actually is
+
+**Dynamic programming (DP)** is "recursion with a notepad".
+
+You take a problem, break it into smaller versions of itself, and notice that the same small versions show up over and over in the recursion. Instead of recomputing them, you write each answer down once and look it up later. That's it.
+
+**Two ingredients you need:**
+
+1. **Optimal substructure** — the optimum of your problem is built from optima of smaller subproblems.
+2. **Overlapping subproblems** — the same subproblem comes up many times in a naive recursion.
+
+**Fun fact.** The name "dynamic programming" has nothing to do with code. Richard Bellman picked a vague name that would survive Pentagon budget review.
+
+### How DP differs from its cousins
+
+| Paradigm | Subproblems | Combine | When to use |
+|----------|-------------|---------|-------------|
+| **Divide-and-conquer** | Disjoint, computed once | Yes | Naturally splits, no overlap |
+| **Greedy** | One per step | No (commit locally) | Greedy choice property holds |
+| **DP** | Overlapping, polynomial-many | Yes | Optimum from smaller optima |
+
+**The week's mantra: identify the subproblem first, write the recurrence second, code third.** Most students who get stuck on DP get stuck at step one — picking a parameterisation that has both optimal substructure and tractable transitions.
+
+## The DP recipe (six steps)
+
+1. **Identify the subproblem.** Parameterise it by a small number of indices. Common shapes: a prefix A[1..i], a suffix A[i..n], a substring A[i..j], two prefixes (A[1..i], B[1..j]), index plus capacity, a tree node.
+
+2. **Define OPT precisely.** Write one English sentence: *"OPT(i, j) is the maximum/minimum/count of ... subject to ..."*.
+
+3. **Derive the recurrence.** Think about the *last decision*. Include element i, exclude it, match it to j, split at k. Express OPT in terms of OPT on smaller inputs. State base cases.
+
+4. **Sanity check.** Plug in tiny cases (n = 0, 1, 2). Trust nothing.
+
+5. **Choose an order.** Top-down with memoisation, or bottom-up tabulation. Same complexity either way.
+
+6. **Reconstruct the solution.** The OPT *value* is rarely the whole answer — you usually need the choices that achieved it. Store back-pointers, or re-derive by walking the table.
+
+**Complexity formula.** Time = #subproblems × work per transition. Space = #subproblems × entry size, possibly reducible via rolling arrays (Week 5).
+
+## Memoisation vs tabulation
+
+**Memoisation: top-down.** Write the recursion; cache results.
+
+```python
+memo = {}
+def opt(i):
+  if i in memo: return memo[i]
+  ans = base_case if ... else combine(opt(i-1), opt(i-2), ...)
+  memo[i] = ans
+  return ans
+```
+
+- **Pros:** computes only subproblems you actually need; matches the recurrence directly.
+- **Cons:** recursion overhead; stack depth; harder to space-optimise.
+
+**Tabulation: bottom-up.** Fill the table in dependency order.
+
+```python
+T[0] = base
+for i = 1..n:
+  T[i] = combine(T[i-1], T[i-2], ...)
+```
+
+- **Pros:** no recursion; cache-friendly; easy to space-optimise.
+- **Cons:** computes everything even if unused; you must figure out a valid fill order.
+
+Pick by preference (and space needs). Same Θ-complexity.
+
+## Weighted interval scheduling
+
+**Problem.** n jobs, each an interval [sⱼ, fⱼ) with value vⱼ ≥ 0. Pick a non-overlapping subset that maximises total value.
+
+The unweighted version was greedy by earliest finish time. Greedy fails here — one big-value long job can beat many cheap short ones.
+
+**Setup — name everything.**
+
+- Sort jobs by finish time. After sorting we have f₁ ≤ f₂ ≤ ... ≤ fₙ.
+- **p(j)** = the largest index i such that job i finishes by the time job j starts (fᵢ ≤ sⱼ). If no such i exists, p(j) = 0.
+- p(j) is "the latest job we could keep alongside j without overlapping". You compute it once for every j up front.
+
+**Subproblem.** **M(j)** = best total value using only the first j jobs (jobs 1..j).
+
+Our final answer is M(n).
+
+**Recurrence — deriving it step by step.**
+
+Look at the last job, job j. There are exactly **two cases** — either we take job j or we don't.
+
+Case A: **we don't take job j.** Then we're choosing from jobs 1..j−1 only. Best value: M(j−1).
+
+Case B: **we take job j.** Then we collect value vⱼ. We **can't** take any job that overlaps j. The latest non-overlapping job is p(j). So the rest of our solution comes from jobs 1..p(j). Best value for the rest: M(p(j)). Total: vⱼ + M(p(j)).
+
+M(j) is the better of the two cases.
+
+```text
+M(j) = max( v_j + M(p(j)),     ← take job j
+            M(j-1) )            ← skip job j
+M(0) = 0                        ← no jobs, no value
+```
+
+**Why this is correct.** For any optimal solution restricted to jobs 1..j, either:
+
+- it doesn't use j → it's a feasible solution on 1..j−1 → its value is ≤ M(j−1);
+- it uses j → the rest is feasible on 1..p(j) (no overlap with j) → its value is ≤ vⱼ + M(p(j)).
+
+Either way, the optimum is ≤ max of the two. And our recurrence achieves that max. So they're equal. ∎
+
+**Complexity.** Sort: Θ(n log n). Compute p(j) for all j via binary search: Θ(n log n). Table fill: Θ(n). **Total: Θ(n log n)**.
+
+**Reconstruction.** Trace from j = n: if vⱼ + M(p(j)) ≥ M(j−1), include j and jump to p(j); else jump to j−1.
+
+### Worked example
+
+Jobs (s, f, v): (1, 4, 3), (2, 5, 5), (4, 6, 4), (5, 8, 6), (7, 9, 2).
+
+Already sorted by f. Compute p: p = [0, 0, 1, 2, 4] (1-indexed).
+
+| j | option (include) | option (skip) | M(j) |
+|---|------------------|---------------|------|
+| 1 | 3 + 0 = 3        | 0             | 3    |
+| 2 | 5 + 0 = 5        | 3             | 5    |
+| 3 | 4 + 3 = 7        | 5             | 7    |
+| 4 | 6 + 5 = 11       | 7             | 11   |
+| 5 | 2 + 11 = 13      | 11            | 13   |
+
+**Optimum = 13** using jobs &#123;2, 4, 5&#125;.
+
+## Segmented least squares
+
+**Problem.** n points (xᵢ, yᵢ) sorted by x. Fit a piecewise-linear function minimising (sum of squared errors) + C × (number of segments).
+
+**Subproblem.** OPT(j) = minimum cost using points 1..j.
+
+**Recurrence.** The last segment spans some i..j. Pay:
+
+- e(i, j) = best least-squares error on points i..j (precomputed).
+- Plus C for the segment.
+- Plus OPT(i−1) for the rest.
+
+```text
+OPT(j) = min over i = 1..j of ( e(i, j) + C + OPT(i-1) )
+OPT(0) = 0
+```
+
+**Complexity.** Precompute all e(i, j) in Θ(n²) via running sums. Table: Θ(n²) entries × Θ(n) transitions = **Θ(n²)** total (with precomputed e). First example of a *quadratic* DP — n subproblems × Θ(n) work each.
+
+**Reconstruction.** Record argmin i at each j; replay backwards.
+
+## Longest Increasing Subsequence (LIS) in Θ(n log n)
+
+**Problem.** Given an array A of n distinct values, find the longest subsequence with strictly increasing values.
+
+**Naive DP.** L(i) = LIS length ending at i. L(i) = 1 + max&#123;L(j) : j &lt; i, A[j] &lt; A[i]&#125;. **Θ(n²)**.
+
+**The Θ(n log n) trick — the idea first.**
+
+We keep a list called `tails`. Position k in this list (0-indexed) stores **the smallest possible last value of any increasing subsequence of length k+1 seen so far**.
+
+Why "smallest possible"? Because a smaller last value is **easier to extend** — more future numbers will be bigger than it.
+
+```text
+LIS(A):
+  tails = []
+  for x in A:
+    k = first index with tails[k] >= x      # binary search
+    if k == |tails|: tails.append(x)        # x extends the longest run
+    else:            tails[k] = x           # x improves an existing length
+  return |tails|
+```
+
+**Why it works — the two facts that hold after every step.**
+
+Fact 1: `tails` is strictly increasing.
+
+Fact 2: `tails[k]` = the smallest last value of any length-(k+1) increasing subsequence we've seen.
+
+When we process a new number x:
+
+- If x is bigger than everything in `tails`, it extends the longest run we've found. Append it.
+- Otherwise, find the first slot k where `tails[k] ≥ x`. Overwrite that slot with x. This either keeps `tails[k]` the same (if it was already x) or replaces it with something smaller — which preserves fact 2 and still keeps `tails` strictly increasing (since x > tails[k−1] by the binary-search definition of k).
+
+The final length of `tails` is the LIS length.
+
+**Picture.** A = [10, 9, 2, 5, 3, 7, 101, 18].
+
+```text
+process 10:   tails = [10]
+process 9:    tails = [9]              ← 9 replaces 10 (smaller is better)
+process 2:    tails = [2]              ← 2 replaces 9
+process 5:    tails = [2, 5]           ← 5 extends
+process 3:    tails = [2, 3]           ← 3 replaces 5
+process 7:    tails = [2, 3, 7]        ← 7 extends
+process 101:  tails = [2, 3, 7, 101]   ← 101 extends
+process 18:   tails = [2, 3, 7, 18]    ← 18 replaces 101
+```
+
+Final length: 4. (Watch out: `tails` itself isn't an actual subsequence of A — but its length is the LIS length.)
+
+**Complexity.** n binary searches of Θ(log n) each ⇒ **Θ(n log n)**.
+
+**Reconstruction.** Store a parent pointer at each insertion; trace back in Θ(n).
+
+The pattern generalises: any DP where the state at index i depends only on a *comparison structure* can often be sped up with a search tree or segment tree.
+
+## Edit distance (Levenshtein)
+
+**Problem.** Given strings A[1..m] and B[1..n], minimum number of single-character edits (insert / delete / substitute) to turn A into B.
+
+**Lead with intuition.** Turn "kitten" into "sitting". You need to:
+
+1. Change k → s.
+2. Change e → i.
+3. Insert g at the end.
+
+That's 3 edits. Edit distance = 3. The DP just systematises this.
+
+**Subproblem.** **D(i, j)** = edit distance between the **prefix** A[1..i] (first i characters of A) and the prefix B[1..j] (first j characters of B). The final answer is D(m, n).
+
+**Recurrence — deriving the three cases.**
+
+Look at the very last character of each prefix. We need to align them somehow. There are exactly three possible "last moves":
+
+Case 1: **delete A[i].** We get rid of A's last character. Now we have to turn A[1..i−1] into B[1..j]. Cost: D(i−1, j) + 1.
+
+Case 2: **insert B[j].** We append B's last character to A. Now we have to turn A[1..i] into B[1..j−1] (since the last character of B is already taken care of). Cost: D(i, j−1) + 1.
+
+Case 3: **match or substitute the last pair.** Match A[i] with B[j]. If they're equal, no edit is needed (cost 0). If different, substitute (cost 1). Then we have to turn A[1..i−1] into B[1..j−1]. Cost: D(i−1, j−1) + (0 if A[i] = B[j] else 1).
+
+D(i, j) is the minimum of the three options.
+
+```text
+D(0, j) = j           ← turn empty into j chars: j inserts
+D(i, 0) = i           ← turn i chars into empty: i deletes
+D(i, j) = min(
+  D(i-1, j)   + 1,                       ← delete A[i]
+  D(i, j-1)   + 1,                       ← insert B[j]
+  D(i-1, j-1) + [A[i] != B[j]]           ← match (0) or substitute (1)
+)
+```
+
+The `[A[i] != B[j]]` notation is 1 if true, 0 if false.
+
+### Worked table: kitten → sitting
+
+Each cell (i, j) holds D(i, j) — the edit distance between the first i chars of "kitten" and the first j chars of "sitting". Fill row by row, left to right, using the recurrence above.
+
+|   | "" | s | i | t | t | i | n | g |
+|---|----|---|---|---|---|---|---|---|
+| "" | 0 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
+| k  | 1 | 1 | 2 | 3 | 4 | 5 | 6 | 7 |
+| i  | 2 | 2 | 1 | 2 | 3 | 4 | 5 | 6 |
+| t  | 3 | 3 | 2 | 1 | 2 | 3 | 4 | 5 |
+| t  | 4 | 4 | 3 | 2 | 1 | 2 | 3 | 4 |
+| e  | 5 | 5 | 4 | 3 | 2 | 2 | 3 | 4 |
+| n  | 6 | 6 | 5 | 4 | 3 | 3 | 2 | 3 |
+
+**D(6, 7) = 3.** ✓
+
+**Tracing one cell.** Look at D(6, 7) — bottom right. We need to turn "kitten" (i=6, last char 'n') into "sitting" (j=7, last char 'g'). The three options:
+
+1. delete 'n' from "kitten": D(5, 7) + 1 = 4 + 1 = 5.
+2. insert 'g' onto "kitten": D(6, 6) + 1 = 2 + 1 = 3.
+3. substitute 'n' → 'g': D(5, 6) + 1 = 3 + 1 = 4 (they differ, so +1).
+
+Minimum is 3 (option 2, insert 'g'). And indeed: kitten → sitten (substitute k→s) → sittin (substitute e→i) → sitting (insert g). Three edits.
+
+**Complexity.** **Θ(mn)** time and space. Space drops to Θ(min(m, n)) with two rolling rows — but you lose the edit script unless you use Hirschberg's D&C reconstruction (Θ(mn) time, Θ(min(m,n)) space).
+
+## Reconstructing the answer
+
+The OPT value alone is rarely enough. Two methods:
+
+**Back-pointer storage.** While filling, record the argmin/argmax at each cell. Trace back from the terminal cell. Space: Θ(table). Time: Θ(answer length).
+
+**Re-derivation walk.** Don't store anything extra; walk the filled table and re-evaluate which transition won at each cell. Constant extra space; same time.
+
+Both are O(table) — dominated by filling cost.
+
+## How to design a subproblem (heuristics)
+
+When you face a new DP problem, ask:
+
+- **What's the last decision?** Often the right subproblem is "after considering elements 1..i".
+- **What do I need to remember about the past?**
+  - If the cost of including i depends only on the most recent inclusion → 1D.
+  - If it depends on a count → add a second axis.
+  - If on a subset → you may need 2^n (Held-Karp, Week 5).
+- **Is there a natural divide?** Substrings or trees? Parameterise by interval or by tree node.
+- **What's the boundary?** Base cases pin down OPT on the empty / singleton.
+
+**Sanity check.** Multiply #subproblems by time per transition. If either is exponential, the parameterisation is wrong.
+
+## Rod cutting (warm-up unbounded DP)
+
+**Problem.** Given prices p[1..n] for rod lengths 1..n, find max revenue from cutting a rod of length n.
+
+**Subproblem.** R(ℓ) = max revenue from a rod of length ℓ.
+
+**Recurrence.** *Last cut is at some position i.*
+
+```text
+R(ℓ) = max over i = 1..ℓ of (p[i] + R(ℓ - i))
+R(0) = 0
+```
+
+### Worked: p = (1, 5, 8, 9, 10, 17, 17, 20)
+
+| ℓ | computation | R(ℓ) |
+|---|-------------|------|
+| 0 | — | 0 |
+| 1 | p[1] = 1 | 1 |
+| 2 | max(1+1, 5+0) | 5 |
+| 3 | max(1+5, 5+1, 8+0) | 8 |
+| 4 | max(1+8, 5+5, 8+1, 9+0) | 10 |
+| 5 | max(1+10, 5+8, 8+5, 9+1, 10+0) | 13 |
+| 6 | max(..., 17+0) | 17 |
+| 7 | max(..., 17+1, 17+0) | 18 |
+| 8 | max(..., 20+0) | 22 |
+
+**Θ(n²) time, Θ(n) space.** Single integer parameter — the simplest "last decision" pattern.
+
+## Longest Common Subsequence (LCS)
+
+**Problem.** Given A[1..m] and B[1..n], find the longest sequence appearing as a subsequence of both.
+
+**Subproblem.** L(i, j) = LCS length of A[1..i] and B[1..j].
+
+**Recurrence.**
+
+```text
+L(0, j) = L(i, 0) = 0
+L(i, j) = L(i-1, j-1) + 1            if A[i] = B[j]
+        = max( L(i-1, j), L(i, j-1) ) otherwise
+```
+
+### Worked: A = "ABCBDAB", B = "BDCAB"
+
+|     | "" | B | D | C | A | B |
+|-----|----|---|---|---|---|---|
+| ""  | 0 | 0 | 0 | 0 | 0 | 0 |
+| A   | 0 | 0 | 0 | 0 | 1 | 1 |
+| B   | 0 | 1 | 1 | 1 | 1 | 2 |
+| C   | 0 | 1 | 1 | 2 | 2 | 2 |
+| B   | 0 | 1 | 1 | 2 | 2 | 3 |
+| D   | 0 | 1 | 2 | 2 | 2 | 3 |
+| A   | 0 | 1 | 2 | 2 | 3 | 3 |
+| B   | 0 | 1 | 2 | 2 | 3 | 4 |
+
+**L(7, 5) = 4**. One witness: "BCAB". **Complexity: Θ(mn)**.
+
+LCS is the canonical 2-string DP template.
+
+## Subset sum: a taste of pseudo-polynomial
+
+**Problem.** Integers a₁, ..., aₙ ≥ 0, target T ≥ 0. Does some subset sum to T?
+
+**Subproblem.** SS(i, t) = TRUE iff some subset of &#123;a₁, ..., aᵢ&#125; sums to t.
+
+**Recurrence.**
+
+```text
+SS(i, t) = SS(i-1, t)  OR  (t >= a_i AND SS(i-1, t - a_i))
+SS(0, 0) = TRUE
+SS(0, t > 0) = FALSE
+```
+
+**Complexity.** Θ(nT). Sounds polynomial, but **T is encoded in O(log T) bits**, so this is exponential in input bit-length — *pseudo-polynomial*.
+
+Subset Sum is NP-complete. This DP confirms it's *weakly* NP-hard (Week 9). Same template (with values vᵢ replacing booleans) gives 0/1 knapsack in Week 5.
+
+## DP on DAGs: longest path
+
+**Problem.** DAG G with edge weights. Find the longest (heaviest) path.
+
+**Subproblem.** L(v) = longest path ending at v.
+
+**Recurrence.** L(v) = max over edges (u, v) of L(u) + w(u, v).
+
+**Fill order.** Topological order — every predecessor before v.
+
+**Complexity.** **Θ(V + E)**.
+
+Note: longest path in *general* graphs is NP-hard. The DAG structure tames it.
+
+**Big idea.** *Every* DP can be viewed as shortest/longest path on the implicit DAG of subproblems. The recurrence defines the edges; the fill order is a topological sort. This duality is the single most general framing of DP.
+
+## DP vs everything else (a comparison)
+
+| Property | Brute force | D&C | Greedy | DP |
+|----------|-------------|-----|--------|-----|
+| Subproblems | exponential | disjoint, poly | one per step | overlapping, poly |
+| Combine | trivial | non-trivial | trivial | non-trivial |
+| Correctness | exhaustive | strong induction | exchange | optimal substructure + induction |
+| Time | exponential | recurrence | linear-ish | (#subproblems) × (transition) |
+| When applicable | always | disjoint structure | greedy choice property | optimal substructure + overlap |
+
+## A worked DP from scratch: counting stairs climbs
+
+**Problem.** Staircase with n steps. You can take 1 or 2 at a time. How many distinct climbs?
+
+**Subproblem.** W(i) = number of sequences ending at step i.
+
+**Recurrence.** Last move was +1 (from step i−1) or +2 (from step i−2).
+
+```text
+W(i) = W(i-1) + W(i-2)
+W(0) = W(1) = 1
+```
+
+This is Fibonacci. W(n) ≈ φⁿ/√5.
+
+**DP: Θ(n) time, Θ(1) space (rolling).** Naive recursion: Θ(φⁿ). That speedup *is* the headline benefit of DP.
+
+## What to do this week
+
+1. Redo the weighted-interval-scheduling recurrence from scratch on the worked example. Confirm you get 13.
+2. Implement Θ(n log n) LIS. Verify on a length-20 sequence by hand.
+3. Fill the kitten/sitting edit-distance table on paper, no peeking at the worked one.
+4. Solve rod-cutting with p = (1, 5, 8, 9, 10, 17, 17, 20) by hand. Confirm R(8) = 22.
+5. For each DP this week, identify the implicit DAG and confirm the fill order is a topological sort.
+6. Reconstruct the LCS of "ABCBDAB" and "BDCAB" by walking the table. (One answer: "BCAB".)
+7. Skim the quiz: any recurrence you can't derive in 30 seconds is a study target.

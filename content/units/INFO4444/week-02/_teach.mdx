@@ -1,0 +1,174 @@
+---
+title: "Week 2 — Innovation Frameworks I: Dominant Design"
+unit: INFO4444
+week: 2
+type: overview
+status: done
+---
+
+## What this week is really about
+
+Week 2 introduces the first of the unit's *big* descriptive frameworks: the Utterback-Abernathy model of how an industry evolves from a chaotic mess of incompatible product designs into a stable, commoditised dominant design — and then either stagnates or is overthrown. The model is forty years old, originally derived from the US automobile industry, and yet it remains the cleanest analytical lens we have for explaining why a young technology category (smart speakers in 2017, electric vehicles in 2018, generative AI now) is full of incompatible products and a mature one (passenger cars in 1990, desktop PCs in 2005) is full of interchangeable ones. The companion concept this week — *standards wars* — answers a different question: when multiple incompatible designs compete, *which one wins, and why?* VHS vs Betamax, QWERTY vs Dvorak, Blu-ray vs HD DVD, iOS vs Android — all of these are standards-war case studies that you should be able to narrate in two sentences each. By the end of this overview, you should be able to (a) state the three Utterback-Abernathy phases and the four dimensions along which each one differs, (b) draw the technology S-curve and label its inflection points, (c) explain *why* a dominant design emerges (the self-reinforcing cycle of learning and network effects), and (d) recite at least one serious critique of the framework — because no innovation argument that uses Utterback-Abernathy uncritically gets full marks at honours level.
+
+## Utterback and Abernathy, 1975
+
+The foundational paper is James M. Utterback and William J. Abernathy, *"A Dynamic Model of Process and Product Innovation"*, Omega 3(6), 1975. Their core empirical observation, drawn from the US auto industry (1894–1923) and later replicated for typewriters, televisions, calculators, and disk drives, was that industries pass through three identifiable phases — *fluid*, *transitional*, *specific* — along *four* dimensions simultaneously: product, process, organisation, and competitive environment. The 4×3 matrix below is the single most useful summary of the framework. You should be able to fill it in from memory.
+
+```
+                        FLUID PHASE         TRANSITIONAL PHASE      SPECIFIC PHASE
+                        ───────────         ──────────────────      ──────────────
+Product innovation      Frequent, major     Major but on dominant   Incremental, on
+                        changes in design   design; differentiation  cumulative product
+                                            on features              improvements
+
+Process innovation      Minor; flexible     Increasingly rigid;     Major; capital-
+                        general-purpose     specialised equipment    intensive, dedicated
+                        equipment                                    process equipment
+
+Organisation            Entrepreneurial,    Project / matrix;       Hierarchical,
+                        informal; loose     formal task groups;     functional, rigid;
+                        roles; small teams  cross-disciplinary       command and control
+
+Competitive environ.    Many small firms,   Fewer firms, growth     Oligopoly; commodity
+                        product variety,    by capturing market     competition on price
+                        market uncertainty  share; M&A activity      and cost
+```
+
+The transitions between phases are driven by the emergence of a **dominant design** at the boundary between fluid and transitional. *Before* the dominant design, no producer knows what configuration of features the market wants, so producers experiment along every dimension simultaneously. The original automobile period 1894–1908 had steam, electric, and gasoline cars, tiller and wheel steering, two-seat and four-seat configurations, brass-rail and enclosed body styles. *After* the Ford Model T (1908), the dominant configuration was set: gasoline, front-mounted engine, rear-wheel drive, steering wheel, enclosed body — and the basis of competition shifted from "what kind of car do you sell?" to "how cheaply can you produce a car of this kind?". Ford's River Rouge plant (1928) is the canonical *specific phase* artefact: vertically integrated, dedicated, capital-intensive, optimised for one product.
+
+## The S-curve of technology performance
+
+Tightly related but conceptually distinct from the U-A model is the **technology S-curve** (popularised by Richard Foster, *Innovation: The Attacker's Advantage*, 1986). The S-curve plots cumulative engineering effort or investment (x-axis) against technology performance (y-axis). Three regimes:
+
+```
+              Performance
+                  │
+                  │                  ╭───── plateau (diminishing returns)
+                  │                ╭─╯
+                  │              ╭─╯
+                  │           ╭──╯
+                  │        ╭──╯       ← inflection / dominant-design era
+                  │     ╭──╯
+                  │   ╭─╯
+                  │  ╭╯              ← rapid improvement (transitional)
+                  │ ╭╯
+                  │╭╯                ← slow start (fluid phase, exploration)
+                  ╰────────────────────────────────────► Cumulative effort
+```
+
+- **Slow start.** The technology is poorly understood, the right architecture is unknown, returns to additional effort are low.
+- **Steep middle.** Once the dominant design is found, every additional unit of effort yields a big improvement — engineers know what to push on.
+- **Plateau.** Physical limits, diminishing returns, and the cost of further improvements rising sharply. This is where a *new* technology with its own S-curve emerges and the old one is overthrown — the technological *discontinuity* of Anderson-Tushman (see below).
+
+The S-curve is not just descriptive — it is a *strategic* tool. Foster's argument was that incumbent firms reliably mis-time the transition: they treat plateau symptoms (declining marginal returns to R&D) as a sign they need *more* R&D on the old technology, when actually they should be hedging with bets on the new S-curve. Kodak in the 1990s is the textbook case: they could see digital sensor performance climbing, but they continued to pour R&D into film grain and chemistry, where every dollar yielded less and less. By the time they pivoted, the new S-curve had moved past them.
+
+## Anderson and Tushman: technology cycles and competence
+
+Philip Anderson and Michael Tushman extended the U-A framework in *"Technological Discontinuities and Dominant Designs"* (Administrative Science Quarterly, 1990). Their three additions are essential for honours-level answers.
+
+1. **Cycles are recurring.** Industries do not pass through U-A's phases once. After a dominant design and a long period of incremental improvement, a *technological discontinuity* triggers a new fluid phase. Vacuum tubes → transistors → integrated circuits → microprocessors → multi-core → specialised accelerators. Each cycle has its own fluid-transitional-specific arc.
+
+2. **The dominant design is never the most advanced version of the technology.** It is the configuration that meets the *needs of the majority of the market*, not the technology frontier. The IBM PC (1981) was technologically mediocre — slower than the Apple II, less capable than minicomputers — but its open architecture and Intel/Microsoft components made it the dominant design for desktop computing for two decades.
+
+3. **Discontinuities are competence-enhancing or competence-destroying.** A competence-enhancing discontinuity extends the incumbent's existing skills (e.g. each new generation of jet engines for established engine makers). A competence-destroying one renders the incumbent's skills obsolete (transistors destroyed RCA's vacuum-tube competence; digital sensors destroyed Kodak's film-chemistry competence). The latter is fatal because the people who got the firm to dominance in the old paradigm are the same people who must lead the transition — and they are precisely those whose skills are now obsolete.
+
+## Why dominant designs emerge: the self-reinforcing cycle
+
+A dominant design is not "the best technology". It is the design that wins a *positive-feedback* contest. Three reinforcing mechanisms drive convergence.
+
+1. **Learning effects.** The more a particular design is produced, the more producers learn about it: better tolerances, better defect rates, more know-how. Boston Consulting Group's "experience curve" (Bruce Henderson, 1968) quantifies this: unit cost falls by 15–25% with every doubling of cumulative production. This makes a design that gets out in front cheaper, faster, in a way no late entrant can match without absorbing the same cumulative volume.
+
+2. **Network effects.** Direct (the more users, the more value to each user — telephones, email, social networks), indirect (the more users of the platform, the more complementary goods are produced — apps on iOS, games on a console), two-sided (riders → drivers → riders on Uber), and local (your team uses Slack, so you do too). Bob Metcalfe famously formalised this with *Metcalfe's Law*: the value of a network grows roughly as N² (the number of pairwise connections), while cost grows as N — so beyond a threshold N\* the network is worth its cost. (Modern empirical work — Briscoe-Odlyzko-Tilly 2006 — argues N·log(N) is closer to reality, but the intuition is right.)
+
+3. **Switching costs and complementary assets.** Once users have invested in training, data conversion, integrated workflows, and complementary products (printers, keyboards, plugins, file formats), the *cost* of switching to a competing design is high even if the competing design is technically superior. This is why the most dominant designs are platforms with rich ecosystems of complements.
+
+The three mechanisms compound. Learning makes the design cheaper, network effects make it more valuable, switching costs lock users in. Once the loop ignites, the dominant design is self-fulfilling: it does not become dominant because it is best — it becomes "best" because it became dominant.
+
+## Standards wars
+
+Dominant designs are sometimes settled by markets through the self-reinforcing cycle above, but often the convergence is *engineered* through a **standards war**. Carl Shapiro and Hal Varian, in *Information Rules* (1998), gave the canonical typology. Their two-by-two:
+
+```
+                          Your technology compatible with rival?
+                          NO                 YES
+                       ┌─────────────────┬──────────────────┐
+        You backward   │ Rival war       │ Evolution        │
+        compatible?    │ (e.g. Blu-ray   │ (e.g. 802.11 b/g/n│
+        NO             │ vs HD DVD)      │  / Wi-Fi)         │
+                       ├─────────────────┼──────────────────┤
+                       │ Revolution      │ Pure evolution    │
+        YES            │ (e.g. iPhone vs │ (incremental     │
+                       │ feature phones) │  versioning)     │
+                       └─────────────────┴──────────────────┘
+```
+
+Two famous case studies you should be able to narrate in detail.
+
+**VHS vs Betamax (1976–1988).** Sony's Betamax (1975) was technically superior — better picture, smaller cassette, earlier to market. JVC's VHS (1976) had longer recording time, lower licensing costs, and an open licensing strategy: JVC licensed VHS to RCA, Sharp, Panasonic, Hitachi within months. By 1980, more than half of all VCRs sold in the US were VHS. The studios then made the decisive move: pre-recorded movies appeared in VHS first because the installed base was bigger, and the indirect network effect (more tapes → more VHS purchases → more tapes) buried Betamax. By 1988 Sony released a VHS deck themselves. *Lesson:* in a network-effects category, picking the *open* licensing model beats picking the *better* technology.
+
+**QWERTY vs Dvorak (1873–present).** The QWERTY layout was designed by Christopher Sholes (1873) explicitly to *slow* typing — common digraphs are placed on opposite sides of the keyboard to prevent mechanical jams in 1870s typewriters. August Dvorak's 1936 layout reduces finger travel and is faster for trained typists. Yet QWERTY remains universal. *Why?* Once typists were trained, switching cost was personal (retraining); once typewriters were sold, switching cost was capital; once a generation of standards was set, network effects (shared keyboards, layouts in publications) locked in. The economic literature debates how *severe* QWERTY's inefficiency really is (Liebowitz-Margolis 1990 argued the speed advantage of Dvorak is small), but the structural lesson stands: technical superiority does not defeat installed-base lock-in.
+
+Other standards wars to know in one sentence each: HD DVD vs Blu-ray (Sony won by capturing PlayStation 3 as a beachhead); USB vs FireWire (USB won on price and PC vendor support); iOS vs Android (codominance via different routes — iOS premium-vertical, Android volume-horizontal); MP3 vs AAC (MP3 won despite AAC's better quality, again on the network/licensing axis).
+
+## Punctuated equilibrium and the technology trajectory
+
+Tushman and Romanelli (1985) applied biologist Stephen Jay Gould's *punctuated equilibrium* metaphor to industries: long periods of incremental change *punctuated* by brief revolutionary discontinuities. Inside an era of incremental change, the technology follows a *trajectory* — a predictable path of improvement along the dimensions the dominant design has selected for (Moore's Law in semiconductors; areal density in disk drives; barrels-per-day in oil refining). The trajectory is *constrained* by the dominant design — improvements that don't fit the dominant configuration are not pursued. This is why the punctuation, when it comes, is so disruptive: a competing technology has been improving in *its* trajectory, often invisible to incumbents because it served a different (often inferior) market segment. We will return to this in Week 3 — it is the heart of Christensen's argument about disruption.
+
+## First mover, second mover, fast second
+
+Closely tied to dominant-design dynamics is the question of *when* to enter. The folk wisdom is "first-mover advantage". The data is more nuanced. Constantinos Markides and Paul Geroski, in *Fast Second* (HBR 2008, book 2005), reviewed dozens of industry case studies and found that **the firm that ends up dominating a new category is rarely the one that created it**. First movers face high failure rates (~47% in some studies vs ~8% for fast followers) because they bear the cost of market education, technology validation, and dominant-design uncertainty. Three patterns:
+
+- **First mover** — invents the category, often becomes the *visionary* but loses dominance. Xerox PARC invented the GUI, the mouse, Ethernet, and laser printing — and shipped none of them to consumers profitably. Friendster invented the social network. Netscape commercialised the browser.
+- **Second mover (fast follower)** — copies the first mover's category, often beats them on execution. Facebook over Friendster/Myspace. Google over Yahoo and AltaVista. iPod over Diamond Rio and Creative Zen.
+- **Fast second / consolidator** — enters just as the dominant design is emerging, often a large incumbent leveraging existing channels and brand. Microsoft Internet Explorer over Netscape (briefly). Apple's iPhone over Palm and BlackBerry. Canon and Microsoft are the textbook fast-second firms in the literature.
+
+The strategic implication: do not confuse *being early* with *being right*. The optimal entry timing is *around* the emergence of the dominant design, when uncertainty is reducing but the consolidation has not yet locked in.
+
+## Dominant designs in IT specifically
+
+The original U-A framework was about physical-product industries, where the dominant design is a tangible configuration (the Model T's mechanical layout). In IT, the dominant designs are usually *architectures* — abstractions that constrain future products:
+
+- The **IBM PC architecture** (1981): x86 instruction set, ISA/PCI bus, BIOS, DOS/Windows OS. Set the dominant design for desktop computing for two decades.
+- **WIMP** (windows, icons, menus, pointing device): defined the dominant interaction paradigm for personal computing after the Macintosh (1984) and Windows 3.0 (1990).
+- **TCP/IP and the Internet Protocol Stack**: layered model that won over OSI (which was technically richer but operationally heavier).
+- **The Web stack** (HTML, HTTP, URLs): dominant design for hypertext / information delivery. Defeated Gopher, WAIS, and proprietary networks.
+- **LAMP** (Linux/Apache/MySQL/PHP-Perl-Python): dominant server-side architecture for the open Internet from the late 1990s.
+- **The relational database** with SQL: dominant design for transactional data since the 1980s; NoSQL was a transitional-phase challenge that has settled into a coexistence rather than replacement.
+- **The iPhone-Android dominant design for smartphones**: capacitive touchscreen, no physical keyboard, app store distribution.
+
+Notice that all of these are *modular* designs in the Henderson-Clark sense (Week 1): the architecture is stable, but the components inside it (the OS version, the database engine, the GPU) can be improved or replaced. This is what made them durable — they are open enough for ecosystems of complements, closed enough for users to predict compatibility.
+
+## Critique of the dominant-design model
+
+No serious exam answer just *applies* Utterback-Abernathy. You need to be able to critique it. Three serious objections to know.
+
+1. **Not every industry produces a single dominant design.** In some industries, multiple designs coexist permanently — programming languages (no dominant design, dozens of strong niches), automobiles in the long run (sedans, SUVs, EVs all viable). U-A predict convergence; reality often gives sustained diversity. The framework was derived from one industry (autos), at one time (early 20th century), under one set of conditions (mass-market, low product diversity, weak segmentation).
+
+2. **The phase boundaries are not as sharp as the model implies.** Many industries appear to be in *transitional* phase for decades — productivity software, for instance, has been "almost converging" on a dominant design since 1990 and never quite getting there (Microsoft Office vs Google Workspace vs Notion vs hundreds of niches).
+
+3. **It is descriptive, not predictive.** You can apply U-A in retrospect to almost any industry. Predicting *prospectively* when a dominant design will emerge for, say, autonomous vehicles or AI agents is essentially impossible. Be honest in essays: U-A is a *post-hoc analytical lens*, not a forecasting tool.
+
+A useful synthesis: combine U-A with Christensen's disruption model (Week 3). U-A tells you what *normal* technology evolution looks like inside an era of incremental change. Christensen tells you what happens when a *competence-destroying* discontinuity arrives — the incumbent's dominant-design lock-in, the very thing that made them dominant, becomes the trap that prevents them from adopting the new S-curve.
+
+## A worked application: the smart-speaker category 2014–2024
+
+Apply the framework to a concrete IT category you have lived through: voice-controlled smart speakers from Amazon Echo's launch (2014) to today.
+
+*2014–2017: fluid phase.* Amazon Echo launches (2014) with a novel form factor and a voice-first interface. Google Home (2016), Apple HomePod (2017), Samsung Galaxy Home (announced 2018, never shipped), Microsoft Cortana-based devices, and a long tail of Alibaba/Baidu/Tencent devices all enter. Each has different microphone configurations, different wake-words, different ecosystems (Alexa Skills, Google Actions, SiriKit, Bixby), different default music services. Consumers do not know what to expect. Reviewers compare on incompatible dimensions. The market signal is mixed.
+
+*2018–2020: transitional phase.* The dominant configuration begins to emerge: a small cylindrical or puck-shaped device with far-field microphones, cloud-based speech recognition, an app ecosystem, and a music-service partnership as the entry use case. The number of viable players shrinks: Microsoft exits consumer voice, Samsung's home device never launches, Apple repositions HomePod as a premium niche. Amazon and Google emerge as the volume leaders; Apple holds the premium top.
+
+*2021 onward: specific phase but with potential discontinuity.* Process innovation now dominates — improved noise cancellation, lower-cost components, integration with smart-home protocols (Matter, 2022). Product innovation incremental. *But* a potential discontinuity is visible: generative AI (LLMs in the speaker) threatens the existing voice-assistant architecture (intent-classification → API call) by enabling open-ended conversation. Amazon's launch of "Alexa+" with Claude, Apple's intelligence updates, and Google's Gemini integration could be the *technological discontinuity* (Anderson-Tushman) that resets the fluid phase. This is in real time as you study the unit.
+
+The exercise shows U-A in operation across one decade for one IT category. Every other category you analyse should get the same treatment.
+
+## What you should be able to do by next week
+
+- Recite the three U-A phases and the four dimensions, and apply them to a current category (smart speakers, EVs, generative AI).
+- Draw the technology S-curve, label the three regimes, and place a real technology on it.
+- Explain Metcalfe's Law and its corrections.
+- Narrate VHS-vs-Betamax and QWERTY-vs-Dvorak in two sentences each.
+- Distinguish first mover, second mover, fast second; give a named example of each.
+- State at least one serious critique of the dominant-design framework.
+
+Week 3 will pick up exactly where this leaves off: what happens when the dominant design is *threatened* by a technology that is initially inferior on the dimensions incumbents care about. That is the Christensen story.

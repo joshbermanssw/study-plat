@@ -1,0 +1,307 @@
+{
+  "unit": "COMP3027",
+  "week": 3,
+  "topic": "Divide and conquer",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "What is the solution to T(n) = 2 T(n/2) + Theta(n)?",
+      "choices": [
+        "Theta(n)",
+        "Theta(n log n)",
+        "Theta(n^2)",
+        "Theta(log n)"
+      ],
+      "correctIndex": 1,
+      "explanation": "Master Case 2: log_b a = 1 = exponent of f. T(n) = Theta(n log n). MergeSort's recurrence."
+    },
+    {
+      "id": "q2",
+      "stem": "T(n) = T(n/2) + O(1) solves to:",
+      "choices": [
+        "Theta(1)",
+        "Theta(log n)",
+        "Theta(n)",
+        "Theta(n log n)"
+      ],
+      "correctIndex": 1,
+      "explanation": "Binary search recurrence: log_b a = 0, f(n) = Theta(1), Case 2 with k = 0 gives Theta(log n)."
+    },
+    {
+      "id": "q3",
+      "stem": "Which Master Theorem case applies to T(n) = 3 T(n/2) + Theta(n)?",
+      "choices": [
+        "Case 1 — recursion dominates",
+        "Case 2 — perfectly balanced",
+        "Case 3 — combine dominates",
+        "Master theorem does not apply"
+      ],
+      "correctIndex": 0,
+      "explanation": "n^{log_2 3} ~ n^{1.585} which dominates f(n) = n, so Case 1 gives T(n) = Theta(n^{log_2 3}). Karatsuba's recurrence."
+    },
+    {
+      "id": "q4",
+      "stem": "Karatsuba multiplies two n-digit numbers using how many half-size multiplications?",
+      "choices": [
+        "2",
+        "3",
+        "4",
+        "n"
+      ],
+      "correctIndex": 1,
+      "explanation": "Karatsuba's identity reduces 4 multiplications to 3 by reusing (x1+x0)(y1+y0)."
+    },
+    {
+      "id": "q5",
+      "stem": "What is the role of the 'recursion fairy' in divide-and-conquer correctness proofs?",
+      "choices": [
+        "It implements the recursion",
+        "It is the inductive hypothesis: assume recursive calls return correct answers on smaller inputs",
+        "It is a memoisation table",
+        "It is a debugging trick"
+      ],
+      "correctIndex": 1,
+      "explanation": "The recursion fairy is shorthand for the strong induction hypothesis: subproblems return correct results, so you focus on the divide and combine steps."
+    },
+    {
+      "id": "q6",
+      "stem": "The combine step in MergeSort takes what time on inputs of total size n?",
+      "choices": [
+        "O(log n)",
+        "O(n)",
+        "O(n log n)",
+        "O(n^2)"
+      ],
+      "correctIndex": 1,
+      "explanation": "Merge is a two-pointer scan; each output position takes O(1), so total work is O(n)."
+    },
+    {
+      "id": "q7",
+      "stem": "What three cases must be considered in the divide-and-conquer max-subarray algorithm?",
+      "choices": [
+        "Sum, count, average",
+        "Left half, right half, spanning the midpoint",
+        "Sorted, unsorted, partially sorted",
+        "Positive, negative, zero"
+      ],
+      "correctIndex": 1,
+      "explanation": "The optimal subarray is either entirely in the left, entirely in the right, or crosses the midpoint (linear-time suffix+prefix scan)."
+    },
+    {
+      "id": "q8",
+      "stem": "In the inversion-counting MergeSort, when is a cross-inversion counted?",
+      "choices": [
+        "When an element of L is moved to the output",
+        "When an element of R is moved to the output before all of L is exhausted; count is |L| - i remaining in L",
+        "Only after both halves are merged",
+        "When the array is reversed"
+      ],
+      "correctIndex": 1,
+      "explanation": "Each element of R that beats remaining elements of L creates that many new inversions equal to the number of remaining L elements."
+    },
+    {
+      "id": "q9",
+      "stem": "Closest Pair of Points runs in what time?",
+      "choices": [
+        "O(n)",
+        "O(n log n)",
+        "O(n log^2 n)",
+        "O(n^2)"
+      ],
+      "correctIndex": 1,
+      "explanation": "Standard analysis with pre-sorted lists gives O(n log n); the 2-delta strip's geometric packing argument keeps combine O(n)."
+    },
+    {
+      "id": "q10",
+      "stem": "Why are only ~7 nearest-y neighbours checked inside the 2-delta strip?",
+      "choices": [
+        "Heuristic",
+        "Geometric packing: at most a constant number of points can fit in a 2-delta by delta box at minimum spacing delta",
+        "Random selection",
+        "Empirical tuning"
+      ],
+      "correctIndex": 1,
+      "explanation": "At least delta-spacing constrains the number of points in any 2-delta x delta box; the packing argument bounds it by a small constant."
+    },
+    {
+      "id": "q11",
+      "stem": "If T(n) = 4 T(n/2) + Theta(n^2), what is the asymptotic complexity?",
+      "choices": [
+        "Theta(n^2)",
+        "Theta(n^2 log n)",
+        "Theta(n^3)",
+        "Theta(n^{log_2 4} log n)"
+      ],
+      "correctIndex": 1,
+      "explanation": "log_b a = log_2 4 = 2, matching f(n) = n^2. Master Case 2 with k = 0 gives Theta(n^2 log n)."
+    },
+    {
+      "id": "q12",
+      "stem": "Strong induction is used in divide-and-conquer correctness because:",
+      "choices": [
+        "Subproblems may have size strictly less than n-1, not just n-1",
+        "Strong induction is faster than weak induction",
+        "It avoids recursion",
+        "Weak induction does not exist"
+      ],
+      "correctIndex": 0,
+      "explanation": "Subproblems can have any size < n. Strong induction allows the hypothesis to apply to all smaller sizes."
+    },
+    {
+      "id": "q13",
+      "stem": "Which problem does NOT have a natural divide-and-conquer algorithm in the lecture material?",
+      "choices": [
+        "MergeSort",
+        "Closest Pair",
+        "Counting Inversions",
+        "Single-source shortest paths in a general graph"
+      ],
+      "correctIndex": 3,
+      "explanation": "Shortest paths use Dijkstra / Bellman-Ford (greedy / DP). The others all fit the divide-and-conquer pattern."
+    },
+    {
+      "id": "q14",
+      "stem": "Master Theorem Case 3 requires which extra regularity condition?",
+      "choices": [
+        "f is monotone",
+        "a * f(n/b) <= c * f(n) for some c < 1 and large n",
+        "f is concave",
+        "a divides n"
+      ],
+      "correctIndex": 1,
+      "explanation": "Regularity ensures the combine costs at higher recursion levels don't blow up. Without it Case 3's conclusion can fail."
+    },
+    {
+      "id": "q15",
+      "stem": "Karatsuba's running time on n-digit multiplication is approximately:",
+      "choices": [
+        "Theta(n)",
+        "Theta(n log n)",
+        "Theta(n^{1.585})",
+        "Theta(n^2)"
+      ],
+      "correctIndex": 2,
+      "explanation": "T(n) = 3 T(n/2) + O(n) gives Theta(n^{log_2 3}) ~ n^{1.585}."
+    },
+    {
+      "id": "q16",
+      "stem": "Which technique is preferred when the master theorem does not apply?",
+      "choices": [
+        "Stop solving the recurrence",
+        "Recursion-tree unrolling or substitution",
+        "Greedy approximation",
+        "Linear programming"
+      ],
+      "correctIndex": 1,
+      "explanation": "The recursion tree gives you a per-level cost; summing across levels closes the bound. Substitution then proves the guess."
+    },
+    {
+      "id": "q17",
+      "stem": "When does Master Case 1 apply?",
+      "choices": [
+        "f(n) is polynomially smaller than n^{log_b a}",
+        "f(n) is polynomially larger than n^{log_b a}",
+        "f(n) equals n^{log_b a} up to polylog",
+        "a = 1"
+      ],
+      "correctIndex": 0,
+      "explanation": "Case 1: recursion dominates because f is asymptotically negligible compared to n^{log_b a}."
+    },
+    {
+      "id": "q18",
+      "stem": "What is the height of the recursion tree for T(n) = a T(n/b) + f(n) on input size n?",
+      "choices": [
+        "log_b n",
+        "log_a n",
+        "n / b",
+        "a"
+      ],
+      "correctIndex": 0,
+      "explanation": "Each level shrinks the subproblem size by factor b, giving height log_b n."
+    },
+    {
+      "id": "q19",
+      "stem": "Counting Inversions runs in:",
+      "choices": [
+        "Theta(n)",
+        "Theta(n log n)",
+        "Theta(n log^2 n)",
+        "Theta(n^2)"
+      ],
+      "correctIndex": 1,
+      "explanation": "Augmented MergeSort gives the same Theta(n log n) bound."
+    },
+    {
+      "id": "q20",
+      "stem": "In the closest-pair algorithm, why is sorting points by y inside the strip important?",
+      "choices": [
+        "To break ties for ordering",
+        "To bound the number of nearby candidates to a constant",
+        "To compute the median",
+        "To minimise cache misses"
+      ],
+      "correctIndex": 1,
+      "explanation": "After y-sorting, each candidate need only compare to its next ~7 y-neighbours, keeping combine O(n)."
+    },
+    {
+      "id": "q21",
+      "stem": "T(n) = T(n - 1) + O(n) solves to:",
+      "choices": [
+        "Theta(n)",
+        "Theta(n log n)",
+        "Theta(n^2)",
+        "Theta(2^n)"
+      ],
+      "correctIndex": 2,
+      "explanation": "Sum of O(n) work over n levels gives Theta(n^2). The master theorem does not apply (subtractive, not divisive)."
+    },
+    {
+      "id": "q22",
+      "stem": "Which divide-and-conquer algorithm fundamentally relies on the integrality of input sizes (no fractional subproblem)?",
+      "choices": [
+        "MergeSort",
+        "Closest Pair",
+        "Binary Search",
+        "All of them — recursion always rounds"
+      ],
+      "correctIndex": 3,
+      "explanation": "Every standard analysis ignores floor/ceiling on n/b; the bounds are unchanged modulo constants."
+    },
+    {
+      "id": "q23",
+      "stem": "Why is the combine step's complexity the lever for divide-and-conquer design?",
+      "choices": [
+        "The recurrence's f(n) dictates the case of the master theorem and hence the final bound",
+        "It is the easiest step to optimise",
+        "It is the only step that runs",
+        "It always equals O(n)"
+      ],
+      "correctIndex": 0,
+      "explanation": "Holding a, b fixed, f(n) is what you control by algorithm design — and it determines whether the answer is Theta(n^{log_b a}), Theta(n^{log_b a} log n), or Theta(f(n))."
+    },
+    {
+      "id": "q24",
+      "stem": "For T(n) = 2 T(n/2) + n log n, the solution is:",
+      "choices": [
+        "Theta(n log n)",
+        "Theta(n log^2 n)",
+        "Theta(n^2)",
+        "Theta(n)"
+      ],
+      "correctIndex": 1,
+      "explanation": "Extended Case 2 with k = 1 (f = Theta(n^{log_b a} log^1 n)) gives Theta(n log^2 n)."
+    },
+    {
+      "id": "q25",
+      "stem": "Which property does NOT hold for divide-and-conquer subproblems?",
+      "choices": [
+        "They have smaller input size",
+        "They are independent (no shared overlap)",
+        "They are solved independently and combined",
+        "They are memoised and reused"
+      ],
+      "correctIndex": 3,
+      "explanation": "Memoisation/overlap is the DP signature. Divide-and-conquer assumes independent subproblems with no overlapping reuse."
+    }
+  ]
+}

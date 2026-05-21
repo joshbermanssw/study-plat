@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useState } from "react";
-import { ChevronRight, FileText, FlaskConical, GraduationCap, BookOpen, NotebookPen } from "lucide-react";
+import { ChevronRight, FileText, FlaskConical, GraduationCap, BookOpen, NotebookPen, Sparkles } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { useMountedProgress } from "@/lib/progress";
 import { isVisibleNote } from "@/lib/visibility";
@@ -16,6 +16,7 @@ const typeIcon: Record<Note["type"], React.ComponentType<{ className?: string }>
   reading: BookOpen,
   overview: GraduationCap,
   exam: GraduationCap,
+  "ai-overview": Sparkles,
 };
 
 export function WeekNav({ unit }: { unit: UnitData }) {
@@ -64,11 +65,13 @@ export function WeekNav({ unit }: { unit: UnitData }) {
                 {wk.notes.map((n) => {
                   const Icon = typeIcon[n.type] ?? FileText;
                   const isRead = !!progress.notes[n.slug]?.read;
+                  const isAi = n.type === "ai-overview";
+                  const title = isAi ? `Teach Me - Week ${wk.week} Overview` : n.title;
                   return (
                     <NavLink key={n.slug} href={n.href} active={pathname === n.href}>
                       <Icon className="size-3.5 shrink-0 text-[var(--color-muted)]" />
                       <span className={cn("flex-1 truncate", isRead && "text-[var(--color-muted)] line-through decoration-[var(--color-muted-2)]/50")}>
-                        {n.title}
+                        {title}
                       </span>
                       {n.status === "stub" && <span className="font-mono text-[9px] text-[var(--color-muted-2)]">stub</span>}
                     </NavLink>

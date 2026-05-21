@@ -1,0 +1,388 @@
+---
+title: "Week 7 — Cloud Monitoring and Elasticity"
+unit: COMP4349
+week: 7
+type: overview
+status: done
+---
+
+Week 7 bridges observability and elasticity — how you *see* what your infrastructure is doing and how it *adapts* to changing load. CloudWatch is the central nervous system; Auto Scaling Groups and Elastic Load Balancing are the muscles. The exam consistently asks you to design an ASG + ALB + CloudWatch architecture for a bursty workload, and to distinguish HA from scalability from elasticity. Drill those.
+
+## Scalability, elasticity, and high availability — three distinct properties
+
+Students conflate these constantly. Tease them apart:
+
+- **Scalability** — the ability to handle a growing workload by adding resources. A scalable system can be made bigger; it does not automatically *get* bigger.
+- **Elasticity** — fine-grained, *automatic* capacity expansion *and contraction* in response to demand. Elasticity implies scalability plus a control loop. It's a cloud-specific term — on-prem you usually have scalability without elasticity.
+- **High Availability (HA)** — the system remains reachable through failures. Different goal: you need redundancy, not bigger capacity. Multi-AZ RDS is HA; an Auto Scaling Group at fixed size is HA-ish but not elastic.
+
+You can have any combination. A single beefy on-prem server is neither scalable nor elastic, but can still be HA via clustering. An ASG of EC2 across two AZs behind an ALB is elastic, scalable, and HA — that's the canonical web tier.
+
+## Horizontal vs vertical scaling
+
+- **Vertical scaling (scale up/down)** — make the instance bigger. RDS supports push-button vertical resizing with brief downtime; EC2 instance type changes require a stop/start. Limited by the largest available instance.
+- **Horizontal scaling (scale out/in)** — add or remove instances. Unbounded (within service quotas) and stateless-app-friendly. Requires a load balancer or sharding.
+
+Modern designs prefer horizontal scaling because it composes with HA (instances naturally spread across AZs) and uses smaller, cheaper instances. Vertical scaling makes sense for the database tier where horizontal sharding is hard.
+
+## What elasticity requires
+
+Three capabilities must come together:
+
+1. **Monitoring** — collect metrics, decide when to scale. AWS provides CloudWatch.
+2. **Fast capacity change** — launch new instances in seconds, not hours. AMIs + EC2 + ASG.
+3. **Traffic redistribution** — recognise new resources and route traffic to them. Elastic Load Balancing.
+
+The user's job is to configure these correctly and ensure the *application* is horizontally scalable (stateless, with state kept in a database or cache).
+
+## Amazon CloudWatch — metrics, logs, alarms, events
+
+CloudWatch is AWS's monitoring service. Four big pieces:
+
+### Metrics
+
+A **metric** is a time-ordered stream of data points belonging to a **namespace** (e.g. `AWS/EC2`, `AWS/RDS`, `MyApp/business`) with optional **dimensions** (key-value pairs that uniquely identify the resource, e.g. `InstanceId=i-0abc`).
+
+AWS services publish standard metrics automatically: `CPUUtilization`, `NetworkIn`, `DiskReadOps`, `StatusCheckFailed`, `Latency`, `RequestCount`. You can publish **custom metrics** via the CloudWatch API or the CloudWatch Agent.
+
+Each data point has a **timestamp** and a **value**. You then choose a **statistic** to aggregate over a period: `Sum`, `Average`, `Minimum`, `Maximum`, `SampleCount`, percentiles `p90/p99`. Standard resolution is 1 minute; high-resolution custom metrics can be 1 second.
+
+```bash
+aws cloudwatch put-metric-data \
+  --namespace "OrdersApp" \
+  --metric-name "OrdersProcessed" \
+  --value 137 \
+  --dimensions Service=checkout,Env=prod
+```
+
+### Logs
+
+**CloudWatch Logs** stores log streams from EC2, Lambda, ECS, RDS, VPC Flow Logs, anything that calls the API. Organisation:
+
+- **Log group** — a container, usually one per application or per service (e.g. `/aws/lambda/process-orders`).
+- **Log stream** — within a group, one stream per source (one per Lambda execution environment, one per EC2 instance, etc.).
+- **Retention** — set per log group (1 day → forever). **Default is never expire** — a costly trap.
+- **Subscription filters** — pattern matches that stream matching lines into Kinesis Data Firehose, Lambda, or OpenSearch in real time.
+
+**CloudWatch Logs Insights** is the query language for ad-hoc analysis:
+
+```text
+fields @timestamp, @message
+| filter @message like /ERROR/
+| stats count(*) by bin(5m)
+```
+
+### Alarms
+
+A **CloudWatch alarm** evaluates a metric (or a metric-math expression) against a threshold and changes state through `OK`, `INSUFFICIENT_DATA`, `ALARM`. Actions on state change:
+
+- Publish to an SNS topic (email, Slack via webhook, PagerDuty).
+- Trigger an EC2 Auto Scaling policy.
+- Stop, terminate, reboot, or recover an EC2 instance.
+- Invoke a Lambda function (via EventBridge).
+
+Threshold types:
+
+- **Static threshold** — `CPUUtilization > 70% for 5 of 5 minutes`.
+- **Anomaly detection** — ML model learns the baseline and flags deviations. Great for irregular metrics.
+- **Metric math expressions** — combine metrics: `(errors / requests) * 100 > 1%`.
+
+**Composite alarms** combine multiple alarms with boolean logic (`alarm-a AND alarm-b`) to suppress alert storms.
+
+### Events / EventBridge
+
+**Amazon EventBridge** (formerly CloudWatch Events) routes events from AWS services, SaaS partners, and your apps to targets (Lambda, SQS, SNS, Step Functions, API destinations).
+
+```json
+{
+  "source": ["aws.ec2"],
+  "detail-type": ["EC2 Instance State-change Notification"],
+  "detail": { "state": ["terminated"] }
+}
+```
+
+Includes schedule expressions (`rate(1 hour)`, `cron(0 9 * * ? *)`) for cron-replacement workloads.
+
+## CloudWatch Agent — beyond default metrics
+
+By default, EC2 publishes `CPUUtilization`, `NetworkIn/Out`, `DiskRead/WriteOps`, `StatusCheck`. Notably absent: **memory and disk-usage** (because they're inside the guest OS and the hypervisor can't see them). Install the **CloudWatch Agent** to publish memory, disk, swap, and to ship arbitrary log files to CloudWatch Logs.
+
+## AWS X-Ray — distributed tracing
+
+X-Ray traces requests across services (API Gateway → Lambda → DynamoDB → SQS → Lambda). Each component reports segments and subsegments; X-Ray assembles a service map and per-trace timeline. Use it to diagnose latency in microservices, find the slow database call, see which downstream caused a cascading failure.
+
+## The four golden signals
+
+From the Google SRE book, the four metrics every service should expose:
+
+- **Latency** — time to respond to a request (often p99 or p99.9, not average).
+- **Traffic** — requests per second or transactions per second.
+- **Errors** — error rate (or error count for low-traffic systems).
+- **Saturation** — how full the system is (CPU, memory, connection pool, queue depth).
+
+Build dashboards from these; alarm on the right thresholds. Avoid the trap of alarming on causes ("CPU > 80%") rather than symptoms ("p99 latency > 500 ms") — your users feel symptoms, not causes.
+
+## SLI, SLO, SLA
+
+- **SLI (Service Level Indicator)** — a quantitative measure of service health (e.g. fraction of requests succeeding within 200 ms).
+- **SLO (Service Level Objective)** — an internal target for an SLI over a window (e.g. 99.9% over 30 days).
+- **SLA (Service Level Agreement)** — an external contractual commitment, with penalties if breached.
+
+Internal teams set SLOs; legal teams negotiate SLAs. Your SLA is always looser than your SLO so you have headroom.
+
+## EC2 Auto Scaling Groups — deeper
+
+A recap from Week 3, with more detail:
+
+An **Auto Scaling Group (ASG)** manages a fleet of EC2 instances across one or more AZs. It launches new instances to maintain the desired count and replaces unhealthy ones.
+
+Components:
+
+- **Launch template** (preferred over the older launch configuration) — AMI ID, instance type, security groups, IAM instance profile, user data, network settings.
+- **Capacity** — `MinSize`, `DesiredCapacity`, `MaxSize`. The ASG actively pushes towards `DesiredCapacity` but won't go below min or above max.
+- **Subnets** — list of subnet IDs spanning AZs; the ASG balances instances across them.
+- **Health checks** — EC2 status (default) and/or ELB target health.
+- **Termination policies** — which instance to kill on scale-in (e.g. `OldestInstance`, `NewestInstance`, `OldestLaunchTemplate`, `Default`).
+- **Lifecycle hooks** — pause launching/terminating instances so you can run setup/cleanup (e.g. drain a connection pool before kill).
+
+### Scaling policies
+
+- **Target tracking** — pick a metric and target, e.g. `Maintain average CPU at 50%`. CloudWatch alarms are created automatically.
+- **Step scaling** — explicit step adjustments tied to alarm states. More tuning room.
+- **Simple scaling** — single adjustment when alarm fires; subject to cooldown. Largely deprecated; use step instead.
+- **Scheduled scaling** — change `DesiredCapacity` at specific times. Cheap and predictable for known patterns (e.g. office hours, end-of-month batch).
+- **Predictive scaling** — ML model forecasts demand 48 hours ahead and pre-warms capacity. Good for diurnal/weekly patterns.
+
+```bash
+aws autoscaling put-scaling-policy \
+  --auto-scaling-group-name prod-web \
+  --policy-name keep-cpu-50 \
+  --policy-type TargetTrackingScaling \
+  --target-tracking-configuration '{
+    "PredefinedMetricSpecification": {"PredefinedMetricType":"ASGAverageCPUUtilization"},
+    "TargetValue": 50.0
+  }'
+```
+
+### Cooldown and warm-up
+
+**Cooldown** prevents thrashing — after a scaling action, the ASG waits before evaluating another. Typically 300-600 seconds, roughly one bootstrap time. **Instance warm-up** delays newly-launched instances from contributing to aggregated metrics until they've stabilised.
+
+## Elastic Load Balancing — recap and deeper
+
+(Built on Week 3.) Three modern types:
+
+- **ALB** — L7 HTTP/HTTPS. Routing on host header, path, headers, query string, method, source IP. Native authentication (Cognito/OIDC). WebSocket. gRPC. The most-used.
+- **NLB** — L4 TCP/UDP/TLS. Sub-100 ms latency, static IPs, millions of RPS. Preserves source IP. For non-HTTP, gaming, mTLS pass-through.
+- **GWLB** — L3, GENEVE encapsulated. Insert third-party virtual firewalls/IDS appliances.
+
+Each ELB type has **target groups** that ALB/NLB route to. Targets can be:
+
+- EC2 instances by instance ID (ELB looks up the ENI's primary IP).
+- IP addresses (for on-prem, VPC peering, ECS Fargate).
+- Lambda functions (ALB only).
+- Other ALBs (NLB → ALB chaining).
+
+**Health checks** ping a configurable path/port at an interval; after N consecutive failures the target is unhealthy and removed from rotation.
+
+### Stickiness — session affinity
+
+Sticky sessions pin a client to a target instance via a cookie (ALB's `AWSALB` or your app's session cookie). Useful for in-process session caches, but it complicates scale-in (you can't drop a sticky instance until its sessions expire). Prefer storing sessions in ElastiCache and keeping targets stateless.
+
+## ASG + ELB + CloudWatch — the canonical elastic web tier
+
+The exam diagram:
+
+```text
+Route 53 (DNS) ─► ALB (in 2 public subnets, AZ-a + AZ-b)
+                         │
+                         ▼
+                   Target Group
+                         │
+                         ▼
+                   ┌────────────────┐
+                   │  Auto Scaling  │
+                   │     Group      │  (in 2 private subnets, AZ-a + AZ-b)
+                   │  min=2 des=4   │
+                   │  max=20        │
+                   └────────────────┘
+                         ▲ ▲
+            target-tracking │ │ ELB health checks replace bad instances
+            CloudWatch alarm │
+                         │
+                  CloudWatch metrics + Logs
+```
+
+### Health-check flow
+
+Two health checks operate in parallel:
+
+- **EC2 status checks** — instance reachable, hypervisor healthy. Catches hardware issues.
+- **ELB health checks** — application responds on the health path (e.g. `GET /healthz` returns 200). Catches app crashes when the OS is fine.
+
+Configure the ASG to use **ELB health checks** (in addition to EC2) so it replaces app-only failures, not just instance-only failures.
+
+```text
+Scenario                       EC2 health  ELB health  Outcome
+App crashes; OS fine           OK          FAIL        ASG replaces instance (ELB-mode)
+Instance hardware failure      FAIL        FAIL        ASG replaces instance
+Slow response (timeout)        OK          FAIL        ASG replaces instance (ELB-mode)
+Routine deploy (drain)         OK          OK          Lifecycle hook handles it
+```
+
+## Scaling the database
+
+Compute is easy to scale; databases are not. AWS gives you a few levers:
+
+- **Vertical resize** (RDS push-button) — minutes of downtime; instance class moves up.
+- **Read replicas** — RDS supports up to 5 read replicas (15 for Aurora) for **read** scaling. Asynchronous replication, so eventually-consistent reads.
+- **Aurora replicas** — share the cluster volume, lag is sub-10 ms, can promote any reader to writer on failure.
+- **DynamoDB** — auto-scales reads/writes; on-demand mode hides this completely.
+- **Caching** — ElastiCache fronts the DB; sharding via Redis Cluster Mode.
+
+Pitfall: never use Multi-AZ for read scaling — the standby is invisible to your application. That's a Read Replica use case.
+
+## Cost monitoring — Cost Explorer, Budgets, Anomaly Detection
+
+Elasticity costs nothing when traffic is low; it costs a lot when traffic spikes. Three tools to keep cost under control:
+
+- **AWS Cost Explorer** — visualise spend over time, by service/tag/account; forecast next month.
+- **AWS Budgets** — set thresholds with SNS alerts when forecasted/actual spend exceeds N% of budget.
+- **AWS Cost Anomaly Detection** — ML model flags unusual spend (e.g. a runaway Lambda recursion).
+
+Tag everything with `CostCenter`, `Project`, `Env` so Cost Explorer can attribute spend.
+
+## Federated user gotchas (AWS Academy specifics)
+
+The Week 7 lecture spends time on AWS Academy lab sessions because students hit them constantly. Key facts:
+
+- Academy uses `AssumeRole` on a single shared role `voclabs` with a **session policy** that scopes permissions per lab.
+- Starting a lab issues short-lived STS credentials and a federation sign-in URL.
+- Ending a lab terminates all resources and revokes the session policy.
+- The AWS console may still show the UI after lab end (cookies linger) but every action will 403.
+- Re-clicking "Start lab" resets the timer; existing resources remain only if the lab session is still active.
+
+Not directly exam material but useful to avoid losing work.
+
+## Common exam traps
+
+- "Scalability vs elasticity" — elasticity is automatic, fine-grained, in *both* directions. Scalability is just "can grow".
+- "ASG without ELB" — ASG can run standalone (e.g. for batch workers polling SQS). ELB is optional but adds health-check sophistication.
+- "Memory metric missing" — by default. Install CloudWatch Agent.
+- "Target tracking vs step scaling" — target tracking is easier; step gives precise control.
+- "Cooldown" — prevents oscillation. Set to roughly one bootstrap.
+- "Scale-in protection" — mark certain instances as ineligible for termination (e.g. the one running the singleton scheduler).
+- "Read scaling on RDS" — Read Replica, not Multi-AZ standby.
+- "Why is my new instance not getting traffic?" — registered with the target group but failing health checks. Check the health path and SG.
+- "Predictive scaling" — best for predictable diurnal/weekly load; pointless for unpredictable spikes (target tracking is better).
+- "Composite alarms" — bundle multiple alarms with boolean expressions to reduce alert noise.
+
+## CloudWatch Logs Insights — querying logs at scale
+
+When you ship application logs and VPC flow logs and ALB access logs to CloudWatch, you need a query language to make sense of them. **CloudWatch Logs Insights** is a purpose-built SQL-ish DSL with a streamed-execution backend.
+
+```text
+fields @timestamp, @message, @duration
+| filter @message like /ERROR/
+| stats count(*) as errors by bin(5m)
+| sort @timestamp desc
+| limit 100
+```
+
+Common operations:
+
+- `fields` — projection (which fields to return).
+- `filter` — predicates.
+- `stats` — aggregations (`count`, `avg`, `min`, `max`, `pct(value, 95)`).
+- `bin(<interval>)` — group by time bucket.
+- `parse` — extract a substring with a pattern.
+- `sort`, `limit`, `dedup`, `display`.
+
+Pitfall: Logs Insights scans pay per GB. Narrow the time window and use `filter` early to keep cost down. For permanent dashboards, prefer metric filters that emit a CloudWatch metric (cheap to query repeatedly) instead of running Logs Insights every minute.
+
+## Metric filters and embedded metric format
+
+Two ways to get metrics out of log data:
+
+- **Metric filter** — pattern on log group; emits a CloudWatch metric counting matches. e.g. count log lines containing `"level":"ERROR"`.
+- **Embedded Metric Format (EMF)** — your application emits JSON log lines that include a metadata section telling CloudWatch which fields are metrics. EMF is the modern approach because it produces dimensions automatically; the AWS Lambda Powertools library generates EMF logs out of the box.
+
+```json
+{
+  "_aws": {
+    "Timestamp": 1716127200000,
+    "CloudWatchMetrics": [{
+      "Namespace": "MyApp",
+      "Dimensions": [["Service"]],
+      "Metrics": [{ "Name": "OrdersProcessed", "Unit": "Count" }]
+    }]
+  },
+  "Service": "checkout",
+  "OrdersProcessed": 137
+}
+```
+
+## CloudWatch dashboards
+
+Dashboards aggregate widgets — metrics graphs, log query results, text. Build per-service or per-team dashboards on the four golden signals. Best practice: an "on-call dashboard" per service that an operator can glance at during an incident.
+
+## Anomaly detection vs static thresholds
+
+A static threshold (`CPU > 70%`) is brittle: 70% is fine at 3am but disastrous at peak. **CloudWatch Anomaly Detection** trains an ML model on the metric's history and learns the daily/weekly pattern; you set an alarm at "N standard deviations from predicted." Use it for metrics with strong seasonality (traffic, daily-active users, transaction volume).
+
+## Synthetic monitoring with Canary
+
+**CloudWatch Synthetics** runs scripted browser sessions (puppeteer) on a schedule to probe your endpoints. It measures the user-perceived latency and success rate even when traffic is zero. Catches regressions invisible to server-side metrics.
+
+## ELB cross-zone load balancing
+
+By default ALB has cross-zone load balancing enabled — traffic is spread evenly across all healthy targets regardless of AZ. NLB has it disabled by default (each AZ-IP only serves targets in its AZ); enable cross-zone for even distribution at the cost of cross-AZ data transfer charges.
+
+Pitfall: with cross-zone disabled and uneven instance counts across AZs (e.g. 5 in `a`, 1 in `b`), the lone instance in `b` gets half the traffic. Either rebalance instances or enable cross-zone.
+
+## Connection draining and deregistration delay
+
+When the ASG scales in or an instance fails ELB health checks, the ELB needs to give in-flight requests time to complete before forcibly closing connections. **Deregistration delay** (default 300 s) holds the target in `draining` state — no new requests, but existing requests can finish. Tune lower for fast deploys, higher for slow back-end calls.
+
+## Step scaling adjustment types
+
+When you write a step-scaling policy, you choose how the adjustment value is interpreted:
+
+- **ChangeInCapacity** — add/remove that many instances. e.g. +2 means launch 2.
+- **ExactCapacity** — set total to that number. Used for absolute control.
+- **PercentChangeInCapacity** — add/remove that percentage. Useful for large fleets where +2 is too small.
+
+Adjust by percent when the ASG is large; by count when small.
+
+## Mixed instance policy (Spot + On-Demand)
+
+An ASG can launch a mix of instance types and pricing models. The **mixed instance policy** specifies a list of acceptable instance types, the proportions of Spot vs On-Demand, and how to choose Spot types (`lowest-price`, `capacity-optimized`, `price-capacity-optimized`). This is how you reliably use Spot at scale without getting your entire fleet reclaimed at once.
+
+```yaml
+MixedInstancesPolicy:
+  LaunchTemplate:
+    LaunchTemplateSpecification: { LaunchTemplateId: lt-0abc }
+    Overrides:
+      - InstanceType: m5.large
+      - InstanceType: m5a.large
+      - InstanceType: m6i.large
+  InstancesDistribution:
+    OnDemandBaseCapacity: 2
+    OnDemandPercentageAboveBaseCapacity: 25
+    SpotAllocationStrategy: price-capacity-optimized
+```
+
+## CloudWatch alarms — additional configuration
+
+Common parameters you can tune:
+
+- `EvaluationPeriods` — how many consecutive periods must breach.
+- `DatapointsToAlarm` — M of N breach (e.g. 3 of 5 minutes), useful for noise reduction.
+- `TreatMissingData` — `missing` (default), `notBreaching`, `breaching`, `ignore`. Important when a service goes silent for legitimate reasons.
+
+## Application Auto Scaling vs EC2 Auto Scaling
+
+Two separate services that look similar:
+
+- **EC2 Auto Scaling** — scales EC2 instances in an ASG. Covered above.
+- **Application Auto Scaling** — scales other AWS resources: ECS tasks, DynamoDB read/write capacity, Aurora replicas, AppStream fleets, Comprehend endpoints, custom resources. Same policy types (target tracking, step), different target services.

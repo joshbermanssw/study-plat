@@ -1,0 +1,302 @@
+{
+  "unit": "COMP4347",
+  "week": 8,
+  "topic": "Client-side frameworks (React)",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "Why does React require a stable `key` on list items?",
+      "choices": [
+        "For accessibility",
+        "To match elements across renders so component state and DOM nodes are reused correctly",
+        "It is purely for CSS",
+        "To enable lazy loading"
+      ],
+      "correctIndex": 1,
+      "explanation": "Keys are React's identity hint. With stable keys, reorders preserve component state and minimise DOM churn."
+    },
+    {
+      "id": "q2",
+      "stem": "Which is correct?",
+      "choices": [
+        "setCount(count + 1) is always safe",
+        "setCount(c => c + 1) avoids stale state when multiple updates batch in one event",
+        "Functional updaters don't trigger renders",
+        "useState batches synchronously across event loops"
+      ],
+      "correctIndex": 1,
+      "explanation": "Functional updaters receive the latest queued state, so two setCount calls in one handler increment by two."
+    },
+    {
+      "id": "q3",
+      "stem": "An effect with deps [] runs:",
+      "choices": [
+        "On every render",
+        "Once after first commit, cleanup on unmount",
+        "Never",
+        "Synchronously during render"
+      ],
+      "correctIndex": 1,
+      "explanation": "Empty deps means React thinks nothing the effect uses changes, so it runs once and cleans up on unmount."
+    },
+    {
+      "id": "q4",
+      "stem": "When does `React.memo` help?",
+      "choices": [
+        "Always",
+        "When a child is re-rendered by a parent but its props are unchanged by reference",
+        "Only when there are no hooks",
+        "Only for class components"
+      ],
+      "correctIndex": 1,
+      "explanation": "memo skips re-render if shallow-equal props match. It does nothing if props are new objects each render."
+    },
+    {
+      "id": "q5",
+      "stem": "How does the reconciler treat a position where the component type changed (e.g. <Header/> became <Banner/>)?",
+      "choices": [
+        "Reuses the instance",
+        "Unmounts the old subtree and mounts a fresh one (state is lost)",
+        "Merges them",
+        "Throws"
+      ],
+      "correctIndex": 1,
+      "explanation": "Different types are not compatible. React tears down and re-creates; that's why preserving identity matters."
+    },
+    {
+      "id": "q6",
+      "stem": "Which violates the rules of hooks?",
+      "choices": [
+        "Calling useEffect at the top of a function component",
+        "Calling useState inside an `if` branch",
+        "Calling useMemo inside another component",
+        "Returning early after all hooks have been called"
+      ],
+      "correctIndex": 1,
+      "explanation": "Hooks must be called unconditionally in the same order each render so React can match them by index."
+    },
+    {
+      "id": "q7",
+      "stem": "An effect fetches data and updates state. The user navigates between ids quickly. Without protection, what bug appears?",
+      "choices": [
+        "Memory leak only",
+        "Stale fetch resolves last and overwrites newer data",
+        "useState fails",
+        "React crashes"
+      ],
+      "correctIndex": 1,
+      "explanation": "Without a cancel flag or AbortController, the slow earlier response wins the race."
+    },
+    {
+      "id": "q8",
+      "stem": "Predict renders. Clicking only the input twice triggers how many App renders?\n\nfunction App() { const [s, setS] = useState(''); return <input value={s} onChange={e => setS(e.target.value)} />; }",
+      "choices": ["0", "1", "2", "Infinite"],
+      "correctIndex": 2,
+      "explanation": "Each onChange calls setS with a new string, scheduling a re-render. Two keystrokes → two re-renders."
+    },
+    {
+      "id": "q9",
+      "stem": "useMemo is best used to:",
+      "choices": [
+        "Avoid all re-renders",
+        "Cache an expensive computation across renders or stabilise a referential prop",
+        "Cache fetch results",
+        "Replace useState"
+      ],
+      "correctIndex": 1,
+      "explanation": "useMemo recomputes only when dependencies change. Don't reach for it for cheap computations — overhead outweighs benefit."
+    },
+    {
+      "id": "q10",
+      "stem": "What does this effect do?\n\nuseEffect(() => { document.title = name; });",
+      "choices": [
+        "Runs once on mount",
+        "Runs after every render (no deps array)",
+        "Never runs",
+        "Runs only on prop changes"
+      ],
+      "correctIndex": 1,
+      "explanation": "Omitting the deps array means React runs the effect after every render. Usually a bug; specify a deps array."
+    },
+    {
+      "id": "q11",
+      "stem": "Why is `key={index}` problematic when items can be reordered?",
+      "choices": [
+        "Keys must be strings",
+        "On reorder, items at the same index swap identities and React mismatches state / DOM",
+        "Indexes are not unique",
+        "It breaks SSR"
+      ],
+      "correctIndex": 1,
+      "explanation": "If you insert at position 0, every old item's index shifts. React treats them as 'same key', applying wrong state to wrong row."
+    },
+    {
+      "id": "q12",
+      "stem": "Which is true about JSX?",
+      "choices": [
+        "It is HTML",
+        "It is syntactic sugar over React.createElement calls",
+        "It runs natively in browsers",
+        "It must be in a separate file"
+      ],
+      "correctIndex": 1,
+      "explanation": "JSX compiles to function calls. Browsers don't understand it directly — a build step (Babel/swc) is required."
+    },
+    {
+      "id": "q13",
+      "stem": "How do you read the latest state inside an event handler scheduled by useEffect?",
+      "choices": [
+        "Read from a closure variable",
+        "Use a ref (useRef) or functional updater",
+        "Call useState again",
+        "Use document.querySelector"
+      ],
+      "correctIndex": 1,
+      "explanation": "Closures capture the state at the time the effect ran. useRef gives a live mutable cell; functional setters receive latest."
+    },
+    {
+      "id": "q14",
+      "stem": "What happens if useEffect's cleanup is omitted on a subscription?",
+      "choices": [
+        "Subscription is auto-removed",
+        "Subscriptions leak across re-renders and unmounts, eventually leading to duplicate handlers and updates on unmounted components",
+        "React throws",
+        "Nothing"
+      ],
+      "correctIndex": 1,
+      "explanation": "React re-runs effects on dep changes and never auto-unsubscribes. You must clean up explicitly."
+    },
+    {
+      "id": "q15",
+      "stem": "Which prop pattern correctly forwards an event handler down?",
+      "choices": [
+        "<Child onClick=doIt() />",
+        "<Child onClick={doIt} />",
+        "<Child onClick={doIt()} />",
+        "<Child onClick='doIt' />"
+      ],
+      "correctIndex": 1,
+      "explanation": "Pass the function reference. Adding parens calls it immediately and passes the return value (often undefined)."
+    },
+    {
+      "id": "q16",
+      "stem": "What does useCallback do?",
+      "choices": [
+        "Memoises a value",
+        "Memoises a function reference so it stays stable between renders when deps don't change",
+        "Schedules a callback for next render",
+        "Replaces useEffect"
+      ],
+      "correctIndex": 1,
+      "explanation": "useCallback(fn, deps) is equivalent to useMemo(() => fn, deps). Useful when fn is a dep of an effect or memoised child."
+    },
+    {
+      "id": "q17",
+      "stem": "Which is true about lifting state up?",
+      "choices": [
+        "It is forbidden in React",
+        "When two siblings share data, move the state to their nearest common ancestor and pass props down",
+        "Always use Redux instead",
+        "Use refs to share state"
+      ],
+      "correctIndex": 1,
+      "explanation": "Lifting puts the source of truth above both consumers, who become controlled via props."
+    },
+    {
+      "id": "q18",
+      "stem": "Why does React 18 use 'concurrent rendering'?",
+      "choices": [
+        "To run on multiple threads",
+        "To allow rendering work to be interrupted/prioritised so urgent updates (input) don't wait for slow ones",
+        "To skip reconciliation",
+        "To remove the virtual DOM"
+      ],
+      "correctIndex": 1,
+      "explanation": "Concurrent mode lets React split work into chunks and yield to the browser for high-priority updates like user input."
+    },
+    {
+      "id": "q19",
+      "stem": "Inside a controlled input, the source of truth for the value is:",
+      "choices": [
+        "The DOM",
+        "React state (props.value drives the input; onChange updates state)",
+        "The server",
+        "localStorage"
+      ],
+      "correctIndex": 1,
+      "explanation": "Controlled = React owns the value via state. Uncontrolled = the DOM owns it and you read via refs."
+    },
+    {
+      "id": "q20",
+      "stem": "What is the virtual DOM?",
+      "choices": [
+        "A separate browser process",
+        "An in-memory tree of element descriptions that React diffs against the previous tree before touching the DOM",
+        "A CSS engine",
+        "A worker thread"
+      ],
+      "correctIndex": 1,
+      "explanation": "vDOM is a lightweight representation. Diffing it is cheap; only the resulting minimal DOM mutations are applied."
+    },
+    {
+      "id": "q21",
+      "stem": "Which scenario is a strong fit for useReducer over useState?",
+      "choices": [
+        "Toggling a boolean",
+        "Complex state with multiple sub-values that update together via discrete actions",
+        "Storing a single string",
+        "Counting clicks"
+      ],
+      "correctIndex": 1,
+      "explanation": "useReducer centralises transitions in a pure reducer — easier to test and reason about than scattering setX calls."
+    },
+    {
+      "id": "q22",
+      "stem": "Why must hooks be called in the same order on every render?",
+      "choices": [
+        "Performance",
+        "React identifies each hook by its call index; reordering would mix up the state slots",
+        "Readability",
+        "TypeScript requires it"
+      ],
+      "correctIndex": 1,
+      "explanation": "Hook order is the implicit identity. Conditional hooks would scramble which state belongs to which call."
+    },
+    {
+      "id": "q23",
+      "stem": "What is logged after one button click?\n\nfunction App() {\n  const [n, setN] = useState(0);\n  return <button onClick={() => { setN(n + 1); setN(n + 1); }}>{n}</button>;\n}",
+      "choices": [
+        "1",
+        "2",
+        "0",
+        "depends on React mode"
+      ],
+      "correctIndex": 0,
+      "explanation": "Both setN calls capture the old n=0 and pass 1. Batched together, the final value is 1. Use setN(c => c+1) twice for 2."
+    },
+    {
+      "id": "q24",
+      "stem": "What does the cleanup function inside useEffect run between?",
+      "choices": [
+        "Before render and after render",
+        "Before the next effect runs (or on unmount), giving you a chance to undo the previous effect",
+        "On every state read",
+        "Only on unmount"
+      ],
+      "correctIndex": 1,
+      "explanation": "When deps change, React first runs cleanup for the previous effect, then the new effect. On unmount, only cleanup runs."
+    },
+    {
+      "id": "q25",
+      "stem": "Which is the right way to send data to a parent from a child?",
+      "choices": [
+        "Mutate parent's state directly",
+        "Call a callback prop passed down from the parent",
+        "Use a global variable",
+        "Throw an event from the child"
+      ],
+      "correctIndex": 1,
+      "explanation": "Data flows down via props; events bubble up by invoking callback props the parent supplied. This keeps the unidirectional model."
+    }
+  ]
+}

@@ -1,0 +1,307 @@
+{
+  "unit": "INFO4444",
+  "week": 2,
+  "topic": "Innovation Frameworks I: Dominant Design",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "Which three phases comprise the Utterback-Abernathy model?",
+      "choices": [
+        "Emergence, growth, maturity",
+        "Fluid, transitional, specific",
+        "Invention, innovation, diffusion",
+        "Exploration, exploitation, decline"
+      ],
+      "correctIndex": 1,
+      "explanation": "The Utterback-Abernathy phases are fluid, transitional, and specific. Memorise this exact terminology."
+    },
+    {
+      "id": "q2",
+      "stem": "In the fluid phase, the rate of product innovation is _____ and the rate of process innovation is _____.",
+      "choices": [
+        "low; high",
+        "high; high",
+        "high; low",
+        "low; low"
+      ],
+      "correctIndex": 2,
+      "explanation": "Fluid phase: high product innovation (many competing designs), low process innovation (no point in optimising a production line for a design that may not win)."
+    },
+    {
+      "id": "q3",
+      "stem": "A dominant design is best defined as:",
+      "choices": [
+        "The most technologically advanced product in a market.",
+        "A single product architecture accepted by the market as the de facto standard.",
+        "The product with the largest market share.",
+        "The product with the lowest unit cost."
+      ],
+      "correctIndex": 1,
+      "explanation": "Dominant design = de facto architectural standard. It need not be the best technology; it must bundle enough features at acceptable cost for the broad market."
+    },
+    {
+      "id": "q4",
+      "stem": "Which is the textbook example of a dominant design in automobiles?",
+      "choices": [
+        "Tesla Model S",
+        "Toyota Corolla",
+        "Ford Model T",
+        "Volkswagen Beetle"
+      ],
+      "correctIndex": 2,
+      "explanation": "The Model T established petrol-engine, four-wheel, front-engine, steering-wheel architecture as the dominant car design after 1908."
+    },
+    {
+      "id": "q5",
+      "stem": "Which phase is characterised by industry shake-out and the crossover of product and process innovation curves?",
+      "choices": [
+        "Fluid",
+        "Transitional",
+        "Specific",
+        "Diffusion"
+      ],
+      "correctIndex": 1,
+      "explanation": "The transitional phase is where dominant design emerges, weak players exit, process innovation accelerates, and the two innovation-rate curves cross."
+    },
+    {
+      "id": "q6",
+      "stem": "In the specific phase, competition is mainly based on:",
+      "choices": [
+        "Radical product variation",
+        "Functionality and architecture experimentation",
+        "Cost, quality, and brand",
+        "Open standards and interoperability"
+      ],
+      "correctIndex": 2,
+      "explanation": "Once architecture is locked, firms compete on operational efficiency: cost, quality, and brand. Capital intensity rises and entry barriers harden."
+    },
+    {
+      "id": "q7",
+      "stem": "VHS beat Betamax primarily because:",
+      "choices": [
+        "Betamax had inferior picture quality.",
+        "JVC built a wide licensee coalition and locked in complementary assets (rental shops, content), creating stronger network effects.",
+        "Sony withdrew Betamax voluntarily.",
+        "VHS was patented and Betamax was not."
+      ],
+      "correctIndex": 1,
+      "explanation": "Betamax arguably had better technical quality. VHS won on ecosystem: open licensing, longer recording time, and rental-shop standardisation produced decisive network effects."
+    },
+    {
+      "id": "q8",
+      "stem": "Why is first-mover advantage typically WEAK in the fluid phase?",
+      "choices": [
+        "Customers prefer mature products.",
+        "First movers often pick the wrong architecture and lose to fast followers who learn from their mistakes.",
+        "Patents do not apply in the fluid phase.",
+        "Capital is scarce for first movers."
+      ],
+      "correctIndex": 1,
+      "explanation": "In the fluid phase no one knows which design will win. Early commitments are bets, and many lose. Apple, Google, Facebook were all fast followers, not first movers."
+    },
+    {
+      "id": "q9",
+      "stem": "Which industry is currently best classified as in the fluid phase?",
+      "choices": [
+        "Smartphones",
+        "Internal combustion vehicles",
+        "Humanoid general-purpose robots",
+        "Commercial aviation"
+      ],
+      "correctIndex": 2,
+      "explanation": "Humanoid robots show many competing architectures (Tesla Optimus, Figure, 1X), unclear customer use case, no dominant design — textbook fluid phase."
+    },
+    {
+      "id": "q10",
+      "stem": "Smartphones today are best classified as:",
+      "choices": [
+        "Fluid phase",
+        "Transitional phase",
+        "Specific phase",
+        "Pre-fluid invention phase"
+      ],
+      "correctIndex": 2,
+      "explanation": "The dominant design (rectangular slab, capacitive touch, app store, two OSes) is locked. Innovation is incremental; competition is on cost, brand, and ecosystem. Specific phase."
+    },
+    {
+      "id": "q11",
+      "stem": "Which is NOT a typical characteristic of the fluid phase?",
+      "choices": [
+        "Many small entrepreneurial firms",
+        "High product innovation rate",
+        "Low capital intensity",
+        "High capital intensity and large oligopolistic firms"
+      ],
+      "correctIndex": 3,
+      "explanation": "High capital intensity and oligopoly belong to the specific phase. Fluid-phase firms are small, organic, and capital-light."
+    },
+    {
+      "id": "q12",
+      "stem": "The QWERTY keyboard is a frequently cited example of:",
+      "choices": [
+        "Disruptive innovation",
+        "A dominant design that locked in despite alternatives like Dvorak that are arguably superior",
+        "Process innovation",
+        "Architectural innovation"
+      ],
+      "correctIndex": 1,
+      "explanation": "QWERTY illustrates that dominant designs are about lock-in, not technical superiority. Switching costs and installed base keep it dominant."
+    },
+    {
+      "id": "q13",
+      "stem": "Electric vehicles are best placed in which phase today?",
+      "choices": [
+        "Fluid",
+        "Transitional — a dominant design (skateboard battery, OTA updates, big touchscreen) is emerging but not locked",
+        "Specific",
+        "Post-specific decline"
+      ],
+      "correctIndex": 1,
+      "explanation": "EV designs are converging on skateboard battery + dual-motor + software-defined cabin, but several architectural choices (e.g. battery chemistry, charging standards) are still being settled."
+    },
+    {
+      "id": "q14",
+      "stem": "At the point a dominant design emerges, you would expect:",
+      "choices": [
+        "An increase in the number of competing firms.",
+        "An industry shake-out, with many fluid-phase players exiting or being acquired.",
+        "A drop in process innovation rate.",
+        "A return to custom manufacturing."
+      ],
+      "correctIndex": 1,
+      "explanation": "Dominant design causes a shake-out: firms that bet on losing architectures exit, and surviving firms scale up production."
+    },
+    {
+      "id": "q15",
+      "stem": "Which of the following is a key role of a dominant design?",
+      "choices": [
+        "It crystallises user expectations and standardises component interfaces, enabling cumulative learning.",
+        "It eliminates the need for patents.",
+        "It guarantees the technologically best solution.",
+        "It marks the start of the fluid phase."
+      ],
+      "correctIndex": 0,
+      "explanation": "Dominant designs lock interfaces, allowing suppliers, complementors, and customers to invest with confidence. This enables learning-curve effects."
+    },
+    {
+      "id": "q16",
+      "stem": "A common LIMITATION of the Utterback-Abernathy model is that:",
+      "choices": [
+        "It only applies to American firms.",
+        "It fits assembled physical products better than software-as-a-service or multi-sided platforms.",
+        "It ignores process innovation entirely.",
+        "It is incompatible with Christensen's framework."
+      ],
+      "correctIndex": 1,
+      "explanation": "The model was built from manufacturing data. SaaS and platforms have business-model dominant designs, not architectural ones, and the curves do not map cleanly."
+    },
+    {
+      "id": "q17",
+      "stem": "A 'standards war' typically occurs in which phase?",
+      "choices": [
+        "Fluid, where multiple competing architectures fight to become the dominant design",
+        "Specific, where firms compete on cost",
+        "After the specific phase, in industry decline",
+        "Only in regulated industries"
+      ],
+      "correctIndex": 0,
+      "explanation": "Standards wars (VHS/Betamax, HD-DVD/Blu-ray, GSM/CDMA) define the late fluid / early transitional phase before a dominant design locks in."
+    },
+    {
+      "id": "q18",
+      "stem": "Process innovation overtakes product innovation in importance in which phase?",
+      "choices": [
+        "Fluid",
+        "Transitional",
+        "Specific",
+        "It never overtakes"
+      ],
+      "correctIndex": 1,
+      "explanation": "The crossover happens in the transitional phase, near the emergence of the dominant design. By the specific phase, process innovation dominates but both rates are declining."
+    },
+    {
+      "id": "q19",
+      "stem": "A digital camera disrupting film photography is best described as:",
+      "choices": [
+        "A specific-phase incumbent extending its lead.",
+        "A disruption that reset the film industry back to a fluid phase under a new technology.",
+        "Process innovation within the film industry.",
+        "Architectural innovation within film cameras."
+      ],
+      "correctIndex": 1,
+      "explanation": "Specific-phase industries can be reset to fluid by a new technology stream. Digital photography reset the dominant design for image capture."
+    },
+    {
+      "id": "q20",
+      "stem": "Which is the best diagnostic question to determine an industry's phase?",
+      "choices": [
+        "Is there a dominant design? If yes, are firms competing on cost?",
+        "How many patents have been filed?",
+        "What is the average firm age?",
+        "Is the industry growing?"
+      ],
+      "correctIndex": 0,
+      "explanation": "The dominant-design status plus the basis of competition (architecture vs cost) is the cleanest two-question diagnostic for fluid/transitional/specific."
+    },
+    {
+      "id": "q21",
+      "stem": "Capital intensity is HIGHEST in which phase?",
+      "choices": [
+        "Fluid",
+        "Transitional",
+        "Specific",
+        "Equal across phases"
+      ],
+      "correctIndex": 2,
+      "explanation": "Specific-phase firms invest heavily in dedicated production lines, automation, and tooling optimised for the dominant design. Fluid-phase firms keep capital low to preserve optionality."
+    },
+    {
+      "id": "q22",
+      "stem": "Which of the following best supported VHS's win in the videotape standards war?",
+      "choices": [
+        "Superior picture resolution.",
+        "Open licensing to multiple manufacturers, longer recording time, and rental-shop standardisation.",
+        "Lower retail price than Betamax at launch.",
+        "Sony's exit from consumer electronics."
+      ],
+      "correctIndex": 1,
+      "explanation": "Sponsor coalition + complementary assets + a feature that mattered to customers (recording length for a full movie/sports event). Network effects then locked it in."
+    },
+    {
+      "id": "q23",
+      "stem": "Which statement about fluid-phase customer behaviour is correct?",
+      "choices": [
+        "Customers know exactly what they want and demand low prices.",
+        "Customer needs are unclear; users do not yet know what they want or how to compare offerings.",
+        "Customers buy primarily on brand.",
+        "Customers refuse to adopt until standards exist."
+      ],
+      "correctIndex": 1,
+      "explanation": "Fluid-phase customers are exploratory. They are willing to try variants and learn alongside vendors. Brand and standards come later."
+    },
+    {
+      "id": "q24",
+      "stem": "Which framework BEST complements Utterback-Abernathy for explaining how incumbents are displaced by new entrants?",
+      "choices": [
+        "Triple Helix",
+        "Christensen's disruptive innovation",
+        "Chesbrough's open innovation",
+        "Lean Startup"
+      ],
+      "correctIndex": 1,
+      "explanation": "Utterback-Abernathy describes industry dynamics; Christensen explains why incumbents specifically fail. They are commonly paired in essay answers."
+    },
+    {
+      "id": "q25",
+      "stem": "The IBM PC (1981) is cited as a dominant design because:",
+      "choices": [
+        "It had the fastest CPU at launch.",
+        "It bundled Intel x86, MS-DOS, and open expansion slots — an architecture the market converged on.",
+        "It was vertically integrated end-to-end by IBM.",
+        "It outsold the Apple II in its first year."
+      ],
+      "correctIndex": 1,
+      "explanation": "Open architecture + a coalition of complementors (clone makers, software developers) cemented the IBM PC as the dominant design and ironically eroded IBM's own position."
+    }
+  ]
+}

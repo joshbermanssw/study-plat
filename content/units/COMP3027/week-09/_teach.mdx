@@ -1,0 +1,309 @@
+---
+title: "Week 9 — NP-Hardness I: P, NP, and Reductions"
+unit: COMP3027
+week: 9
+type: overview
+status: done
+---
+
+## Why complexity theory belongs here
+
+For eight weeks you've been building faster and faster algorithms. Week 9 confronts the **natural ceiling**.
+
+Some problems appear to resist *all* polynomial-time effort. Even simple-sounding ones like "given a graph, find a vertex cover of size ≤ k". The theory of NP-completeness (Cook, Karp, Levin, early 1970s) gives a precise framework for *why*:
+
+**A vast class of problems are equivalent up to polynomial-time reductions.** A polynomial algorithm for any one of them would solve all of them. The world has searched for 50 years and found none.
+
+This week defines P, NP, co-NP; introduces polynomial-time reductions (the same tool from Week 7 reapplied as a *hardness* amplifier); states **Cook-Levin** (3-SAT as the prototype NP-complete problem); and surveys the canonical NP-complete problems you must recognise on sight.
+
+## P, NP, co-NP defined
+
+A **decision problem** is a yes/no question on inputs. (Optimisation problems become decision problems by adding a threshold: "is there a solution of value ≥ k?".)
+
+**P.** Problems decidable by a polynomial-time algorithm.
+
+**NP.** Problems with a **polynomial-time verifier**. Formally: L is in NP iff there's a polynomial-time predicate V(x, c) and polynomial p such that
+
+```text
+x ∈ L  iff  there exists a certificate c with |c| <= p(|x|) and V(x, c) = YES
+```
+
+**Crucially: NP does NOT stand for "non-polynomial".** It stands for *nondeterministic polynomial*. Think: an all-powerful prover hands you a short certificate, and you can check it efficiently.
+
+**co-NP.** Problems whose *complement* is in NP. Equivalently: short certificates of "NO" answers.
+
+**Inclusions you know for free.**
+
+- P ⊆ NP (a polynomial decider ignores the certificate).
+- P ⊆ co-NP (same reasoning).
+- Whether NP = co-NP is open.
+
+## Quick examples
+
+**SAT.** Given a Boolean formula φ, is there an assignment making it TRUE? **In NP:** certificate = assignment; verifier evaluates φ.
+
+**3-SAT.** SAT restricted to 3-CNF (each clause has exactly 3 literals). **In NP.**
+
+**Independent Set.** Graph G, integer k. Is there a set of k pairwise non-adjacent vertices? **In NP:** certificate = the set.
+
+**Hamiltonian Cycle.** Is there a cycle visiting every vertex exactly once? **In NP:** certificate = the vertex permutation.
+
+**Tautology.** Is the Boolean formula TRUE under every assignment? **In co-NP** — its negation (∃ falsifying assignment) is in NP. Not known to be in NP.
+
+## Polynomial-time reductions (Karp reductions)
+
+**The intuition first.** A reduction from problem L₁ to problem L₂ is a way to **translate** every instance of L₁ into an instance of L₂, such that yes-instances translate to yes-instances and no-instances translate to no-instances.
+
+Then if anyone hands you a fast algorithm for L₂, you have a fast algorithm for L₁ too — just translate and call.
+
+**Formally.** A **polynomial-time many-one reduction** from L₁ to L₂, written L₁ ≤ₚ L₂, is a polynomial-time function f such that
+
+```text
+x ∈ L_1  iff  f(x) ∈ L_2
+```
+
+In words: f translates inputs of L₁ into inputs of L₂, preserving the yes/no answer.
+
+**Slogan: "if you can solve L₂, you can solve L₁."**
+
+**Baby example.** Consider two decision problems:
+
+- **EVEN-SUM:** given a list of ints, does it sum to an even number?
+- **EVEN-PARITY:** given a single int, is it even?
+
+Reduce EVEN-SUM ≤ₚ EVEN-PARITY: f(list) = sum(list). This runs in polynomial time. And `sum(list) is even` iff `the list's sum is even`. ✓
+
+So any algorithm for EVEN-PARITY gives you an algorithm for EVEN-SUM with O(n) overhead.
+
+**Consequences.**
+
+- If L₂ ∈ P and L₁ ≤ₚ L₂, then L₁ ∈ P. (Translate, then run L₂'s decider.)
+- ≤ₚ is transitive (chain the translations).
+
+### The mental flip from Week 7
+
+Weeks 7-8 used polynomial reductions *constructively*: "reduce X to flow, so X is polynomial."
+
+This week we use them *destructively*: "reduce a known-hard problem to X, so X is at least as hard as that hard problem."
+
+**Memorise the direction.** A reduction from a known-hard problem L to a new problem X proves that **X is hard** — because if X had a fast algorithm, L would too.
+
+## NP-hard, NP-complete
+
+**L is NP-hard** if every L' ∈ NP polynomial-time reduces to L.
+
+**L is NP-complete** if L is NP-hard *and* L ∈ NP.
+
+So NP-complete problems are the **hardest** problems in NP. Solving any of them in polynomial time would solve them all.
+
+**Why the seed problem matters.** If even one NP-complete problem L₀ exists, we can prove others NP-hard by reducing *from* L₀, not from scratch. Cook and Levin provided the seed.
+
+## The Cook-Levin theorem
+
+**Theorem (Cook 1971; Levin 1973).** SAT is NP-complete. Every L ∈ NP polynomial-time reduces to SAT.
+
+### Why this is huge
+
+Until Cook-Levin, NP-completeness was a definition without examples — you'd need to reduce *every* NP problem to your candidate, an infinite task. Cook and Levin did this **once**, for SAT. Every subsequent NP-completeness proof just reduces from SAT (or one of its descendants), not from "every NP problem".
+
+### Proof intuition (don't try to prove this in full)
+
+Take any L ∈ NP. By definition, L has a polynomial-time verifier V(x, c) that says YES iff x ∈ L for some short certificate c.
+
+The trick: **describe the entire run of V(x, c) as one big Boolean formula**, in which c is the unknown.
+
+- One Boolean variable per (time step, tape cell, content) triple of V's computation. (That's why the construction is intricate — it's encoding a Turing machine into logic.)
+- Clauses that say: "the initial config has x on the tape and c in the certificate slot".
+- Clauses that say: "each step is consistent with V's transition function" (a local consistency check in a small window of variables).
+- A clause that says: "V eventually outputs YES".
+
+The resulting formula φ_(V, x) is satisfiable **iff** some certificate c exists that makes V accept x **iff** x ∈ L.
+
+The formula has polynomial size, and the construction is polynomial-time. So we've reduced L to SAT. ∎ (mostly)
+
+**Why each clause is small.** Turing machine transitions are local — they only look at the current cell and a few neighbours. So consistency between time t and t+1 only involves a constant-size window of variables. That's why we can write the whole thing as a CNF formula.
+
+**SAT ≤ₚ 3-SAT.** Standard clause rewriting (see below) shows 3-SAT is also NP-complete. From here, Week 10's reductions all start.
+
+## SAT → 3-SAT (clause rewriting)
+
+For each clause C with k literals:
+
+- **k = 1:** C = (ℓ₁) becomes (ℓ₁ ∨ y ∨ z) ∧ (ℓ₁ ∨ y ∨ ¬z) ∧ (ℓ₁ ∨ ¬y ∨ z) ∧ (ℓ₁ ∨ ¬y ∨ ¬z) for fresh y, z. Forces ℓ₁ = TRUE.
+- **k = 2:** (ℓ₁ ∨ ℓ₂) becomes (ℓ₁ ∨ ℓ₂ ∨ y) ∧ (ℓ₁ ∨ ℓ₂ ∨ ¬y).
+- **k = 3:** keep as is.
+- **k ≥ 4:** chain into 3-clauses with new variables y₁, ..., y_&#123;k-3&#125;:
+
+```text
+(ℓ₁ ∨ ℓ₂ ∨ y₁) ∧ (¬y₁ ∨ ℓ₃ ∨ y₂) ∧ ... ∧ (¬y_{k-3} ∨ ℓ_{k-1} ∨ ℓ_k)
+```
+
+The chain is satisfiable iff some ℓᵢ in the original clause is TRUE.
+
+Linear time, linear size blow-up. **SAT ≤ₚ 3-SAT.** ✓
+
+## The canonical NP-complete problems
+
+You must memorise these. For each: the formal statement, at least one reduction *to* it, and one polynomial special case.
+
+| Problem | Decision question |
+|---------|-------------------|
+| **3-SAT** | Is a 3-CNF formula satisfiable? |
+| **Independent Set** | Graph G, k: ∃ independent set of size ≥ k? |
+| **Vertex Cover** | Graph G, k: ∃ vertex cover of size ≤ k? |
+| **Clique** | Graph G, k: ∃ clique of size ≥ k? |
+| **Set Cover** | Universe U, sets, k: ∃ k sets covering U? |
+| **Hamiltonian Path / Cycle** | ∃ simple path / cycle visiting every vertex once? |
+| **TSP (decision)** | ∃ Hamiltonian cycle with total weight ≤ B? |
+| **Subset Sum** | Integers aᵢ, target T: ∃ subset summing to T? |
+| **Partition** | ∃ partition into two equal-sum subsets? (Subset Sum special case) |
+| **3-Coloring** | ∃ proper 3-coloring of G? |
+
+**Polynomial cousins to remember.**
+
+- 2-SAT: polynomial via strongly-connected components on implication graph.
+- 2-Coloring: polynomial (bipartite check).
+- Hamiltonian Path on DAGs: polynomial.
+
+## Decision vs search vs optimisation: self-reducibility
+
+NP is officially about *decision*. But you usually care about *search* (find the certificate) or *optimisation* (find the best).
+
+**Self-reducibility** says these are equivalent up to polynomial overhead.
+
+**SAT example.** With a SAT decision oracle, find an actual assignment:
+
+```text
+1. Fix x_1 = TRUE.
+2. Ask: is φ|_{x_1 = TRUE} satisfiable?
+3. If yes, recurse. If no, fix x_1 = FALSE and recurse.
+4. After n queries, reconstruct the assignment.
+```
+
+So "polynomial algorithm for SAT" implies "polynomial algorithm for finding satisfying assignments". This is why P = NP would have dramatic consequences — every NP-complete optimisation problem in the wild (scheduling, routing, cryptanalysis, theorem proving) becomes polynomial.
+
+## NP verifiers: examples
+
+For each canonical problem, here's the verifier.
+
+**SAT.** Certificate: assignment α. Verifier: substitute and evaluate, O(|φ|).
+
+**Independent Set.** Certificate: set S. Verifier: check |S| ≥ k and pairwise non-adjacency, O(n²).
+
+**Hamiltonian Cycle.** Certificate: permutation π. Verifier: check edges (π_i, π_&#123;i+1&#125;) ∈ E, O(n).
+
+**Subset Sum.** Certificate: subset S. Verifier: sum and compare, O(n).
+
+**3-Coloring.** Certificate: coloring c : V → &#123;1, 2, 3&#125;. Verifier: check c(u) ≠ c(v) for each edge, O(m).
+
+**TSP (decision).** Certificate: Hamiltonian cycle. Verifier: sum weights, check ≤ B.
+
+Designing the verifier is the *easy* part of proving NP-completeness. The hard part is the reduction.
+
+## How to write a reduction proof
+
+When asked "prove X is NP-hard", follow this template:
+
+1. **Choose a source.** Typically 3-SAT, Independent Set, Vertex Cover, or Subset Sum.
+2. **Describe the reduction.** Given a source instance, build an X instance.
+3. **Polynomial time.** Verify the construction is polynomial-time and produces polynomial-size output.
+4. **Bidirectional correctness.**
+   - Source = YES ⇒ X = YES.
+   - X = YES ⇒ source = YES.
+5. **Cite the source's NP-completeness** to conclude X is NP-hard. If X is also in NP (state the verifier), then X is NP-complete.
+
+**Step 4 is where most students lose marks.** Both directions, every time. *"YES iff YES."*
+
+## A canonical worked reduction: 3-SAT ≤ₚ Independent Set
+
+Given 3-CNF φ with m clauses, build graph G_φ.
+
+**Construction.**
+
+- For each clause Cᵢ = (ℓ_&#123;i,1&#125; ∨ ℓ_&#123;i,2&#125; ∨ ℓ_&#123;i,3&#125;): create three vertices for its literals.
+- Add a **triangle edge** between every pair within a clause.
+- Add a **conflict edge** between any two vertices whose literals are complementary (x and ¬x).
+
+Set k = m.
+
+**Claim.** φ satisfiable ⇔ G_φ has an independent set of size k.
+
+**(⇒)** From a satisfying assignment, pick one true literal per clause. The corresponding m vertices form an independent set:
+
+- No two from same clause (triangle blocks).
+- No two complementary (conflict blocks).
+
+**(⇐)** From an independent set of size m, exactly one vertex per clause (else two would share a triangle). The chosen literals are mutually consistent (no conflict edge crossed). Set those literals TRUE; the formula is satisfied. ∎
+
+Construction is polynomial. Hence Independent Set is NP-hard. Since it's also in NP, **Independent Set is NP-complete**.
+
+## Worked: 3-SAT ≤ₚ Clique
+
+**Construction.** For each clause, three vertices for its literals. Add an edge between two vertices in *different* clauses iff their literals are not complementary. Set k = m.
+
+**(⇒)** Satisfying assignment ⇒ pick one true literal per clause ⇒ pairwise non-complementary ⇒ edge between every chosen pair ⇒ m-clique.
+
+**(⇐)** m-clique ⇒ at most one vertex per clause (within-clause vertices aren't connected — note the dual to Independent Set!) ⇒ exactly one per clause (since |K| = m) ⇒ chosen literals consistent ⇒ assignment satisfies. ∎
+
+**Note the duality with Independent Set.** Independent Set used edges to *forbid* pairs; Clique uses edges to *require* pairs. Both work.
+
+## What P = NP would mean
+
+If P = NP:
+
+- Every NP-complete problem becomes polynomial.
+- The **polynomial hierarchy** PH = ∪ₖ Σₖᵖ collapses to P.
+- Public-key cryptography collapses — RSA, Diffie-Hellman, lattice-based schemes presuppose problems harder than P.
+- Most proof finding becomes automated (given that a short proof exists, you can find it in polynomial time).
+
+**Why we believe P ≠ NP.**
+
+1. Fifty years of failed attempts.
+2. Decades of incremental circuit-complexity lower bounds.
+3. The rich provable separations of related classes (via diagonalisation).
+
+A formal proof would be transformative. It is widely regarded as the most important open problem in theoretical computer science.
+
+## Not all hard problems are NP-hard
+
+- **Undecidable.** Halting Problem: no algorithm exists at all.
+- **PSPACE-hard.** Generalised chess, two-player games. Presumed above NP.
+- **NP-intermediate.** If P ≠ NP, there are NP problems neither in P nor NP-complete (Ladner). Graph Isomorphism is a famous candidate (Babai 2015: quasi-polynomial).
+- **NP-easy / NP-equivalent.** Informal; not standard COMP3027 vocabulary.
+
+**Common error:** claiming a problem is NP-hard without proof. Don't. Either cite a known NP-hard reduction, exhibit one yourself, or write "unknown".
+
+## Karp vs Cook (Turing) reductions
+
+**Karp reduction.** Many-one: x ∈ L₁ ⇔ f(x) ∈ L₂. Single oracle call.
+
+**Cook reduction.** Polynomial-time computation with multiple oracle calls. Strictly more powerful.
+
+For COMP3027, every reduction is Karp. Karp reductions preserve the structural picture of NP vs co-NP; Cook reductions blur it.
+
+## Reductions in two directions: a memory hook
+
+- **Solve direction (Weeks 7-8).** "X reduces to flow" means X *inherits* flow's polynomial-time bound.
+- **Hardness direction (Week 9).** "3-SAT reduces to X" means X *inherits* 3-SAT's hardness.
+
+Either way, the reduction goes from the problem you *know* to the problem you're *learning about*.
+
+## What this week gives you
+
+Three things:
+
+1. **Vocabulary.** P, NP, co-NP, NP-hard, NP-complete, Karp reduction.
+2. **A test for hardness.** Reduce from a known-hard problem.
+3. **A list of canonical NP-complete problems** whose hardness you can assume.
+
+Together: triage any new algorithmic problem into "probably polynomial" vs "probably NP-hard" within minutes. This saves enormous wasted effort.
+
+## What to do this week
+
+1. Re-derive SAT ≤ₚ 3-SAT by writing each clause-rewriting gadget explicitly.
+2. Construct an NP verifier for Subset Sum. (Certificate = subset; verifier sums in O(n).)
+3. For 2-SAT (known polynomial), explain in 100 words why the proof of NP-completeness for 3-SAT fails when restricted to 2-CNF.
+4. Confirm self-reducibility for Vertex Cover: given a decision oracle, find an actual cover.
+5. Memorise the ten canonical NP-complete problems. Flashcards: formal statement on one side, brief reduction sketch on the other.
+6. Write the verifier for TSP (decision version).
+7. Skim the quiz: any P / NP / co-NP confusion is a study target.

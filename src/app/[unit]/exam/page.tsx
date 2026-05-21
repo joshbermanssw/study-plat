@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MDXRemote } from "next-mdx-remote-client/rsc";
+import { mdxOptions } from "@/lib/mdx-options";
 import { getUnitData } from "@/lib/content";
 import { CountdownChip } from "@/components/countdown-chip";
 
@@ -29,7 +30,7 @@ export default async function ExamPage({ params }: { params: Promise<{ unit: str
         {data.exam.map((n) => (
           <section key={n.slug} className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] p-6">
             <h2 className="mb-4 text-xl font-semibold tracking-tight">{n.title}</h2>
-            <div className="prose-note"><MDXRemote source={n.body} /></div>
+            <div className="prose-note"><MDXRemote source={n.body} options={mdxOptions} /></div>
           </section>
         ))}
       </div>

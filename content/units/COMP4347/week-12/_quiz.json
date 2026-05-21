@@ -1,0 +1,307 @@
+{
+  "unit": "COMP4347",
+  "week": 12,
+  "topic": "Industry speakers",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "Which is the strongest argument for choosing 'boring tech' (Postgres + sessions) over a buzzy stack?",
+      "choices": [
+        "It is always faster",
+        "Operational maturity, well-known failure modes, and existing tooling reduce risk",
+        "It is free",
+        "It is required by HTTP"
+      ],
+      "correctIndex": 1,
+      "explanation": "Mature tools have known sharp edges, broad community knowledge, and runbooks. Novelty often has surprises in production."
+    },
+    {
+      "id": "q2",
+      "stem": "The 'RED' method tracks which service metrics?",
+      "choices": [
+        "Reads, Errors, Deletes",
+        "Rate, Errors, Duration",
+        "Resilience, Errors, Density",
+        "Routes, Endpoints, Dependencies"
+      ],
+      "correctIndex": 1,
+      "explanation": "RED is the standard service-level golden signals: request Rate, Error rate, latency Duration. USE is for resources."
+    },
+    {
+      "id": "q3",
+      "stem": "USE method (for resources) tracks:",
+      "choices": [
+        "Uptime, Stability, Efficiency",
+        "Utilization, Saturation, Errors",
+        "Users, Sessions, Endpoints",
+        "Updates, Stages, Errors"
+      ],
+      "correctIndex": 1,
+      "explanation": "Brendan Gregg's USE method: how busy is the resource (U), how queued is it (S), how often is it failing (E)."
+    },
+    {
+      "id": "q4",
+      "stem": "Blameless postmortem aims to:",
+      "choices": [
+        "Identify and discipline the person who caused the incident",
+        "Surface root causes and contributing factors to improve the system without fear-driven hiding",
+        "Skip documentation",
+        "Replace the deploy process"
+      ],
+      "correctIndex": 1,
+      "explanation": "Blame chills reporting and learning. Healthy teams analyse systems, not people."
+    },
+    {
+      "id": "q5",
+      "stem": "Which is correct about microservices vs a monolith for a small team?",
+      "choices": [
+        "Microservices are always better",
+        "A well-modularised monolith is usually the right starting point; microservices add operational overhead and shine for organisational/team scaling",
+        "Monoliths cannot use Postgres",
+        "Microservices remove all complexity"
+      ],
+      "correctIndex": 1,
+      "explanation": "Conway's Law: microservices align with independent teams. For one team, the coordination tax often exceeds the technical win."
+    },
+    {
+      "id": "q6",
+      "stem": "Feature flags primarily enable:",
+      "choices": [
+        "A/B testing only",
+        "Decoupling deploy from release — code ships in 'off' state and is enabled gradually",
+        "Schema migrations",
+        "Cookie storage"
+      ],
+      "correctIndex": 1,
+      "explanation": "You can deploy continuously while flagging risky paths off. Ramp percentage of users, kill quickly on regression."
+    },
+    {
+      "id": "q7",
+      "stem": "A canary deploy is:",
+      "choices": [
+        "A test environment",
+        "Routing a small fraction of traffic to a new version first, watching metrics, then ramping",
+        "A staging branch",
+        "A linting step"
+      ],
+      "correctIndex": 1,
+      "explanation": "Canaries catch regressions before they hit 100% of users. Pair with automated rollback."
+    },
+    {
+      "id": "q8",
+      "stem": "Distributed tracing helps you:",
+      "choices": [
+        "Encrypt requests",
+        "Follow a single request through multiple services to find where latency or errors occur",
+        "Run faster databases",
+        "Cache responses"
+      ],
+      "correctIndex": 1,
+      "explanation": "Each service annotates the request with span data. Tools like OpenTelemetry stitch the spans into a timeline."
+    },
+    {
+      "id": "q9",
+      "stem": "Idempotency in a distributed system enables:",
+      "choices": [
+        "Faster responses",
+        "Safe retries — clients can resend on failure without duplicate side effects",
+        "Encryption",
+        "Smaller payloads"
+      ],
+      "correctIndex": 1,
+      "explanation": "Networks fail. Idempotent endpoints (or idempotency keys for naturally non-idempotent ones) make retries safe."
+    },
+    {
+      "id": "q10",
+      "stem": "Eventual consistency means:",
+      "choices": [
+        "All reads return the latest write immediately",
+        "Replicas converge on a consistent state after some time; in the interim, reads may be stale",
+        "Writes never succeed",
+        "There is only one node"
+      ],
+      "correctIndex": 1,
+      "explanation": "Common in geo-distributed/availability-favouring systems. Application must tolerate (or hide) the staleness window."
+    },
+    {
+      "id": "q11",
+      "stem": "CAP theorem says that during a network partition you must choose between:",
+      "choices": [
+        "Consistency and Availability",
+        "Cost and Performance",
+        "Cache and Persistence",
+        "Compute and Storage"
+      ],
+      "correctIndex": 0,
+      "explanation": "Partition tolerance is mandatory in a distributed system. The other two are the trade. PACELC extends this to the non-partition case (Latency vs Consistency)."
+    },
+    {
+      "id": "q12",
+      "stem": "Which is the BEST first response to a doubled traffic load on a Postgres-backed monolith?",
+      "choices": [
+        "Rewrite in microservices",
+        "Profile, add indexes/caching, consider a read replica, and scale vertically before splitting services",
+        "Switch language",
+        "Replace Postgres with NoSQL"
+      ],
+      "correctIndex": 1,
+      "explanation": "Cheap interventions first. A diagnosis-driven approach often makes the rewrite unnecessary."
+    },
+    {
+      "id": "q13",
+      "stem": "Trunk-based development means:",
+      "choices": [
+        "All work in long-lived feature branches",
+        "Small, frequent merges to main; features hidden behind flags if incomplete",
+        "Only one developer commits",
+        "Branches are deleted at year-end"
+      ],
+      "correctIndex": 1,
+      "explanation": "Avoids merge debt and integrates continuously. Pair with CI and flags so unfinished work stays dark."
+    },
+    {
+      "id": "q14",
+      "stem": "Graceful degradation means:",
+      "choices": [
+        "The site shuts down on any error",
+        "Non-critical features fail or hide when their dependencies are down, but core functionality survives",
+        "Static pages only",
+        "Faster CSS"
+      ],
+      "correctIndex": 1,
+      "explanation": "A recommendation widget being down shouldn't take checkout with it. Isolate failures."
+    },
+    {
+      "id": "q15",
+      "stem": "Backpressure in a queue-based system is:",
+      "choices": [
+        "Encrypting messages",
+        "Signalling to producers to slow down when consumers can't keep up",
+        "Compressing payloads",
+        "Adding more consumers"
+      ],
+      "correctIndex": 1,
+      "explanation": "Without backpressure, queues grow unbounded and latency explodes. Producers must respect bounded capacity."
+    },
+    {
+      "id": "q16",
+      "stem": "Which is correct about secret rotation?",
+      "choices": [
+        "Once-off setup is enough",
+        "Rotate on a schedule AND immediately on suspected compromise; never commit secrets to git",
+        "Only rotate yearly",
+        "Rotation is unnecessary with HTTPS"
+      ],
+      "correctIndex": 1,
+      "explanation": "Schedules ensure freshness; incident-driven rotation contains compromises. Secret managers automate both."
+    },
+    {
+      "id": "q17",
+      "stem": "Structured logging means:",
+      "choices": [
+        "Long log lines",
+        "Logs in machine-parsable format (JSON), with consistent keys for filtering and aggregation",
+        "Logs sorted alphabetically",
+        "Two-line headers"
+      ],
+      "correctIndex": 1,
+      "explanation": "Structured logs are queryable. Correlate by request id; aggregate by status; trace through services."
+    },
+    {
+      "id": "q18",
+      "stem": "Which is a sound system-design answer pattern?",
+      "choices": [
+        "Jump straight to picking AWS services",
+        "Clarify scope and SLAs first, sketch components, pick data models, identify bottlenecks, discuss failure modes",
+        "Reject the question",
+        "Use the latest framework"
+      ],
+      "correctIndex": 1,
+      "explanation": "Interviewers care about reasoning. Numbers (QPS, payload size) drive architectural choices; jumping to tech-name bingo signals shallow understanding."
+    },
+    {
+      "id": "q19",
+      "stem": "Why is shipping small, frequent deploys safer than large weekly ones?",
+      "choices": [
+        "Less code review",
+        "Smaller diff → easier to bisect, faster rollback, less coordination risk",
+        "Smaller bundle size",
+        "Required by Express"
+      ],
+      "correctIndex": 1,
+      "explanation": "Risk grows non-linearly with change size. Small deploys keep blast radius and cognitive load small."
+    },
+    {
+      "id": "q20",
+      "stem": "Which is true about GDPR?",
+      "choices": [
+        "It applies only inside the EU",
+        "It applies to processing of EU residents' data regardless of where you operate; key principles include lawfulness, data minimisation, and right to erasure",
+        "It is a US law",
+        "It only restricts cookies"
+      ],
+      "correctIndex": 1,
+      "explanation": "Extraterritorial reach + heavy fines. Build with data minimisation and clear bases for processing."
+    },
+    {
+      "id": "q21",
+      "stem": "Why pin dependencies in package-lock / requirements.txt?",
+      "choices": [
+        "Faster installs",
+        "Reproducible builds and protection against unexpected upstream changes (including malicious typosquats)",
+        "Required by HTTP",
+        "Reduces bundle size"
+      ],
+      "correctIndex": 1,
+      "explanation": "Floating ranges mean today's build differs from yesterday's. Lockfiles freeze exact versions for security and reproducibility."
+    },
+    {
+      "id": "q22",
+      "stem": "Which fits 'fan-out on write' best?",
+      "choices": [
+        "Compute the feed for each follower at write time so reads are O(1) lookups",
+        "Compute the feed at read time",
+        "Skip feeds entirely",
+        "Use a single database row"
+      ],
+      "correctIndex": 0,
+      "explanation": "Push-on-write feeds favour read-heavy social graphs but suffer for celebrity accounts. Hybrid approaches mix push and pull."
+    },
+    {
+      "id": "q23",
+      "stem": "Which is a common cost-awareness pitfall?",
+      "choices": [
+        "Picking too many providers",
+        "Provisioning peak-capacity infrastructure and never tuning, when autoscaling would suffice",
+        "Using HTTPS",
+        "Compressing responses"
+      ],
+      "correctIndex": 1,
+      "explanation": "Cloud bills swell from idle capacity, oversized instances, and orphaned resources. Tag, monitor, autoscale."
+    },
+    {
+      "id": "q24",
+      "stem": "Why is code review valuable beyond catching bugs?",
+      "choices": [
+        "It satisfies regulators",
+        "It spreads knowledge, surfaces design issues, and reinforces standards across the team",
+        "It is required by HTTP",
+        "It speeds up CI"
+      ],
+      "correctIndex": 1,
+      "explanation": "Best code reviews are dialogue. They mentor newer engineers and decentralise expertise."
+    },
+    {
+      "id": "q25",
+      "stem": "An incident is caused by an expired TLS certificate. Mature follow-up includes:",
+      "choices": [
+        "Apologising and moving on",
+        "Adding monitoring/alerting on cert expiry, automating renewal (e.g. ACME), and adding the missing test/process — all in the postmortem action items",
+        "Switching to HTTP",
+        "Manually checking certs monthly"
+      ],
+      "correctIndex": 1,
+      "explanation": "Process + automation eliminates the failure class. Manual monthly checks are themselves an outage waiting to happen."
+    }
+  ]
+}

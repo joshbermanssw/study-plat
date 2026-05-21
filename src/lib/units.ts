@@ -9,10 +9,10 @@ import type { UnitMeta } from "./types";
  * publishes the exam slot, e.g. `new Date(2026, 5, 16, 14, 0)` for 16 Jun 2 pm.
  */
 export const UNITS: UnitMeta[] = [
-  { code: "COMP4347", name: "Web Application Development", examDate: new Date(2026, 5, 16), color: "#7c5cff" },
-  { code: "COMP4349", name: "Cloud Computing",             examDate: new Date(2026, 5, 13), color: "#4ade80" },
-  { code: "INFO4444", name: "Computing 4 Innovation",      examDate: new Date(2026, 5, 15), color: "#fbbf24" },
-  { code: "COMP3027", name: "Algorithm Design",            examDate: new Date(2026, 5, 17), color: "#f87171" },
+  { code: "COMP4347", name: "Web Application Development", examDate: new Date(2026, 5, 16), color: "#ec4815" },
+  { code: "COMP4349", name: "Cloud Computing",             examDate: new Date(2026, 5, 13), color: "#ec4815" },
+  { code: "INFO4444", name: "Computing 4 Innovation",      examDate: new Date(2026, 5, 15), color: "#4DFE23" },
+  { code: "COMP3027", name: "Algorithm Design",            examDate: new Date(2026, 5, 17), color: "#4DFE23" },
 ];
 
 export function getUnit(code: string): UnitMeta | undefined {

@@ -1,0 +1,214 @@
+---
+title: "Week 1 — Cloud Computing Overview"
+unit: COMP4349
+week: 1
+type: overview
+status: done
+---
+
+Week 1 is the conceptual scaffolding for everything else in COMP4349. Almost every later week assumes you can recite the NIST definition, place a service in IaaS/PaaS/SaaS/FaaS, describe how Regions and Availability Zones interact, and explain who is responsible for what under the shared responsibility model. The exam reliably asks at least one definition question and one "given workload X, choose the model and justify" question — drill those until they are automatic.
+
+## What "cloud computing" actually is (NIST definition)
+
+The US National Institute of Standards and Technology (NIST SP 800-145) defines cloud computing as "a model for enabling ubiquitous, convenient, on-demand network access to a shared pool of configurable computing resources (e.g. networks, servers, storage, applications and services) that can be rapidly provisioned and released with minimal management effort or service-provider interaction." Memorise that sentence — it is the standard reference for any "define cloud computing" exam question.
+
+NIST then lists five essential characteristics that all cloud offerings should satisfy:
+
+1. **On-demand self-service** — a consumer can provision compute and storage automatically (an API call or a button in a console), without a human at the provider side filling in a ticket.
+2. **Broad network access** — capabilities are available over standard networks (typically the public internet) and consumed through standard protocols (HTTPS, REST). Renting a private leased line from a colocation provider does not satisfy this; calling `aws ec2 run-instances` over HTTPS does.
+3. **Resource pooling** — the provider's resources are multi-tenant. Many customers share the same physical hardware, with isolation provided by hypervisors, namespaces, or microVMs. Customers usually have no idea (and no need to know) exactly which physical CPU is running their workload.
+4. **Rapid elasticity** — capacity can grow or shrink quickly, often automatically, in response to demand. The classic example is an EC2 Auto Scaling Group that adds instances when CPU spikes and removes them when it falls.
+5. **Measured service** — usage is metered (per second, per request, per GB-month) and reported. This is the basis of the pay-as-you-go pricing model that separates cloud from renting a rack from your ISP.
+
+A common pitfall is to confuse "cloud" with "anything hosted somewhere else." Renting a Dell server you SSH into, paid annually, hosted in someone else's data centre, is not cloud — it fails self-service, elasticity, and measured service. The exam will test this distinction with a scenario, so look for the five characteristics before you label something.
+
+## Service models — IaaS, PaaS, SaaS, FaaS
+
+The service models describe how much of the stack the customer manages versus the provider. Picture a vertical stack from bottom to top: facilities, hardware, virtualisation, OS, runtime, middleware, application, data.
+
+- **Infrastructure as a Service (IaaS)** — the provider manages everything up to the hypervisor; the customer manages OS, runtime, application and data. AWS example: **Amazon EC2** (virtual machines). You pick the AMI, you patch the OS, you install the database, you secure the application. You get maximum control and maximum operational responsibility.
+- **Platform as a Service (PaaS)** — the provider also manages OS, runtime and (usually) middleware; you bring the application code and data. AWS examples: **AWS Elastic Beanstalk**, **Amazon RDS**, **Amazon Elastic MapReduce (EMR)**. With RDS you do not log into the database VM and run `apt-get upgrade`; AWS does that for you.
+- **Software as a Service (SaaS)** — the provider delivers a finished application; the customer manages only their data within the application. Examples: **Gmail**, **Salesforce**, **AWS Trusted Advisor**, **Amazon Chime**. The user has zero control over runtime, hypervisor or hardware.
+- **Function as a Service (FaaS)** — a more recent layer above PaaS, where the unit of deployment is a single function and the provider handles the entire execution environment, scaling from zero to many invocations on demand. AWS example: **AWS Lambda**. We cover FaaS in depth in Week 12.
+
+Pitfall: the boundaries are not crisp. Aurora Serverless v2 is a managed relational database (PaaS) that scales like FaaS. ECS Fargate runs containers (IaaS-style packaging) but with no servers to manage (PaaS-style operations). In the exam, justify the label by what the customer manages rather than fighting over the perfect category.
+
+```text
+Stack layer          IaaS   PaaS   SaaS   FaaS
+Application data     You    You    You    You
+Application code     You    You    --     You (the function)
+Runtime              You    AWS    AWS    AWS
+OS                   You    AWS    AWS    AWS
+Virtualisation       AWS    AWS    AWS    AWS
+Hardware/Network     AWS    AWS    AWS    AWS
+Facilities           AWS    AWS    AWS    AWS
+```
+
+## Deployment models — public, private, hybrid, community, multi-cloud
+
+NIST also defines four deployment models, and a fifth (multi-cloud) is universal in industry:
+
+- **Public cloud** — infrastructure shared between many tenants and owned by the provider. AWS, Azure, Google Cloud. Cheapest per unit but you accept multi-tenancy.
+- **Private cloud** — infrastructure dedicated to a single organisation. Either on-premises (OpenStack, VMware) or carved out of a public provider (AWS Outposts, AWS Dedicated Hosts). Used by banks and governments with strict residency or sovereignty rules.
+- **Hybrid cloud** — connects a private and a public cloud so workloads can move between them, with consistent identity and networking. AWS Direct Connect + Storage Gateway is the canonical AWS hybrid pattern.
+- **Community cloud** — shared between several organisations with shared concerns (e.g. AWS GovCloud serving US federal agencies).
+- **Multi-cloud** — using two or more public providers concurrently, usually to avoid vendor lock-in or because different teams chose differently. Operationally expensive — you pay every cross-provider egress.
+
+Pitfall: students often confuse hybrid (one workload spans two environments) with multi-cloud (separate workloads on separate providers). The distinction matters because hybrid demands consistent identity (e.g. Active Directory federated to IAM Identity Center) and consistent networking (VPN/Direct Connect), whereas multi-cloud usually does not.
+
+## AWS global infrastructure — Regions, AZs, Edge, Local Zones, Wavelength
+
+AWS organises its physical estate into a hierarchy you must know cold:
+
+- **AWS Regions** are geographic areas. Each Region is a separate failure domain and (importantly for compliance) a separate jurisdiction. Examples: `us-east-1` (Northern Virginia), `ap-southeast-2` (Sydney), `eu-west-1` (Ireland). Data does not cross Regions unless you explicitly replicate it. Most AWS services are Regional — an S3 bucket lives in exactly one Region.
+- **Availability Zones (AZs)** are isolated partitions of a Region — typically 2 to 6 per Region. An AZ consists of one or more discrete data centres with their own power, cooling and network, but AZs within a Region are connected by low-latency (sub-millisecond, AWS publishes &lt;2 ms) private fibre. The point of multiple AZs is fault isolation: a fire, flood or grid failure in `ap-southeast-2a` should leave `ap-southeast-2b` and `ap-southeast-2c` running.
+- **Edge Locations** are hundreds of small points-of-presence used by Amazon CloudFront (CDN), Route 53 (DNS), AWS Shield, and AWS Global Accelerator. They cache content close to end users but are not used for primary compute or storage.
+- **Local Zones** push a handful of AWS services (EC2, EBS, sometimes RDS) into a single metropolitan area for ultra-low-latency workloads — e.g. media editing, gaming. They appear as an extension of a parent Region.
+- **Wavelength Zones** put EC2 and EBS inside telecom 5G networks so packets never leave the carrier's network — used for mobile gaming and AR/VR latency-sensitive use cases.
+
+The exam loves a question like "where should you deploy?" The shortcut: choose the Region for latency and compliance (proximity to users; data sovereignty), distribute across AZs for HA, use Edge for global content caching, use Local Zones/Wavelength only for explicit latency requirements you cannot hit from a Region.
+
+## Data replication — synchronous vs asynchronous, Multi-AZ vs cross-Region, RPO/RTO
+
+Resilience is built on replication, and you need to be precise about which kind:
+
+- **Synchronous replication** — the write returns success to the application only after the secondary acknowledges. Zero data loss but limited by latency between sites; only practical within a Region (intra-AZ or cross-AZ). RDS Multi-AZ deployments use synchronous replication to a standby in another AZ.
+- **Asynchronous replication** — the primary acknowledges the write immediately and ships changes to replicas in the background. Tolerates higher latency (works fine cross-Region) but a failure can lose the last few seconds of writes. RDS Read Replicas and S3 Cross-Region Replication (CRR) are asynchronous.
+
+Two metrics define how good your DR posture is:
+
+- **Recovery Point Objective (RPO)** — how much data you can lose, expressed in time. Synchronous Multi-AZ gives an RPO of zero; daily backups give an RPO of up to 24 hours.
+- **Recovery Time Objective (RTO)** — how long the service can be unavailable. RDS Multi-AZ failover is typically 60-120 seconds; restoring a database from a snapshot is tens of minutes; rebuilding from CloudFormation is hours.
+
+A common confusion: "Multi-AZ" inside a single Region protects against an AZ failure but not against a Region failure (an `us-east-1` outage takes down all AZs in that Region). For Region-level resilience you need cross-Region replication (S3 CRR, Aurora Global Database, DynamoDB Global Tables) — that is asynchronous and has a non-zero RPO.
+
+## HA vs DR strategies (backup-restore through multi-site active-active)
+
+AWS publishes four DR strategies, increasing in cost and decreasing in RTO/RPO:
+
+1. **Backup and restore** — store snapshots/backups in S3 (or replicated to another Region). On disaster, provision new infrastructure and restore. RTO hours, RPO hours. Cheap. Suitable for non-critical workloads.
+2. **Pilot light** — a minimal version of the environment runs continuously in the DR Region (e.g. a stopped EC2 with the latest AMI, a small RDS replica). On disaster, scale up. RTO tens of minutes, RPO low single-digit minutes.
+3. **Warm standby** — a scaled-down but always-on copy of production runs in the DR Region. On disaster, scale up to full size and cut DNS. RTO minutes, RPO seconds.
+4. **Multi-site active-active** — both Regions serve live traffic via Route 53 or Global Accelerator. RTO near-zero, RPO near-zero. Most expensive; requires careful conflict-resolution design for stateful workloads.
+
+High Availability (HA) refers to designs that survive a small failure within a Region (e.g. losing one AZ). Disaster Recovery (DR) refers to designs that survive losing an entire Region. RDS Multi-AZ is HA; Aurora Global Database is DR.
+
+## Shared responsibility model — "OF" vs "IN" the cloud
+
+AWS draws a sharp line: AWS is responsible for **security *of* the cloud** (the global infrastructure, hypervisor, physical security, hardware decommissioning, host OS patching). The customer is responsible for **security *in* the cloud** (your data, your IAM users and policies, your OS patches on EC2, your security group rules, your application code, your encryption configuration).
+
+The boundary moves with the service model. With **Amazon EC2** (IaaS) you must patch the guest OS; with **Amazon RDS** (managed) AWS patches the database engine on a maintenance window you choose; with **AWS Lambda** (FaaS) AWS patches even the language runtime. Across all services the customer always owns: data classification, IAM, network configuration choices, and client-side encryption.
+
+Pitfall: thinking that "AWS is more secure" means you have nothing to do. The biggest cloud breaches in the last decade (Capital One, multiple S3-bucket leaks) were customer-side misconfigurations — public S3 buckets, over-broad IAM policies, missing MFA on the root account. The exam will hand you a scenario and ask "who's responsible for X?" and the answer is dictated by which side of this line X sits on.
+
+## Well-Architected Framework — the six pillars
+
+AWS Well-Architected provides a checklist of design principles, organised into six pillars. You should be able to name them and place a question into the right pillar:
+
+1. **Operational Excellence** — operations as code, frequent reversible changes, learn from failure. Tools: CloudFormation, CodePipeline, CloudWatch dashboards.
+2. **Security** — defence in depth, least privilege, automate security, encrypt everywhere. Tools: IAM, KMS, GuardDuty, WAF, Shield.
+3. **Reliability** — automatic recovery, scale horizontally, manage change in automation. Tools: Auto Scaling Groups, Route 53 health checks, Multi-AZ.
+4. **Performance Efficiency** — pick the right resource type and size, go global in minutes, use serverless. Tools: Compute Optimizer, CloudFront, Aurora Serverless.
+5. **Cost Optimization** — match supply with demand, use the right pricing model, measure efficiency. Tools: Cost Explorer, Budgets, Savings Plans.
+6. **Sustainability** — reduce energy and resource consumption. Tools: Graviton instances, right-sizing, regional choice for renewable energy.
+
+If an exam question asks "what design principle supports X?" you can almost always name the pillar in your answer to signal that you have engaged with the framework.
+
+## Pricing models — on-demand, reserved, spot, savings plans
+
+AWS gives multiple ways to pay for the same EC2 instance, each with different tradeoffs:
+
+- **On-demand** — full per-second price, no commitment. Use for spiky or short-lived workloads.
+- **Reserved Instances (RI)** — 1- or 3-year commitment for a specific instance family/Region, up to ~75% discount. Use when you know your baseline.
+- **Spot Instances** — bid on unused EC2 capacity; up to 90% discount, but AWS can reclaim with 2 minutes warning. Use for fault-tolerant batch jobs (e.g. ML training, video transcoding, Spark workers).
+- **Savings Plans** — newer, more flexible commitment (\$/hour spend rather than specific family). Includes "Compute" plans that apply across EC2, Fargate and Lambda.
+- **Dedicated Hosts / Dedicated Instances** — physical isolation for compliance (e.g. BYO Windows licences). Most expensive.
+
+The exam frequently presents a workload pattern (steady, spiky, batch, latency-sensitive) and asks for the best pricing model. The shortcut: steady baseline → Reserved/Savings; bursty above baseline → On-demand; interruption-tolerant batch → Spot.
+
+## CapEx → OpEx and the vendor lock-in trap
+
+A core business motivation for cloud is converting capital expenditure (CapEx — buying servers up front, depreciating over 3-5 years) into operating expenditure (OpEx — pay monthly for what you use). This frees cash for other investments and lets you scale without procurement cycles.
+
+The complement is real: **vendor lock-in** and especially **egress costs**. Data transfer *into* AWS is free, but data transfer *out* (to the internet or to another cloud) costs ~\$0.09/GB after the free tier. Migrating 100 TB out of AWS can cost ~\$9,000 just in egress. Architecture choices that use proprietary services (DynamoDB, Aurora, Step Functions) are stickier than ones that use open standards (PostgreSQL on RDS, Kubernetes on EKS) — that is a deliberate tradeoff, not a mistake, but you should be aware of which lever you are pulling.
+
+## Accessing AWS — Console, CLI, SDKs, IaC blueprints
+
+There are four equivalent surfaces over the same AWS APIs:
+
+- **AWS Management Console** — the browser GUI. Best for exploration, the first time you set up a service, and for visualising state.
+- **AWS CLI** — the `aws ...` command-line tool. Best for ad-hoc automation and shell scripts. Authentication via access key ID + secret access key stored in `~/.aws/credentials`.
+- **AWS SDKs** — language-specific libraries (boto3 for Python, AWS SDK for JavaScript, AWS SDK for Java, etc.). Best for embedding AWS calls inside an application.
+- **Infrastructure as Code (CloudFormation, AWS CDK, Terraform)** — declarative blueprints. Best for reproducible environments. We cover this in depth in Week 8.
+
+```bash
+# Quick taste of each surface
+aws sts get-caller-identity                     # CLI
+aws s3 ls                                        # CLI
+aws cloudformation create-stack \                # IaC
+  --stack-name web-tier \
+  --template-body file://web-tier.yaml
+```
+
+## IAM essentials — users, groups, roles, policies, evaluation logic
+
+Identity and Access Management (IAM) is the global service that controls who can do what in your AWS account. Master four entities:
+
+- **IAM user** — a long-lived identity with credentials (password + optional MFA for console; access key ID + secret access key for CLI/SDK). Typically a human or a legacy script.
+- **IAM group** — a collection of users that share permissions. You attach policies to the group; users inherit them.
+- **IAM role** — a set of permissions that no one owns. Assumed via AWS STS to get temporary credentials. Used by EC2 instances (instance profile), Lambda functions (execution role), cross-account access, and federated users.
+- **IAM policy** — a JSON document with `Version`, `Statement[]` containing `Effect` (`Allow`/`Deny`), `Action`, `Resource`, optional `Condition`. Identity-based policies attach to users/groups/roles; resource-based policies attach to resources (S3 buckets, SQS queues, KMS keys).
+
+The evaluation algorithm is the single most exam-tested IAM fact:
+
+1. By default, every action is **implicitly denied**.
+2. An **explicit allow** overrides the default deny.
+3. An **explicit deny** beats any allow.
+
+```json
+{
+  "Version": "2012-10-17",
+  "Statement": [
+    {
+      "Effect": "Allow",
+      "Action": ["s3:GetObject", "s3:ListBucket"],
+      "Resource": ["arn:aws:s3:::my-bucket", "arn:aws:s3:::my-bucket/*"]
+    },
+    {
+      "Effect": "Deny",
+      "Action": "s3:*",
+      "Resource": "arn:aws:s3:::my-bucket/secret/*"
+    }
+  ]
+}
+```
+
+This policy allows reading the bucket — except anything under `secret/`. Always follow the **principle of least privilege**: grant the narrowest set of actions on the narrowest set of resources that lets the workload succeed.
+
+Pitfall: people add an `Allow *` "just to get it working" and never tighten it. Use IAM Access Analyzer and CloudTrail to audit which permissions are actually exercised before locking down.
+
+## Putting it together — the canonical web-shop architecture
+
+The week-1 reading walks through an e-commerce site three times — bare metal, single-region cloud, and HA cloud. The HA target architecture is the mental picture you should carry into every later week:
+
+- Route 53 hosts the public DNS for `shop.example.com`.
+- CloudFront caches static assets at edge locations.
+- An Application Load Balancer in two AZs fronts an Auto Scaling Group of EC2 web servers.
+- Web servers talk to a Multi-AZ Amazon RDS primary; read traffic optionally goes to a Read Replica.
+- Sessions go in ElastiCache (Redis); large objects go in S3; secrets in AWS Secrets Manager.
+- An IAM role on each EC2 instance lets the application read S3 and call RDS without baked-in credentials.
+- CloudWatch collects metrics and logs; CloudFormation defines the whole thing.
+
+If you can sketch and annotate that diagram in three minutes under exam pressure, you have the Week 1 material.
+
+## Common exam traps and how to dodge them
+
+- "Define cloud computing" — quote NIST, then list the 5 essential characteristics.
+- "Pick the service model" — anchor on who manages OS and runtime.
+- "Choose a Region" — three drivers: latency, compliance/sovereignty, service availability.
+- "Multi-AZ vs cross-Region" — Multi-AZ is HA (intra-Region, synchronous, RPO zero); cross-Region is DR (asynchronous, non-zero RPO).
+- "Shared responsibility" — the test is which side of the dotted line in AWS's published diagram the task sits.
+- "IAM policy evaluation" — explicit deny > explicit allow > implicit deny. Always.
+- "Cost optimisation pricing model" — anchor to baseline (Reserved/Savings) + spike (On-demand) + interrupt-tolerant batch (Spot).
+
+Spend ten minutes drilling these prompts before the exam — they account for a disproportionate share of the marks for the time you invest.

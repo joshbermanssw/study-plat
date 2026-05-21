@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
-import { Edit3, Eye, Loader2, Save, PanelRightOpen, PanelRightClose, AlertCircle, Check, Sparkles, Code2 } from "lucide-react";
+import { Edit3, Eye, Loader2, Save, PanelRightOpen, PanelRightClose, AlertCircle, Check, Sparkles, Code2, History } from "lucide-react";
 import { cn } from "@/lib/cn";
 import { saveNoteBody } from "@/app/sync/actions";
 import { splitBody, joinBody } from "@/lib/stamp-extract";
@@ -23,6 +23,28 @@ interface Props {
   pdfFilename?: string;
 }
 
+function draftKey(unit: string, slug: string) {
+  return `study-platform/draft/${unit}/${slug}`;
+}
+
+interface UnsavedDraft { body: string; savedAt: number }
+
+function readDraft(unit: string, slug: string): UnsavedDraft | null {
+  if (typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(draftKey(unit, slug));
+    return raw ? JSON.parse(raw) as UnsavedDraft : null;
+  } catch { return null; }
+}
+
+function writeDraft(unit: string, slug: string, body: string) {
+  try { window.localStorage.setItem(draftKey(unit, slug), JSON.stringify({ body, savedAt: Date.now() })); } catch {}
+}
+
+function clearDraft(unit: string, slug: string) {
+  try { window.localStorage.removeItem(draftKey(unit, slug)); } catch {}
+}
+
 export function NoteView({ unit, slug, rawBody, preview, pdfUrl, pdfFilename }: Props) {
   const router = useRouter();
 
@@ -37,9 +59,23 @@ export function NoteView({ unit, slug, rawBody, preview, pdfUrl, pdfFilename }: 
   const [userPortion, setUserPortion] = useState(initialSplit.user);
   const [pdfOpen, setPdfOpen] = useState(true);
   const [saveState, setSaveState] = useState<SaveState>({ status: "idle" });
+  const [recoverable, setRecoverable] = useState<UnsavedDraft | null>(null);
   const [pending, startTransition] = useTransition();
   const dirty = userPortion !== initialSplit.user;
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // On mount: check for an unsaved draft in localStorage that's newer than disk.
+  useEffect(() => {
+    const draft = readDraft(unit, slug);
+    if (draft && draft.body !== initialSplit.user) setRecoverable(draft);
+  }, [unit, slug, initialSplit.user]);
+
+  // Mirror userPortion to localStorage on every change (safety net for the ≤1.5s
+  // gap between keystroke and server save).
+  useEffect(() => {
+    if (!dirty) return;
+    writeDraft(unit, slug, userPortion);
+  }, [userPortion, dirty, unit, slug]);
 
   const save = useCallback(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current);
@@ -49,6 +85,7 @@ export function NoteView({ unit, slug, rawBody, preview, pdfUrl, pdfFilename }: 
       const res = await saveNoteBody(unit, slug, combined);
       if (res.ok) {
         setSaveState({ status: "saved", at: Date.now() });
+        clearDraft(unit, slug);
         router.refresh();
       } else {
         setSaveState({ status: "error", message: res.message ?? "Save failed" });
@@ -77,7 +114,31 @@ export function NoteView({ unit, slug, rawBody, preview, pdfUrl, pdfFilename }: 
   }, [save, dirty]);
 
   return (
-    <div className={cn("grid gap-4", pdfUrl && pdfOpen ? "lg:grid-cols-2" : "grid-cols-1")}>
+    <div className="flex flex-col gap-3">
+      {recoverable && (
+        <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg border border-[var(--color-warning)]/40 bg-[var(--color-warning)]/5 px-3 py-2 text-sm">
+          <span className="inline-flex items-center gap-2 text-[var(--color-warning)]">
+            <History className="size-4" />
+            Unsaved draft from {new Date(recoverable.savedAt).toLocaleString("en-AU", { day: "numeric", month: "short", hour: "numeric", minute: "2-digit" })} — not on disk.
+          </span>
+          <div className="flex items-center gap-2">
+            <button
+              onClick={() => { setUserPortion(recoverable.body); setEditorKey((k) => k + 1); setMode("edit"); setRecoverable(null); }}
+              className="rounded-md bg-[var(--color-warning)] px-3 py-1 text-xs font-medium text-black hover:opacity-90"
+            >
+              Restore
+            </button>
+            <button
+              onClick={() => { clearDraft(unit, slug); setRecoverable(null); }}
+              className="rounded-md border border-[var(--color-border)] bg-[var(--color-surface-2)] px-3 py-1 text-xs hover:text-[var(--color-text)]"
+            >
+              Discard
+            </button>
+          </div>
+        </div>
+      )}
+
+      <div className={cn("grid gap-4", pdfUrl && pdfOpen ? "lg:grid-cols-2" : "grid-cols-1")}>
       {/* LHS — editor + preview */}
       <div className="flex min-h-[70vh] flex-col rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)]">
         <div className="flex items-center justify-between gap-3 border-b border-[var(--color-border)] px-3 py-2">
@@ -158,6 +219,7 @@ export function NoteView({ unit, slug, rawBody, preview, pdfUrl, pdfFilename }: 
           />
         </div>
       )}
+      </div>
     </div>
   );
 }

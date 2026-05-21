@@ -1,0 +1,431 @@
+---
+title: "Week 6 — Sessions, routes, MVC"
+unit: COMP4347
+week: 6
+type: overview
+status: done
+---
+
+## What this week is really about
+
+**Last week your Express app was a single `app.js` file with global variables for state.** That works for a survey demo. It does not work for a real product.
+
+This week fixes two separate problems at once:
+
+- **Memory.** HTTP forgets every request the instant it finishes. Yet your app needs to know that the person who just clicked "Place order" is the same person who logged in five minutes ago. That gap is filled by **cookies, sessions, and tokens**.
+- **Organisation.** A growing app drowns in route handlers, view rendering, and database calls all jammed into one file. The fix is **MVC**: split the file by responsibility so each piece does one job.
+
+The unit's Week 6 lecture is titled "Node Express MVC IntroToMongo", so you'll see those two threads run side by side: the *architecture* you put around an Express app, and the *persistence layer* (MongoDB) that the controllers will eventually talk to. The exam loves making you refactor a flat `app.js` into a controller + router pair, then ask you which scope (application, request, session) a piece of data belongs in.
+
+You should leave this week able to:
+
+1. Explain why HTTP is stateless and what we do about it.
+2. Read a `Set-Cookie` header attribute by attribute.
+3. Trade off server-side sessions vs JWTs and name the security failure mode of each.
+4. Refactor a monolithic Express file into controllers, routers, and (next week) models.
+5. Translate a small relational schema into MongoDB documents and write basic CRUD queries.
+
+## Stateful vs stateless servers
+
+**HTTP is stateless by design.** Every request stands on its own. The server is free to forget everything the moment the response is flushed. That's not laziness — it's the property that lets a load balancer route your next request to *any* server in the pool.
+
+But applications are not stateless. A shopping cart, a logged-in dashboard, a "you have 3 unread messages" badge — all of these need the server to recognise that **this** request belongs to **this** user. The mismatch between stateless transport and stateful applications is the problem the rest of this week solves.
+
+There are exactly two production strategies:
+
+- **Server-side sessions.** The server keeps the state in memory (or Redis, or a database). It gives the client a small opaque ID. The client sends the ID back on every request. The ID is meaningless to anyone except the server that issued it.
+- **Tokens (JWT).** The server signs a self-describing token containing the user's identity and permissions. The client carries that token on every request. The server verifies the signature and trusts the contents. No server-side storage is needed.
+
+Both rely on the client to retransmit *something* identifying on every request. That something is almost always either a **cookie** (sent automatically by the browser) or an `Authorization` header (sent explicitly by the client code).
+
+**The trade-off in one sentence.** Server-side sessions are simple to revoke but require shared storage; JWTs scale horizontally for free but are painful to revoke before they expire. Almost every interview question on this topic is just a rephrasing of that sentence.
+
+## Cookies, attribute by attribute
+
+A cookie is a small name/value pair the server tells the browser to remember. The browser automatically re-attaches matching cookies to every subsequent request to the same site.
+
+```http
+Set-Cookie: sid=abc123; Domain=example.com; Path=/; Max-Age=86400; HttpOnly; Secure; SameSite=Lax
+```
+
+Each attribute has a job, and exam questions live in the gap between them:
+
+- **`Name=Value`.** The data. For sessions, this is the opaque session ID. Lecture slides show one called `connect.sid`, which is the default name set by `express-session`.
+- **`Domain`.** Which hosts the cookie applies to. Setting `Domain=example.com` means it's also sent to `api.example.com`. Omit it and the cookie is host-only — sent only to the exact origin that set it.
+- **`Path`.** Which URL prefix the cookie applies to. The slides emphasise that cookies are identified by the triple &#123;name, domain, path&#125; — two cookies can share a name as long as either domain or path differs.
+- **`Max-Age` / `Expires`.** When the cookie should be deleted. Omit both and you get a **session cookie** that dies when the browser closes (in theory — modern browsers often restore them).
+- **`Secure`.** Only sent over HTTPS. A flag with no value. Mandatory in production.
+- **`HttpOnly`.** Not exposed to JavaScript via `document.cookie`. This is your main defence against XSS-driven token theft.
+- **`SameSite`.** Controls cross-site sending. `Strict` = never on cross-site. `Lax` = sent on top-level GET navigations (clicking a link) but not on cross-site POSTs or embedded resources. `None` = always sent (and requires `Secure`).
+
+**Browser rule for sending cookies.** The browser sends a cookie with a request when the cookie's `Domain` is a domain-suffix of the URL's host *and* the cookie's `Path` is a prefix of the URL's path. The slides walk through three cookies — A, B, C — and ask which apply to a page at `web.cs.usyd.edu.au/~comp5347/doc/cookie.html`. The answer is **B and C** (the ones whose domain is a suffix of `web.cs.usyd.edu.au` and whose path is a prefix of `/~comp5347/doc/`).
+
+Whenever you see a cookie attribute on an exam, ask: *what attack does omitting it enable?* That's almost always the right framing.
+
+## Sessions: opaque ID + server-side store
+
+**A session is server-side state, keyed by an ID the client carries in a cookie.** That's it. Everything else is implementation detail.
+
+The lifecycle in eight steps the slides spell out:
+
+1. Client makes its first request — no session cookie yet.
+2. Server creates a session object in its store and generates a unique ID.
+3. Server returns the response with `Set-Cookie: connect.sid=<id>`.
+4. Browser stores the cookie, associating it with that origin.
+5. On every subsequent request to that origin, the browser auto-attaches the cookie.
+6. Server reads the ID, looks up the session object in the store.
+7. The session data is exposed to the request handler as `req.session`.
+8. When the session expires (timeout) or the user logs out, the server destroys the entry.
+
+In Express this is wired up with `express-session`:
+
+```js
+const session = require('express-session')
+app.use(session({
+  secret: 'ssshhhhh',
+  cookie: { maxAge: 10 * 60 * 1000, httpOnly: true, sameSite: 'lax' }
+}))
+
+app.post('/vote', (req, res) => {
+  if (req.session.voted) return res.send('already voted')
+  req.session.voted = true
+  // ... record the vote
+})
+```
+
+**Where does the session data live?** In memory by default — which is fine for the lab demo and disastrous in production, because it can't be shared across multiple Node processes. The standard answer is **Redis**: a small in-memory key/value store, accessed via `connect-redis`. The cookie carries the ID, Redis carries the data, every Node instance can read the same store.
+
+**The secret matters.** `express-session` signs the cookie with the secret so the client can't forge an ID. Leak the secret and an attacker can mint session cookies for any user. Rotate it carefully.
+
+**Session-aware survey (the lecture example).** The slides show a vote-once-per-browser rule implemented by stashing `req.session.vote = productidx`. On the next POST, the controller checks `if ("vote" in sess)` and short-circuits. That's the canonical exam pattern: **read session, branch on presence, write session**.
+
+## JWT: signed, self-describing, stateless
+
+**A JSON Web Token is a string with three base64url-encoded parts joined by dots: `header.payload.signature`.**
+
+```text
+eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiIxMjM0In0.s3F2h...truncated
+```
+
+- **Header** declares the algorithm: `{"alg":"HS256","typ":"JWT"}`.
+- **Payload** is the claims: `{"sub":"1234","exp":1731936000,"role":"admin"}`.
+- **Signature** is `HMAC(secret, header + "." + payload)` for HS256, or an RSA/ECDSA signature for RS256.
+
+**HS256 vs RS256, in plain terms.** HS256 uses a single shared secret — fast, simple, but anyone who can verify can also sign. RS256 uses a private key to sign and a public key to verify — slower, but lets you hand the public key to other services without giving them the power to issue tokens. Microservices that need to *check* tokens but not *mint* them want RS256.
+
+**The big property.** Anyone with the secret (or public key) can verify the token without contacting the issuer. That makes JWT-based auth trivially horizontally scalable.
+
+**The big drawback.** You can't revoke a JWT before its `exp` claim without keeping a server-side blocklist — and the moment you add that blocklist, you've reinvented sessions. So you mitigate the problem with **short-lived access tokens + long-lived refresh tokens**:
+
+- Access token lives 5–15 minutes. Sent on every API call. If stolen, the window of damage is small.
+- Refresh token lives days or weeks, stored in an `HttpOnly; Secure; SameSite=Strict` cookie. Used only against `POST /auth/refresh` to mint a fresh access token.
+- **Refresh-token rotation**: every refresh issues a *new* refresh token and invalidates the old one. If an attacker reuses a stolen refresh token, the server detects the reuse and revokes the whole family.
+
+**Where to store the access token on the client?** Not `localStorage` — it's readable by any script on the page, so a single XSS payload exfiltrates every token. Either an `HttpOnly` cookie (immune to XSS, vulnerable to CSRF, so add SameSite) or in-memory only (lost on refresh, requires the refresh token to come from a cookie).
+
+## CSRF: the auto-cookie attack
+
+**Cross-Site Request Forgery rides on the browser's helpfulness.** The browser auto-attaches cookies to *every* request to an origin, including requests initiated by other sites. So if you're logged into `bank.com` and you visit `evil.com`, a hidden form on `evil.com` can POST to `bank.com/transfer` and your session cookie comes along for the ride.
+
+**Three defences, in order of modern relevance:**
+
+- **`SameSite` cookies.** The cleanest fix. `SameSite=Lax` (the default in Chrome since 2020) blocks the cookie on cross-site POSTs entirely. The attack above just stops working. For most apps in 2026 this is sufficient on its own.
+- **Origin / Referer header check.** State-changing requests must come from your own origin. Servers reject anything else. Cheap, but Referer can be stripped by privacy tools.
+- **Double-submit CSRF token.** The server sets a random `csrfToken` cookie *and* requires the same value in a custom header (`X-CSRF-Token`) or hidden form field. The attacker can't read the cookie (different origin), so they can't reproduce the value in the header. This is what `csurf` and similar middlewares implement.
+
+**Why JWT-in-localStorage is "CSRF-immune".** The browser doesn't auto-attach localStorage values, so a cross-site form can't include your token. But you've traded CSRF for XSS, and XSS is the worse trade.
+
+**Exam pattern.** Be ready to read a scenario and name (a) whether it's CSRF or XSS, (b) which cookie attribute or token strategy would have prevented it. CSRF needs an authenticated session and a cross-site trigger; XSS is your own page running attacker JavaScript.
+
+## MVC: separation of concerns, applied to a server
+
+**MVC splits a server into three layers based on what each piece is responsible for.**
+
+- **Model.** The data and the rules for changing it. Talks to the database. Knows nothing about HTTP.
+- **View.** Rendering. Turns data into HTML, JSON, or whatever the client wants. Knows nothing about the database.
+- **Controller.** The glue. Receives the parsed request, asks the model for what it needs, picks a view, sends the response.
+
+The lecture slides draw the diagram as: **Browser → Routes → Controller → Model → DB**, with the View rendered on the way back. The router is the dispatcher; it maps `(method, path)` to a controller function and does nothing else.
+
+**Why bother?** Three reasons that come up over and over:
+
+1. **Testability.** A controller you can call with a fake `req` and `res` is testable. A controller that opens a Mongo connection inline is not.
+2. **Reuse.** The "create user" logic shouldn't have to be duplicated between a REST endpoint and a GraphQL resolver. Put it in a service that both call.
+3. **Comprehension.** When the bug is "wrong total on the invoice", you know to look in the model. When it's "wrong status code", you know to look in the controller.
+
+The Week 6 lab folder structure the slides recommend:
+
+```text
+app/
+  controllers/   ← request handlers
+  routes/        ← URL-to-controller mapping
+  views/         ← templates (Pug, EJS)
+  models/        ← (next week) Mongoose schemas
+server.js        ← wires middleware, mounts routers
+```
+
+**MVC is a guideline, not a religion.** Real apps add a service layer between controllers and models (more on that below), break views out entirely in SPA-style apps, or rename layers ("handler", "use-case", "repository"). The discipline is "one layer, one job", not the exact three names.
+
+## Controllers, services, repositories
+
+**Beyond textbook MVC, real Node apps usually have four layers.** The slides only show two (controller + model), but the exam-ready picture is wider, because "controller" gets bloated fast.
+
+- **Controller.** HTTP-shaped. Reads `req.params`, `req.query`, `req.body`. Calls a service. Returns a response with the right status code. Should be 5–15 lines.
+- **Service.** Business logic. "Create user" means "hash the password, save to DB, send a welcome email, log an audit event". The service orchestrates that across multiple repositories and external systems. Doesn't know about HTTP — you could call it from a CLI.
+- **Repository.** Database access. Wraps `User.find()` / `User.create()` / `User.update()` with named methods like `findByEmail` and `markEmailVerified`. The rest of the app talks through the repository, never the ORM directly. Swap MongoDB for Postgres tomorrow and only repositories change.
+- **Model.** The schema itself (Mongoose schema or equivalent). Defines fields, types, validations.
+
+```js
+// controllers/user.controller.js — HTTP only
+exports.signup = async (req, res, next) => {
+  try {
+    const user = await userService.signup(req.body)
+    res.status(201).json({ id: user._id })
+  } catch (e) { next(e) }
+}
+
+// services/user.service.js — business rules
+exports.signup = async ({ email, password }) => {
+  if (await userRepo.findByEmail(email)) throw new ConflictError()
+  const hash = await bcrypt.hash(password, 12)
+  const user = await userRepo.create({ email, passwordHash: hash })
+  await mailer.sendWelcome(user)
+  return user
+}
+
+// repositories/user.repository.js — DB only
+exports.findByEmail = (email) => User.findOne({ email })
+exports.create = (data) => User.create(data)
+```
+
+**The smell that tells you you skipped a layer:** Mongoose calls inside a controller, or `res.json(...)` inside a service. Either one means the layers leaked.
+
+**Variable scopes (the lecture's framing).** Express makes three scopes available, and choosing the right one is an exam favourite:
+
+- **Application scope** — `req.app.locals.products`. Shared across all requests for the lifetime of the process. Use for config-like data that's the same for everyone.
+- **Request scope** — `req.body.gender`, `req.params.id`, `req.query.page`. Lives only for this single request.
+- **Session scope** — `req.session.cartId`. Lives across multiple requests from the same client.
+
+## Routing in Express: params, queries, middleware
+
+**`express.Router()` is a mini-app you can mount under a URL prefix.** Each feature gets its own router file, and `server.js` stitches them together.
+
+```js
+// routes/user.routes.js
+const router = require('express').Router()
+const ctrl = require('../controllers/user.controller')
+
+router.get('/',          ctrl.list)         // GET  /users
+router.post('/',         ctrl.create)       // POST /users
+router.get('/:id',       ctrl.getOne)       // GET  /users/42
+router.patch('/:id',     ctrl.update)
+router.delete('/:id',    ctrl.remove)
+router.get('/:id/posts', ctrl.listPosts)    // nested resource
+
+module.exports = router
+
+// server.js
+app.use('/users', require('./app/routes/user.routes'))
+```
+
+**Route parameters vs query strings.** Two different shapes for two different purposes:
+
+- **Path params** (`/:id`) identify the resource. They're part of the *identity* of the URL. `GET /users/42` is a different URL from `GET /users/43`.
+- **Query strings** (`?page=2&sort=name`) modify how the resource is presented. `GET /users` and `GET /users?page=2` return the same kind of thing, paginated differently.
+
+A common exam slip is to put pagination in the path (`/users/page/2`) or to put identity in the query (`/user?id=42`). Both work technically, both are wrong. The REST norm is path = identity, query = filter/sort/page.
+
+**Middleware** is the pipeline that runs *between* the router matching a route and the controller running. Each middleware can mutate `req` or `res`, then call `next()` to pass control along, or end the response itself.
+
+```js
+app.use(express.json())                    // parse JSON bodies
+app.use(express.urlencoded({ extended: true }))
+app.use(session({ /* ... */ }))            // attach req.session
+app.use('/api', requireAuth)               // route-scoped auth
+app.use(errorHandler)                      // 4-arg error middleware
+```
+
+**Order matters.** `session` has to run before any controller that reads `req.session`. The error handler — the one with four arguments `(err, req, res, next)` — has to be registered *last*, because Express recognises it by arity and only routes errors there.
+
+## Intro to MongoDB and the document model
+
+**MongoDB is a NoSQL document store: collections of JSON-like (BSON) documents, no fixed schema enforced by the database.** This unit treats it as the persistence layer for the Express MVC app you'll be wiring up next week.
+
+**The terminology map (straight from the slides):**
+
+| SQL | MongoDB |
+|-----|---------|
+| Database | Database |
+| Table | Collection |
+| Row | BSON document |
+| Column | BSON field |
+| Primary key | `_id` field |
+| Index | Index |
+| JOIN | Embedding, referencing, or `$lookup` |
+
+**The big shape change.** In SQL, the schema lives in the table definition: every row has the same columns. In MongoDB, the schema lives in the *data*: each document carries its own field names. Two documents in the same collection can have different shapes:
+
+```js
+// users collection
+{ _id: 12345, name: "Joe Smith",  emails: ["joe@gmail.com", "joe@ibm.com"], age: 30 }
+{ _id: 54321, name: "Mary Sharp", email:  "mary@gmail.com", age: 27,
+  address: { number: 1, name: "cleveland street", suburb: "chippendale", zip: 2008 } }
+```
+
+**Two ways to model relationships:**
+
+- **Embedding.** Nest the related data inside the parent document. Mary's address lives inside Mary. Reads are one query; writes are atomic at the document level. Good when the embedded data is owned by the parent and accessed with it.
+- **Referencing.** Store an `_id` pointing at another collection. Requires a second query or a `$lookup` aggregation stage. Good when the related data is shared, large, or independently queried.
+
+**Rule of thumb the unit emphasises.** "Embed what you read together; reference what you write independently." If the survey results always render with the product list, embed. If users have a million orders, reference.
+
+**Native array and embedded-document fields.** Both are first-class. `emails: ["joe@gmail.com", "joe@ibm.com"]` is just a field whose value happens to be an array. You query into it with `db.user.find({ emails: "joe@gmail.com" })` and Mongo searches every element. You can address a specific position with `"emails.0"`.
+
+**Limitations.** No transactions across documents in the basic model (multi-document transactions exist since 4.0 but cost throughput). No traditional JOIN — you embed, reference, or `$lookup`. Field names cannot start with `$` or contain `.` or null, and `_id` is reserved.
+
+## MongoDB CRUD: the queries you'll be asked about
+
+**Every CRUD operation in Mongo is a method on a collection.** The shell uses `db.<collection>.<method>(...)`; in Node you'll use the same names through the driver or Mongoose.
+
+**Read.**
+
+```js
+db.user.find()                                  // all docs
+db.user.find({})                                // same
+db.user.find({ name: "Joe Smith" })             // equality
+db.user.find({ age: { $lt: 30 } })              // operator
+db.user.find({}, { name: 1, age: 1, _id: 0 })   // projection
+db.user.find({ age: { $gt: 18 } }).sort({ age: 1 }).limit(5)
+```
+
+The second argument is a **projection** — `1` means include, `0` means exclude, and `_id` is the only field you have to *explicitly* turn off. Equivalent SQL beside Mongo (the slide table):
+
+| SQL | Mongo |
+|-----|-------|
+| `select * from user` | `db.user.find()` |
+| `select name, age from user` | `db.user.find({}, {name:1, age:1, _id:0})` |
+| `select * from user where name = 'Joe Smith'` | `db.user.find({name: "Joe Smith"})` |
+| `select * from user where age < 30` | `db.user.find({age: {$lt: 30}})` |
+
+**Querying nested data.** Dot notation reaches inside embedded documents: `db.user.find({ "address.suburb": "chippendale" })`. For arrays, `db.user.find({ emails: "joe@gmail.com" })` matches if any element equals the value.
+
+**Create.**
+
+```js
+db.user.insert({ _id: 12345, name: "Joe Smith", emails: ["joe@gmail.com"], age: 30 })
+```
+
+Omit `_id` and Mongo auto-generates an `ObjectId`. Supply a duplicate `_id` and the insert fails.
+
+**Update.**
+
+```js
+db.user.update({ _id: 12345 }, { $set:   { age: 29 } })
+db.user.update({ _id: 54321 }, { $unset: { email: 1 } })
+db.user.update({ _id: 12345 }, { $push:  { emails: "joe@hotmail.com" } })
+db.user.update({ _id: 12345 }, { $pull:  { emails: "joe@ibm.com" } })
+```
+
+**Without an operator, update *replaces the whole document***. `db.user.update({_id:1}, {age: 29})` deletes every other field. That's the single most common Mongo bug in student code — always use `$set` for partial updates.
+
+**Delete.**
+
+```js
+db.user.remove({ _id: 12345 })
+db.user.remove({})        // empties the collection
+```
+
+**Aggregation (a glimpse).** For analytics — group, sum, count, sort — Mongo's pipeline DSL does it on the database engine:
+
+```js
+db.orders.aggregate([
+  { $match: { status: "A" } },
+  { $group: { _id: "$cust_id", total: { $sum: "$amount" } } }
+])
+```
+
+Equivalent SQL: `SELECT cust_id, SUM(amount) FROM orders WHERE status='A' GROUP BY cust_id`.
+
+## Putting it all together: refactoring `app.js` into MVC
+
+**The canonical exam task is: here's a flat Express file, split it into controller + router + entrypoint.** The Week 6 lab walks through it on the Survey app. Here is the recipe.
+
+**Before** — one file, two route handlers, application data as module-level globals:
+
+```js
+const express = require('express')
+const app = express()
+const products = ['iphone 7', 'huawei p9', 'Pixel XL', 'Samsung S7']
+const surveyresults = { fp: [0,0,0,0], mp: [0,0,0,0] }
+
+app.use(express.urlencoded({ extended: true }))
+
+app.get('/', (req, res) => res.render('survey.pug', { products }))
+app.post('/survey', (req, res) => {
+  if (req.body.gender == 0) surveyresults.mp[req.body.vote]++
+  else                       surveyresults.fp[req.body.vote]++
+  res.render('surveyresult.pug', { products, surveyresults })
+})
+
+app.listen(3000)
+```
+
+**After** — three files, each with one job:
+
+```js
+// app/controllers/survey.server.controller.js
+exports.showForm = (req, res) => {
+  res.render('survey.pug', { products: req.app.locals.products })
+}
+exports.showResult = (req, res) => {
+  const { products, surveyresults } = req.app.locals
+  const idx = req.body.vote
+  if (req.body.gender == 0) surveyresults.mp[idx]++
+  else                       surveyresults.fp[idx]++
+  res.render('surveyresult.pug', { products, surveyresults })
+}
+```
+
+```js
+// app/routes/survey.server.routes.js
+const router = require('express').Router()
+const ctrl = require('../controllers/survey.server.controller')
+router.get('/',  ctrl.showForm)
+router.post('/', ctrl.showResult)
+module.exports = router
+```
+
+```js
+// server.js
+const express = require('express')
+const session = require('express-session')
+const app = express()
+app.locals.products = ['iphone 7', 'huawei p9', 'Pixel XL', 'Samsung S7']
+app.locals.surveyresults = { fp: [0,0,0,0], mp: [0,0,0,0] }
+app.set('views', __dirname + '/app/views')
+app.use(express.urlencoded({ extended: true }))
+app.use(session({ secret: 'ssshhhhh', cookie: { maxAge: 600000 } }))
+app.use('/survey', require('./app/routes/survey.server.routes'))
+app.listen(3000)
+```
+
+**What moved where.**
+
+- The two handler functions left `app.js` and became **controllers**. Each is now a named export.
+- The `app.get` / `app.post` lines became a **router**. The router is mounted under `/survey`, so `GET /survey/` and `POST /survey/` reach the handlers.
+- The global arrays became `app.locals.*` — **application-scope** state, reachable from any controller via `req.app.locals`.
+- `server.js` is now just wiring: parsers, session, routers, listen.
+
+To add session-aware "vote once": import `express-session`, register it as middleware, and inside `showResult` check `if ("vote" in req.session)` before recording. The controller is the only file that changes.
+
+## Common exam patterns
+
+- **"Refactor this `app.js` into MVC."** Move handlers into `app/controllers/<feature>.server.controller.js`, build a `Router()` in `app/routes/<feature>.server.routes.js`, leave `server.js` with middleware + `app.use` mounting. Convert module-level state into `app.locals.*`. This is the highest-value pattern of the week.
+- **"Which scope?"** Application = same for everyone (`req.app.locals`). Request = this one HTTP call (`req.body`, `req.params`, `req.query`). Session = same client across requests (`req.session`). Pick by *who* and *when* the data is visible.
+- **"Sessions vs JWT."** Sessions = server-side store + opaque cookie ID, easy to revoke, needs Redis to scale. JWT = signed token, self-contained, scales free, hard to revoke without a blocklist. Refresh-token rotation mitigates the revocation problem.
+- **"Which cookie attribute prevents X?"** `HttpOnly` blocks XSS-reading. `Secure` requires HTTPS. `SameSite=Lax/Strict` blocks CSRF. `Domain`/`Path` control which requests get the cookie.
+- **"Is this CSRF or XSS?"** CSRF: attacker site triggers a request to your authenticated origin and the browser auto-attaches your cookie. XSS: attacker's JavaScript runs *on your page* and reads/writes the DOM, cookies (if not HttpOnly), or localStorage.
+- **"Which Mongo operator?"** `$set` for partial update (never bare-replace), `$unset` to remove a field, `$push`/`$pull` for array elements, `$lt`/`$gt`/`$in` for read criteria, `_id` is the primary key and is auto-generated if omitted.
+- **"Embed or reference?"** Embed when the child is owned by and read with the parent. Reference when the child is large, shared, or independently queried. JOIN-by-`$lookup` is the escape hatch, not the default.
+- **"Path param or query string?"** Path = identity of the resource (`/users/42`). Query = how to filter/sort/paginate (`?page=2&sort=name`). Don't put IDs in query strings.
+- **"Order of Express middleware."** Body parsers before routes that read `req.body`. `session` before any controller using `req.session`. The 4-arg error handler last. Static files early (cheap to serve).

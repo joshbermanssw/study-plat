@@ -1,0 +1,297 @@
+{
+  "unit": "COMP4347",
+  "week": 7,
+  "topic": "Connecting to a database",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "Which is the ONLY reliable defence against SQL injection?",
+      "choices": [
+        "HTML-encoding the input",
+        "Parameterised queries / prepared statements with placeholders",
+        "Filtering for ' and ;",
+        "Restricting the OS user"
+      ],
+      "correctIndex": 1,
+      "explanation": "Placeholders separate SQL code from data, so user input cannot become part of the parsed query."
+    },
+    {
+      "id": "q2",
+      "stem": "The N+1 query problem occurs when:",
+      "choices": [
+        "Two queries return the same data",
+        "An outer query returns N rows and the code runs one more query per row to load related data",
+        "An index has too many columns",
+        "Two clients query concurrently"
+      ],
+      "correctIndex": 1,
+      "explanation": "Classic anti-pattern: 1 query for the list, then N for each item. Fix with JOIN, IN-batch, or populate."
+    },
+    {
+      "id": "q3",
+      "stem": "Mongoose's .populate('author') is best described as:",
+      "choices": [
+        "An aggregation pipeline join inside the DB",
+        "A client-side helper that issues one additional query (find({_id: $in: [...]})) and stitches results onto the parent documents",
+        "A database trigger",
+        "An index"
+      ],
+      "correctIndex": 1,
+      "explanation": "populate performs a follow-up bulk query and merges. It is not a server-side join."
+    },
+    {
+      "id": "q4",
+      "stem": "Embed comments inside a blog post document when:",
+      "choices": [
+        "Comments are huge and queried independently",
+        "Comments are always read with the post, are bounded in size, and not queried separately",
+        "Each comment has its own access control",
+        "You need to update comments transactionally with users"
+      ],
+      "correctIndex": 1,
+      "explanation": "Embed when the children are read together, small, and locally owned. Reference when they're large, queried separately, or shared."
+    },
+    {
+      "id": "q5",
+      "stem": "Which index supports the query SELECT * FROM users WHERE country = 'AU' AND age > 18?",
+      "choices": [
+        "(age)",
+        "(country, age)",
+        "(age, country)",
+        "(name)"
+      ],
+      "correctIndex": 1,
+      "explanation": "Equality column first, then range. The DB seeks to country='AU' and ranges age."
+    },
+    {
+      "id": "q6",
+      "stem": "ACID's 'Atomicity' guarantees:",
+      "choices": [
+        "Transactions are visible immediately",
+        "All operations in a transaction commit, or none do",
+        "Data is encrypted at rest",
+        "Strong typing"
+      ],
+      "correctIndex": 1,
+      "explanation": "Atomicity = all-or-nothing. If any step fails, the transaction rolls back to the prior state."
+    },
+    {
+      "id": "q7",
+      "stem": "Why is `${userInput}` concatenated into SQL dangerous?",
+      "choices": [
+        "It is slower",
+        "User input becomes part of the parsed SQL, allowing injection like ' OR '1'='1",
+        "It hits the cache wrong",
+        "It bypasses indexes"
+      ],
+      "correctIndex": 1,
+      "explanation": "Without placeholders the parser sees one merged string and treats injected operators as code."
+    },
+    {
+      "id": "q8",
+      "stem": "What does `User.findById(id, 'name email').lean()` do?",
+      "choices": [
+        "Returns a Mongoose document with all fields",
+        "Returns a plain JS object containing only name and email",
+        "Deletes other fields",
+        "Caches the result"
+      ],
+      "correctIndex": 1,
+      "explanation": "Field projection limits returned data; .lean() bypasses Mongoose hydration for a faster plain object."
+    },
+    {
+      "id": "q9",
+      "stem": "A connection pool exists to:",
+      "choices": [
+        "Encrypt data",
+        "Reuse a fixed set of DB connections so each request avoids handshake cost and contention is controlled",
+        "Shard tables",
+        "Cache query results"
+      ],
+      "correctIndex": 1,
+      "explanation": "Establishing TCP+TLS+auth per query is expensive. A pool keeps a few open and rotates them."
+    },
+    {
+      "id": "q10",
+      "stem": "Which is most appropriate for analytics over billions of events with flexible nested schemas?",
+      "choices": [
+        "Tiny SQLite DB",
+        "A NoSQL or columnar store sized for the workload",
+        "A single Postgres instance with no indexes",
+        "Local files only"
+      ],
+      "correctIndex": 1,
+      "explanation": "Workloads that scale write throughput and tolerate eventual consistency often pair well with NoSQL/columnar systems."
+    },
+    {
+      "id": "q11",
+      "stem": "What does Schema-level `unique: true` cause Mongoose to do?",
+      "choices": [
+        "Run a check before each save",
+        "Create a unique index in MongoDB on that field (collisions reject the write)",
+        "Encrypt the field",
+        "Nothing"
+      ],
+      "correctIndex": 1,
+      "explanation": "unique creates a unique index. Race conditions are caught by the DB, not the app."
+    },
+    {
+      "id": "q12",
+      "stem": "Which is a sign you should refactor away from N+1?",
+      "choices": [
+        "A page issues O(N) queries proportional to the rendered list size",
+        "The page returns 200 OK",
+        "The DB has a primary key",
+        "The query uses GROUP BY"
+      ],
+      "correctIndex": 0,
+      "explanation": "If query count scales with response size, batch the lookups (IN clause, populate, JOIN)."
+    },
+    {
+      "id": "q13",
+      "stem": "Why might a developer pick PostgreSQL JSONB over MongoDB for semi-structured data?",
+      "choices": [
+        "JSONB is faster than every alternative",
+        "Postgres gives JSON flexibility AND relational joins, transactions, and constraints",
+        "MongoDB cannot store JSON",
+        "JSONB is sharded by default"
+      ],
+      "correctIndex": 1,
+      "explanation": "Postgres JSONB lets you keep flexible fields alongside strict relations and full transactions — best of both worlds for many apps."
+    },
+    {
+      "id": "q14",
+      "stem": "ACID's Isolation prevents which anomaly when serializable?",
+      "choices": [
+        "Dirty reads, non-repeatable reads, phantom reads — all of them",
+        "Only dirty reads",
+        "Network drops",
+        "Hardware failure"
+      ],
+      "correctIndex": 0,
+      "explanation": "Serializable, the strongest isolation level, is equivalent to some serial order and prevents all standard anomalies."
+    },
+    {
+      "id": "q15",
+      "stem": "Which query is parameterised correctly in node-postgres?",
+      "choices": [
+        "client.query(`SELECT * FROM u WHERE id = ${id}`)",
+        "client.query('SELECT * FROM u WHERE id = $1', [id])",
+        "client.query(\"SELECT * FROM u WHERE id = '\" + id + \"'\")",
+        "client.query('SELECT * FROM u').then(r => r.filter(...))"
+      ],
+      "correctIndex": 1,
+      "explanation": "$1 placeholders with a values array — the driver and DB handle quoting safely."
+    },
+    {
+      "id": "q16",
+      "stem": "What does a Mongoose Schema's `ref: 'Post'` enable?",
+      "choices": [
+        "Auto-deletes",
+        "Allows populate() to follow ObjectId values into the referenced collection",
+        "Creates a foreign key constraint in Mongo",
+        "Adds a JSON schema"
+      ],
+      "correctIndex": 1,
+      "explanation": "ref tells Mongoose which model to look up when populate is called. There are no real FK constraints in MongoDB."
+    },
+    {
+      "id": "q17",
+      "stem": "Which is true about indexes and writes?",
+      "choices": [
+        "Indexes make writes faster",
+        "Each additional index slightly slows writes because it must be updated",
+        "Indexes only affect reads",
+        "Writes ignore indexes"
+      ],
+      "correctIndex": 1,
+      "explanation": "Every index is more work on insert/update/delete. Add only the indexes you need."
+    },
+    {
+      "id": "q18",
+      "stem": "When should a query result avoid `lean()` in Mongoose?",
+      "choices": [
+        "When you need a JSON response",
+        "When you need to call instance methods or trigger middleware on the documents",
+        "Always avoid lean()",
+        "When using populate"
+      ],
+      "correctIndex": 1,
+      "explanation": "lean returns plain JS — no instance methods, no virtuals, no save(). If you need those, keep the hydrated document."
+    },
+    {
+      "id": "q19",
+      "stem": "Which Mongo update operator increments a numeric field?",
+      "choices": ["$set", "$inc", "$push", "$add"],
+      "correctIndex": 1,
+      "explanation": "$inc adds the given value to a field atomically."
+    },
+    {
+      "id": "q20",
+      "stem": "Why do MongoDB transactions require a replica set / config server?",
+      "choices": [
+        "For SSL",
+        "Multi-document ACID needs the oplog / clusterTime infrastructure provided by replica sets and sharded clusters",
+        "For backups",
+        "It does not"
+      ],
+      "correctIndex": 1,
+      "explanation": "Single-node mongod doesn't expose transactions; you need at least a replica set (even single-node RS works for dev)."
+    },
+    {
+      "id": "q21",
+      "stem": "What does `findOneAndUpdate(filter, update, { new: true })` return?",
+      "choices": [
+        "The pre-update document",
+        "The post-update document",
+        "Nothing",
+        "A boolean"
+      ],
+      "correctIndex": 1,
+      "explanation": "By default Mongoose returns the original document. `new: true` flips it to return the updated version."
+    },
+    {
+      "id": "q22",
+      "stem": "Which is a sound reason to denormalise (duplicate data)?",
+      "choices": [
+        "It is always required",
+        "Read patterns are highly skewed and avoiding a join significantly speeds the hot path",
+        "Denormalisation removes the need for indexes",
+        "It improves transactional consistency"
+      ],
+      "correctIndex": 1,
+      "explanation": "Trade write complexity for read speed when reads dominate and the duplicated data changes rarely."
+    },
+    {
+      "id": "q23",
+      "stem": "Why use `try/catch` around an async DB call in an Express handler?",
+      "choices": [
+        "To suppress errors",
+        "To forward errors to error middleware via next(err) instead of leaving the request hanging",
+        "Required by Mongoose",
+        "It is not needed"
+      ],
+      "correctIndex": 1,
+      "explanation": "Express 4 doesn't catch promise rejections. Without try/catch (or an asyncH wrapper) the request never gets a response."
+    },
+    {
+      "id": "q24",
+      "stem": "Which is correct about ORM vs raw SQL?",
+      "choices": [
+        "ORMs are always slower",
+        "ORMs add ergonomics and safety (parameterised queries, validation) but can hide query cost; drop to SQL when needed",
+        "ORMs disable transactions",
+        "ORMs reject all migrations"
+      ],
+      "correctIndex": 1,
+      "explanation": "ORMs accelerate the common case and prevent injection. For complex queries you should still understand the SQL they emit."
+    },
+    {
+      "id": "q25",
+      "stem": "A unique index on email throws a duplicate-key error. What status code best reflects this from a POST /users?",
+      "choices": ["400 Bad Request", "404 Not Found", "409 Conflict", "500 Internal Server Error"],
+      "correctIndex": 2,
+      "explanation": "409 Conflict signals the request conflicts with current resource state (an existing user with that email)."
+    }
+  ]
+}

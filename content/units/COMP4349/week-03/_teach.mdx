@@ -1,0 +1,284 @@
+---
+title: "Week 3 — Cloud Compute Service"
+unit: COMP4349
+week: 3
+type: overview
+status: done
+---
+
+Week 3 turns from storage to compute — the EC2 family of services and the virtualisation theory underneath them. The exam usually tests two things from this week: (1) given a workload, pick the right instance type, AMI strategy, and storage; and (2) sketch a scalable web tier using Auto Scaling Groups behind an Elastic Load Balancer. Get those drills sharp.
+
+## Virtualisation — the theory underneath EC2
+
+Cloud IaaS rests on **server virtualisation**: a single physical machine runs many independent virtual machines, each with its own OS. The component that makes that possible is the **hypervisor**, also called a Virtual Machine Monitor (VMM). Andrew Tanenbaum's classic definition: the hypervisor provides an environment identical to the physical environment, with minimal performance cost, while retaining complete control of system resources.
+
+Two types of hypervisor:
+
+- **Type 1 ("bare-metal")** — the hypervisor runs directly on the hardware. Examples: Xen, Microsoft Hyper-V, KVM (Linux kernel module). These dominate in cloud.
+- **Type 2 ("hosted")** — the hypervisor runs as an application on a host OS (Linux, Windows, macOS). Examples: VMware Workstation, Oracle VirtualBox, Parallels Desktop. Used for development laptops, not production cloud.
+
+Three hypervisors you should know by name:
+
+- **Xen** — used by early AWS EC2 (2006-2017). Architecture: Dom0 (privileged management VM that handles I/O) plus guest domains.
+- **Hyper-V** — Microsoft's hypervisor. Root partition handles I/O; child partitions are guest VMs.
+- **KVM** (Kernel-based Virtual Machine) — turns a Linux kernel into a hypervisor via three components: the KVM kernel module, QEMU for device emulation, and libvirt for management. Both AWS (post-Nitro) and Google Cloud use KVM.
+
+## What the hypervisor manages — CPU, memory, I/O
+
+The hypervisor multiplexes three resources:
+
+- **CPU** — each VM is presented with one or more virtual CPUs (vCPUs). Physical cores are time-shared. Some hypervisors support CPU pinning (a vCPU is bound to a specific pCPU) for latency-sensitive workloads. With hyperthreading, one physical core appears as two logical cores; on AWS, a vCPU normally maps to one hyperthread.
+- **Memory** — each guest OS believes it owns a fraction of physical memory. The hypervisor maintains a two-level page table: guest-virtual → guest-physical (managed by guest OS) and guest-physical → host-physical (managed by the hypervisor). Modern CPUs have hardware support (Intel EPT, AMD NPT) to avoid the performance penalty of nested translation.
+- **I/O** — physical NICs and disks are shared. The hypervisor presents virtual NICs/disks to each guest, intercepts I/O, and forwards to the real hardware. This is where most virtualisation overhead historically lived, which is why AWS built Nitro.
+
+Pitfall: assigning 16 vCPUs to a VM does not make it 16× faster than 2 vCPUs. If your application is single-threaded, the extra vCPUs are idle — and a VM with many vCPUs takes longer to schedule (the hypervisor needs to find that many free cores simultaneously). 2 vCPUs is the typical sweet spot for small services.
+
+## The AWS Nitro System
+
+In 2017 AWS replaced its modified Xen hypervisor with **Nitro** for almost all new EC2 instance types. Nitro is a micro-services architecture for virtualisation:
+
+- A thin **HVM hypervisor** (based on KVM, heavily stripped down) on the host CPU handles only CPU and memory partitioning. Dom0 is gone.
+- Dedicated **Nitro cards** offload networking (VPC), EBS storage, instance storage, security, and monitoring to custom AWS silicon. Encryption is done in hardware on the Nitro card, so guests don't pay CPU cycles for it.
+- A **Nitro Security Chip** continuously verifies firmware integrity.
+
+The result is that EC2 performance is now within a few percent of bare metal — and Nitro made **bare-metal instances** (`*.metal` family) possible, where AWS hands you the entire physical machine with no hypervisor, while Nitro cards still mediate networking and storage.
+
+## Amazon EC2 — the canonical IaaS compute service
+
+EC2 (Elastic Compute Cloud) provides resizable compute capacity in the cloud. You launch virtual machines (called instances) in minutes; you pay per second (with a 60-second minimum); you can scale up or down at any time.
+
+A running EC2 instance is just a Linux or Windows VM. Once it boots you SSH or RDP in and it looks like any other server. The differences from on-prem are:
+
+- It is born from a template (Amazon Machine Image — AMI) and can be replaced from that template in minutes.
+- It can be scaled out behind a load balancer without procurement.
+- Networking and storage are programmable (security groups, EBS volumes, ENIs).
+- You are billed only while the instance is running (well, almost — you still pay for any attached EBS volumes).
+
+## The nine choices when launching an EC2 instance
+
+The Launch Instance Wizard takes you through nine decisions. Internalise them — they map directly to exam questions:
+
+1. **AMI** — the template (OS + pre-installed software). Options: Quick Start (AWS-provided Linux/Windows), My AMIs (you baked it), AWS Marketplace (third-party, often licence-included), Community AMIs (use carefully).
+2. **Instance type** — family + generation + size, e.g. `t3.large`. Determines CPU/memory/storage/network.
+3. **Key pair** — public/private RSA or ED25519 key pair. AWS stores the public key; you keep `.pem` private. Without it you cannot SSH (Linux) or retrieve the Windows admin password (Windows).
+4. **Network settings** — which VPC and subnet to launch in, whether to auto-assign a public IPv4.
+5. **Security group** — stateful instance-level firewall. Allow-only rules by source/protocol/port.
+6. **Storage** — root volume (EBS or instance store) plus any additional data volumes; encryption; size.
+7. **IAM role** — instance profile attaching IAM permissions so the application can call AWS APIs (e.g. `s3:PutObject`) without baked-in credentials.
+8. **User data** — a shell script (Linux) or PowerShell (Windows) that runs on first boot via cloud-init. Used for `apt install`, fetching application code, joining a config-management agent.
+9. **Tags** — key-value labels for cost allocation, automation filters, access control.
+
+```bash
+aws ec2 run-instances \
+  --image-id ami-0ccedee93274bbb8d \
+  --instance-type t3.medium \
+  --key-name my-key \
+  --subnet-id subnet-0abc \
+  --security-group-ids sg-1234 \
+  --iam-instance-profile Name=WebServerProfile \
+  --user-data file://bootstrap.sh \
+  --tag-specifications 'ResourceType=instance,Tags=[{Key=Env,Value=Prod}]'
+```
+
+## Instance type families — pick the right shape
+
+EC2 offers over 600 instance types organised into families. You need to know the broad categories:
+
+- **General purpose** (`m`, `t`, `a`) — balanced CPU/memory. `t3`/`t4g` are burstable (cheap baseline + CPU credits for bursts) and great for low-traffic web servers. `m6i`/`m7g` are steady-state workhorses.
+- **Compute optimised** (`c`) — high CPU-to-memory ratio. `c7g` for HPC, gaming servers, batch CPU jobs.
+- **Memory optimised** (`r`, `x`, `z`) — high memory per vCPU. `r7g` for in-memory caches, `x2gd` for SAP HANA, `z1d` for high single-thread frequency.
+- **Storage optimised** (`d`, `h`, `i`) — large local instance store. `i4i` for NoSQL clusters, `d3en` for distributed file systems.
+- **Accelerated computing** (`p`, `g`, `f`, `inf`, `trn`) — GPUs (`p4`/`p5` for ML training, `g5` for inference and graphics), FPGAs (`f1`), or AWS custom accelerators (Inferentia, Trainium).
+
+The naming scheme is `<family><generation>.<size>` — `c7g.4xlarge` means compute-optimised, generation 7, Graviton (g), 4× the vCPU/memory of `c7g.xlarge`. Each next size doubles vCPU and memory.
+
+```text
+Size       vCPU   Memory(GB)
+nano       2      0.5
+micro      2      1
+small      2      2
+medium     2      4
+large      2      8
+xlarge     4      16
+2xlarge    8      32
+4xlarge    16     64
+...
+```
+
+Use **AWS Compute Optimizer** to get right-sizing recommendations based on observed CloudWatch metrics — it will tell you a `c5.4xlarge` running at 8% CPU should be a `c5.large`.
+
+## AMIs in depth — the lifecycle
+
+An AMI captures the entire boot environment: kernel, OS, drivers, pre-installed software, default permissions. AMIs live in S3 (managed by AWS, invisible to you) and are Region-scoped — you must copy an AMI to another Region before launching there.
+
+The AMI lifecycle:
+
+1. Start from a base AMI (Amazon Linux 2023, Ubuntu, RHEL).
+2. Launch an instance, log in, install your application stack.
+3. Create a new AMI from the running instance (`aws ec2 create-image`).
+4. Tag it, copy to other Regions if needed.
+5. Use it in launch templates / Auto Scaling Groups.
+
+This pattern — bake an AMI, deploy AMIs — is the foundation of **immutable infrastructure**. You never patch a running instance; you bake a new AMI and replace the instance. Tools like **HashiCorp Packer** automate this with a declarative template.
+
+The alternative is **configuration management** (Ansible, Chef, Puppet, AWS Systems Manager) which mutates running instances. Both approaches are valid; immutable AMI baking is favoured in modern AWS shops because it composes cleanly with Auto Scaling.
+
+## User data and cloud-init
+
+Linux AMIs include **cloud-init**, which reads the user data script on first boot. Example:
+
+```bash
+#!/bin/bash
+yum update -y
+yum install -y nginx
+echo "<h1>Hello from $(hostname)</h1>" > /usr/share/nginx/html/index.html
+systemctl enable --now nginx
+```
+
+User data runs once by default, as root. Logs go to `/var/log/cloud-init-output.log`. Common pitfalls: forgetting the `#!/bin/bash` shebang (causes the script to be ignored); assuming network is ready (it might not be at the very first stage); large scripts that should be S3-downloaded instead of inlined.
+
+## Placement groups — when topology matters
+
+EC2 normally places instances arbitrarily within an AZ. For workloads where the placement matters, three placement group strategies:
+
+- **Cluster** — pack instances into the same rack for lowest latency (sub-millisecond) and 10/25/100 Gbps network. Used by HPC, distributed analytics, low-latency trading.
+- **Spread** — separate instances onto different racks (max 7 per AZ). Used when you want to minimise correlated failures for a small high-importance fleet.
+- **Partition** — divide instances into logical partitions; each partition lives on different racks. Used by large distributed systems (HDFS, Cassandra) where you want to spread shards but keep within-partition locality.
+
+## Auto Scaling Groups — horizontal elasticity
+
+An **Auto Scaling Group (ASG)** is a managed pool of EC2 instances. You define a **launch template** (AMI + instance type + key pair + security group + user data), a desired/min/max count, and a list of subnets (typically across multiple AZs). The ASG keeps the running count equal to the desired count, replacing instances that fail health checks.
+
+You drive scaling with policies:
+
+- **Target tracking** — "keep average CPU at 50%". The ASG calculates how many instances to add/remove and does so. Easiest. Default choice.
+- **Step scaling** — explicit step ranges, e.g. "if CPU > 70% for 5 min add 1; if > 90% add 3." More control, more tuning.
+- **Scheduled scaling** — predictable patterns, e.g. "scale to 10 at 9am, scale to 2 at 6pm." Cheap and effective for diurnal traffic.
+- **Predictive scaling** — ML model forecasts load 48 hours ahead and pre-warms capacity. Good for retail with strong weekly cycles.
+
+Health checks come in two flavours: EC2 status (the instance is running) and ELB health checks (the application on the instance is responding). Enable both — an app crash on a still-running EC2 instance is invisible to EC2 status checks.
+
+**Cooldown** prevents thrashing — after a scaling action, the ASG waits N seconds before considering another. Set this to roughly one bootstrap time (e.g. 300s).
+
+```text
+Launch template ─┐
+                 ├─→ ASG (min=2, desired=4, max=10) ─→ EC2 across 3 AZs ─→ behind ALB
+Scaling policies ┘
+```
+
+## Elastic Load Balancing — distributing traffic
+
+ELB has four products:
+
+- **Application Load Balancer (ALB)** — Layer 7 (HTTP/HTTPS). Routing by host header, path, query string, headers. Native HTTPS termination via ACM certificates. Best for web apps and microservices.
+- **Network Load Balancer (NLB)** — Layer 4 (TCP/UDP/TLS). Static IPs per AZ, ultra-low latency, millions of requests per second. Used for non-HTTP services (game servers, MQTT, databases) or when you need preserved client IPs.
+- **Classic Load Balancer (CLB)** — legacy, predates ALB/NLB. Layer 4 *and* 7. Avoid for new deployments.
+- **Gateway Load Balancer (GWLB)** — Layer 3 for inserting third-party virtual appliances (firewalls, IDS). Uses GENEVE encapsulation.
+
+An ALB has three building blocks:
+
+- **Listeners** — port + protocol. An ALB needs at least one (e.g. HTTPS:443).
+- **Rules** — conditions (host header, path) → actions (forward to target group, redirect, fixed response).
+- **Target groups** — sets of backends. Health-checked. The ALB load-balances within the target group using round-robin (default) or Least Outstanding Requests (LOR).
+
+```text
+Client → ALB:443 → rule "host = api.example.com" → target group "api"
+                 ↳ rule "path = /static/*"          → target group "cdn"
+```
+
+**Sticky sessions** (session affinity) pin a client to the same backend instance via a cookie. Useful for in-memory session storage; avoid where possible because it complicates scale-in.
+
+## ELB and ASG together — the canonical web tier
+
+This is the architecture the exam asks you to sketch:
+
+1. Route 53 DNS → ALB (Internet-facing, in two public subnets across two AZs).
+2. ALB → target group → ASG of EC2 instances (in two private subnets, one per AZ).
+3. Each EC2 instance has an IAM role for S3/RDS access, and a security group allowing port 80/443 from the ALB security group only.
+4. The ASG uses ELB health checks; bad instances are auto-replaced.
+5. RDS Multi-AZ in private DB subnets.
+
+## EC2 pricing — choosing how to pay
+
+Five pricing models, decreasing in price for steady-state workloads:
+
+- **On-demand** — full price, no commitment. For spiky/unknown.
+- **Reserved Instances** — 1- or 3-year commitment to a specific family/Region. Up to ~75% off. Standard RIs trade flexibility for discount.
+- **Savings Plans** — newer, more flexible. Compute Savings Plans apply across EC2 of any family, Fargate, and Lambda. Up to ~66% off.
+- **Spot Instances** — bid on unused capacity. Up to 90% off. AWS can reclaim with 2 minutes warning. Use for stateless, fault-tolerant batch (Spark workers, transcoding, CI).
+- **Dedicated Hosts** — physically isolated, more expensive. For BYO Windows/Oracle licences with hardware-locked terms.
+
+## Adjacent services — Beanstalk, Lightsail, bare-metal
+
+- **AWS Elastic Beanstalk** — PaaS layer on top of EC2. You upload a JAR/ZIP/Docker image; Beanstalk provisions ALB + ASG + RDS + CloudWatch and rolls out updates. Good for prototypes and small teams.
+- **AWS Lightsail** — simplified VPS pricing (one fixed monthly price for instance + bandwidth + storage). Targeting WordPress and small-shop workloads.
+- **EC2 Bare Metal** (`*.metal`) — full physical server, no hypervisor. For VMware Cloud on AWS, very large in-memory databases, or licences that forbid virtualisation.
+
+## Common exam traps
+
+- "vCPU vs core" — a vCPU is typically one hyperthread. 2 vCPUs ≈ 1 physical core on Intel/AMD; 1:1 on Graviton.
+- "AMI scope" — Region-only; copy explicitly to use elsewhere.
+- "Spot interruption" — 2 minutes warning. Don't run state-only databases on Spot.
+- "User data" — runs once on first boot; need cloud-init directives to re-run on every boot.
+- "ASG health checks" — enable both EC2 and ELB; ELB-only misses app crashes that still reply to ICMP; EC2-only misses app-only failures.
+- "Sticky sessions" — break scale-in; pin sessions in ElastiCache instead.
+- "Placement groups" — cluster for latency, spread for fault isolation, partition for sharded data.
+- "ALB vs NLB" — HTTP/HTTPS routing → ALB; TCP/UDP, static IPs, extreme RPS → NLB.
+- "Reserved vs Savings Plans" — Savings Plans are more flexible; pick them unless you already have RIs.
+
+## EC2 instance lifecycle and states
+
+An EC2 instance moves through states:
+
+- **pending** — launching. EBS volumes attaching, network configuring.
+- **running** — fully up. Billed per second.
+- **stopping** → **stopped** — like shutdown. EBS persists; instance store wiped. Not billed for compute; still billed for EBS.
+- **shutting-down** → **terminated** — gone. EBS volumes deleted unless `DeleteOnTermination=false`.
+- **rebooting** — quick restart. State remains in same physical host; instance store survives.
+
+Stop vs reboot vs terminate matters: stopping migrates the instance away from its host (so instance store is lost), reboot does not, terminate is final.
+
+## Stop-Hibernate
+
+For instances with hibernate enabled (`HibernationOptions: { Configured: true }`), stop is replaced by **hibernate**: the in-memory state is written to the encrypted EBS root volume, and on next start the OS resumes where it left off. Only certain instance types and AMIs support it; root volume must be encrypted and big enough for RAM dump.
+
+## EC2 hardening checklist
+
+- Disable IMDSv1; require IMDSv2 token-based metadata access.
+- Run with an instance profile (IAM role); never bake credentials into the AMI.
+- Patch the OS with Systems Manager Patch Manager.
+- Restrict SSH access — Session Manager preferred over open port 22.
+- Encrypt all EBS volumes; use KMS customer-managed keys for sensitive workloads.
+- Tag for cost allocation (`CostCenter`, `Env`, `Owner`).
+- Enable detailed CloudWatch monitoring for production.
+
+## EC2 status checks — system vs instance
+
+AWS runs two automated health checks every minute:
+
+- **System status check** — host hardware/network. Failure means AWS infrastructure problem; the fix is usually to stop/start (migrates to a new host).
+- **Instance status check** — guest OS reachable. Failure means a problem inside the OS (kernel panic, disk full); usually requires troubleshooting from your side or recovering the instance.
+
+CloudWatch alarms can trigger automatic `recover-instance` actions when system status fails — AWS recovers it to a new host with the same private IP, EBS volumes, and metadata.
+
+## EC2 bare metal vs Nitro virtualised
+
+Bare-metal instances (`*.metal`) expose the entire physical machine — no hypervisor between you and the silicon. Used for:
+
+- Licences that prohibit virtualisation (some Oracle deployments).
+- VMware Cloud on AWS (you bring vSphere).
+- Workloads needing direct hardware access (custom kernel drivers, embedded clocks).
+
+Performance vs hypervisor-backed Nitro instances is essentially identical — Nitro overhead is in the low single-digit percent. Unless you have a specific reason, regular Nitro instances are fine.
+
+## Auto Scaling Group termination policies
+
+When scaling in, the ASG picks which instance to terminate based on a policy list:
+
+- `Default` — terminate from the AZ with the most instances, then the oldest launch config/template, then closest to the next billing hour.
+- `OldestInstance` — kill the oldest. Useful for rolling out new AMIs.
+- `NewestInstance` — kill the newest. Useful during deployment testing.
+- `OldestLaunchTemplate` / `OldestLaunchConfiguration` — kill instances using the older spec, accelerating fleet refresh.
+- `AllocationStrategy` — for mixed-instance ASGs (Spot + On-demand), kill the most expensive first.
+
+You can stack policies; the ASG applies them in order.

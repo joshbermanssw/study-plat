@@ -1,0 +1,307 @@
+{
+  "unit": "COMP3027",
+  "week": 2,
+  "topic": "Greedy algorithms",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "Which property certifies that a greedy choice is safe?",
+      "choices": [
+        "It runs in O(n log n) time",
+        "An optimal solution can be transformed via an exchange to contain the greedy choice without worsening the objective",
+        "The input is sorted",
+        "The problem has overlapping subproblems"
+      ],
+      "correctIndex": 1,
+      "explanation": "Greedy safety is established by an exchange argument: any optimal solution can be modified to include the greedy choice without harming the objective."
+    },
+    {
+      "id": "q2",
+      "stem": "Which greedy rule is optimal for unweighted Interval Scheduling?",
+      "choices": [
+        "Earliest start time",
+        "Shortest interval",
+        "Earliest finish time",
+        "Fewest conflicts"
+      ],
+      "correctIndex": 2,
+      "explanation": "Earliest Finish Time leaves the most resource available for later jobs. The other three rules each have simple counter-examples."
+    },
+    {
+      "id": "q3",
+      "stem": "For Fractional Knapsack, which sort key gives an optimal greedy?",
+      "choices": [
+        "Weight ascending",
+        "Benefit ascending",
+        "Benefit/weight ratio descending",
+        "Deadline ascending"
+      ],
+      "correctIndex": 2,
+      "explanation": "Sort by b_i / w_i descending and pack greedily. Exchange argument: moving weight from a low-ratio item to a higher-ratio item strictly improves the objective."
+    },
+    {
+      "id": "q4",
+      "stem": "Why does the ratio-greedy fail for 0/1 Knapsack?",
+      "choices": [
+        "Sorting is too slow",
+        "Items cannot be split, so a high-ratio item that doesn't fit cannot be replaced by partial pieces, breaking the exchange",
+        "The capacity is not bounded",
+        "Ratios are not well-defined"
+      ],
+      "correctIndex": 1,
+      "explanation": "Without fractional pieces the exchange argument fails — you cannot move arbitrary amounts of weight between items. 0/1 Knapsack is NP-complete."
+    },
+    {
+      "id": "q5",
+      "stem": "In the Minimising Lateness problem, what is an 'inversion'?",
+      "choices": [
+        "A pair of jobs with equal deadlines",
+        "A pair (i, k) scheduled in the order k, i but with d_i < d_k",
+        "A job whose lateness exceeds its length",
+        "Any job that finishes after its deadline"
+      ],
+      "correctIndex": 1,
+      "explanation": "An inversion is two jobs out of deadline order in the schedule. EDF has no inversions, and swapping adjacent inversions never increases max lateness."
+    },
+    {
+      "id": "q6",
+      "stem": "What is the running time of the standard EDF / EFT / fractional-knapsack greedy algorithms?",
+      "choices": [
+        "O(n)",
+        "O(n log n)",
+        "O(n^2)",
+        "O(n^3)"
+      ],
+      "correctIndex": 1,
+      "explanation": "Sorting dominates; the sweep is linear. So O(n log n) overall."
+    },
+    {
+      "id": "q7",
+      "stem": "What is the 'depth' of an interval instance in Interval Partitioning?",
+      "choices": [
+        "Total number of intervals",
+        "Maximum number of intervals overlapping any single point in time",
+        "Number of distinct start times",
+        "Sum of all interval lengths"
+      ],
+      "correctIndex": 1,
+      "explanation": "Depth is the max point-overlap. It is a structural lower bound on the number of rooms needed, and greedy by start-time achieves it."
+    },
+    {
+      "id": "q8",
+      "stem": "Which technique proves Interval Partitioning greedy is optimal?",
+      "choices": [
+        "Exchange argument on inversions",
+        "Master theorem",
+        "Structural lower bound matching depth",
+        "Induction on edge weights"
+      ],
+      "correctIndex": 2,
+      "explanation": "Any partition needs >= depth rooms (lower bound). The greedy never opens more than depth rooms (upper bound). Together they imply optimality."
+    },
+    {
+      "id": "q9",
+      "stem": "Which counter-example shows that 'shortest interval' is NOT optimal for Interval Scheduling?",
+      "choices": [
+        "Three intervals all of equal length",
+        "A short interval that overlaps two disjoint longer intervals",
+        "Two disjoint long intervals",
+        "Empty input"
+      ],
+      "correctIndex": 1,
+      "explanation": "If a 1-unit interval overlaps two non-overlapping 10-unit intervals, taking the short one yields 1 job; taking the two long ones yields 2."
+    },
+    {
+      "id": "q10",
+      "stem": "When proving EDF optimal via exchange, what is shown about swapping an adjacent inversion?",
+      "choices": [
+        "It decreases total processing time",
+        "It strictly decreases max lateness",
+        "It does not increase max lateness",
+        "It changes the deadlines of both jobs"
+      ],
+      "correctIndex": 2,
+      "explanation": "The swap may keep max lateness the same or decrease it; the proof only needs 'does not increase'. Iterating turns any schedule into EDF."
+    },
+    {
+      "id": "q11",
+      "stem": "Which problem from this week is solved by a structural lower bound rather than an exchange argument?",
+      "choices": [
+        "Fractional Knapsack",
+        "Interval Scheduling",
+        "Minimising Lateness",
+        "Interval Partitioning"
+      ],
+      "correctIndex": 3,
+      "explanation": "Interval Partitioning's proof matches greedy's room count to the depth lower bound. The others use exchange / stays-ahead arguments."
+    },
+    {
+      "id": "q12",
+      "stem": "Which is the right next step if your first greedy heuristic seems to work?",
+      "choices": [
+        "Submit it immediately",
+        "Stress-test against small counter-examples; if it survives, prove correctness",
+        "Skip the proof and benchmark on random inputs",
+        "Generalise to a DP"
+      ],
+      "correctIndex": 1,
+      "explanation": "Most natural heuristics fail. Construct adversarial small inputs first; only then attempt a proof."
+    },
+    {
+      "id": "q13",
+      "stem": "In a 'stays ahead' proof, what is the inductive claim?",
+      "choices": [
+        "Greedy is always strictly faster than OPT",
+        "Greedy's k-th element finishes no later than OPT's k-th element",
+        "Greedy's solution contains OPT as a subset",
+        "OPT and greedy have the same final element"
+      ],
+      "correctIndex": 1,
+      "explanation": "You show greedy's k-th finish time is <= OPT's k-th finish time for every k. This is how Interval Scheduling correctness is proved."
+    },
+    {
+      "id": "q14",
+      "stem": "In Fractional Knapsack, what is the time complexity of computing the optimal value?",
+      "choices": [
+        "O(n)",
+        "O(n log n)",
+        "O(n^2)",
+        "O(nW)"
+      ],
+      "correctIndex": 1,
+      "explanation": "Sort by ratio (O(n log n)) and sweep once. There is no W-dependent term."
+    },
+    {
+      "id": "q15",
+      "stem": "Which problem does NOT admit an optimal greedy algorithm?",
+      "choices": [
+        "Fractional Knapsack",
+        "Unweighted Interval Scheduling",
+        "0/1 Knapsack",
+        "Minimising Lateness"
+      ],
+      "correctIndex": 2,
+      "explanation": "0/1 Knapsack is NP-complete and requires DP (O(nW)) in general. The others have known optimal greedy rules."
+    },
+    {
+      "id": "q16",
+      "stem": "Why does sorting by deadline (EDF) make the exchange argument easy for Minimising Lateness?",
+      "choices": [
+        "Adjacent jobs in EDF are by definition not inverted, so the proof reduces to showing each adjacent swap is safe",
+        "EDF makes all lateness zero",
+        "It removes ties from the schedule",
+        "It avoids preemption"
+      ],
+      "correctIndex": 0,
+      "explanation": "EDF is precisely the inversion-free schedule, so showing 'remove adjacent inversion does not increase lateness' implies EDF is optimal."
+    },
+    {
+      "id": "q17",
+      "stem": "Which sort key powers the optimal Interval Partitioning greedy?",
+      "choices": [
+        "Finish time ascending",
+        "Start time ascending",
+        "Length descending",
+        "Random order"
+      ],
+      "correctIndex": 1,
+      "explanation": "Sort intervals by start time; assign to the lowest-numbered compatible room (or open a new one). This achieves the depth lower bound."
+    },
+    {
+      "id": "q18",
+      "stem": "Which is NOT a correct general 'recipe' for designing a greedy algorithm?",
+      "choices": [
+        "Define the greedy rule, then test on small inputs",
+        "Find a sort key that captures local optimality",
+        "Prove correctness via exchange or structural argument",
+        "Define overlapping subproblems and memoise"
+      ],
+      "correctIndex": 3,
+      "explanation": "Overlapping subproblems is the DP signature. Greedy does not memoise — it commits irrevocably to one choice."
+    },
+    {
+      "id": "q19",
+      "stem": "Suppose intervals have varying weights and you want max total weight of a disjoint subset. Does Earliest Finish Time still work?",
+      "choices": [
+        "Yes; it always works for interval problems",
+        "No; weighted interval scheduling needs dynamic programming",
+        "Yes; sort by weight descending",
+        "Only if weights are all equal"
+      ],
+      "correctIndex": 1,
+      "explanation": "Weighted Interval Scheduling defeats greedy in general — a single high-weight long interval can outweigh many short ones. Week 4 solves it with O(n log n) DP."
+    },
+    {
+      "id": "q20",
+      "stem": "What is the correctness lemma used in the Earliest Finish Time proof?",
+      "choices": [
+        "Matroid exchange theorem",
+        "Greedy stays ahead: f(g_k) <= f(opt_k)",
+        "Master theorem",
+        "Strong duality"
+      ],
+      "correctIndex": 1,
+      "explanation": "Stays-ahead: by induction, greedy's k-th finish time is no later than OPT's k-th. Hence greedy can keep selecting at least as long, so |G| >= |OPT|."
+    },
+    {
+      "id": "q21",
+      "stem": "Which best describes a counter-example you should reach for when sanity-checking a greedy rule?",
+      "choices": [
+        "A large random input",
+        "A small (3-5 item) hand-built adversarial input where greedy and OPT disagree",
+        "A formal proof",
+        "A test in production"
+      ],
+      "correctIndex": 1,
+      "explanation": "Adversarial 3-5 item inputs are the cheapest way to refute a candidate greedy. Random or large inputs hide subtle failures."
+    },
+    {
+      "id": "q22",
+      "stem": "In Minimising Lateness with EDF, what time does the optimal max lateness equal in the worst case?",
+      "choices": [
+        "Always zero",
+        "max_j (sum of t_i over earlier-deadline jobs + t_j - d_j) clipped at zero",
+        "Always equal to total processing time",
+        "Half the total processing time"
+      ],
+      "correctIndex": 1,
+      "explanation": "After EDF the lateness of each job is determined by accumulated processing time; the max lateness has the form given. It is not always zero."
+    },
+    {
+      "id": "q23",
+      "stem": "Why does greedy run after a sort, rather than before?",
+      "choices": [
+        "Sorting is irrelevant",
+        "The sort imposes the order in which the greedy rule is applied; without it the rule is meaningless",
+        "Sorting reduces the number of items",
+        "Sorting handles duplicates"
+      ],
+      "correctIndex": 1,
+      "explanation": "The local 'best' is defined by the sort key. Greedy is precisely 'sweep in sort order, take each item if feasible'."
+    },
+    {
+      "id": "q24",
+      "stem": "An exchange argument typically transforms OPT into greedy in how many steps?",
+      "choices": [
+        "Exactly one swap",
+        "At most a polynomial number of objective-preserving swaps",
+        "An exponential number of swaps",
+        "It does not modify OPT"
+      ],
+      "correctIndex": 1,
+      "explanation": "Iterated polynomially many local swaps, each preserving (or improving) the objective, converts OPT into greedy. The argument implies greedy is optimal."
+    },
+    {
+      "id": "q25",
+      "stem": "Which problem is solved by 'least busy room' assignment in greedy order?",
+      "choices": [
+        "Fractional Knapsack",
+        "Interval Scheduling",
+        "Interval Partitioning",
+        "Minimising Lateness"
+      ],
+      "correctIndex": 2,
+      "explanation": "Interval Partitioning sorts by start time and assigns each interval to the lowest-indexed free room, opening a new room only when forced."
+    }
+  ]
+}

@@ -1,0 +1,577 @@
+---
+title: "Week 8 — Cloud Automation"
+unit: COMP4349
+week: 8
+type: overview
+status: done
+---
+
+Week 8 covers cloud automation — the move from clicking around the console to defining infrastructure as code (IaC). The exam reliably asks you to read or write a CloudFormation snippet, explain stack vs template, and reason about intrinsic functions. CloudFormation is AWS-native; Terraform is the cross-cloud alternative; the AWS CDK lets you write IaC in a programming language. Master CloudFormation first; the others fall out from understanding it.
+
+## Why infrastructure as code?
+
+Building anything non-trivial in the console teaches you fast why manual processes don't scale:
+
+- **No reproducibility** — "I'll just click through these 30 steps again in another Region" is a recipe for drift and bugs.
+- **No version control** — what changed last Tuesday? Who knows.
+- **No audit trail** — Compliance asks "is this resource configured the way it was approved?" and you can't prove it.
+- **Inconsistent config** — two of your three EC2 instances have the new SSL cipher; one was forgotten.
+- **No rollback** — production is broken and you don't remember the previous config.
+
+IaC fixes all five. You declare the desired state in text files; an IaC tool computes the diff against reality and converges. Templates live in Git, get code-reviewed, and propagate identically to dev/staging/prod.
+
+```text
+Template (declarative state)  ─► IaC engine ─► AWS resources (actual state)
+        ▲                                              │
+        └────── git history + reviews ◄── diff ────────┘
+```
+
+## AWS CLI — the foundation
+
+Before talking IaC, the **AWS CLI** is the imperative complement. It is the same API surface as the Console and SDKs, callable from any shell.
+
+Installation, configuration, examples:
+
+```bash
+# install (macOS)
+brew install awscli
+
+# configure access key + region + output format
+aws configure
+# AWS Access Key ID [None]: AKIA...
+# AWS Secret Access Key [None]: ...
+# Default region name [None]: ap-southeast-2
+# Default output format [None]: json
+
+# Run examples
+aws s3 ls
+aws ec2 describe-instances --filters Name=tag:Env,Values=prod
+aws ec2 run-instances \
+  --image-id ami-0abc \
+  --instance-type t3.micro \
+  --count 1 \
+  --tag-specifications 'ResourceType=instance,Tags=[{Key=Name,Value=demo}]'
+aws s3api create-bucket --bucket my-globally-unique-bucket --region us-east-1
+```
+
+Credentials live in `~/.aws/credentials` and config in `~/.aws/config`. **Named profiles** let you switch between accounts: `aws s3 ls --profile prod`. **AWS SSO/IAM Identity Center** integration via `aws sso login` is the modern preferred flow.
+
+The CLI is great for ad-hoc tasks and shell pipelines, but for **declarative**, **reproducible** infrastructure you want CloudFormation/CDK/Terraform.
+
+## Declarative vs imperative IaC
+
+- **Imperative** — describe *how*: "create the VPC, then create the subnet, then attach the IGW…" Examples: AWS CLI scripts, the older AWS CDK v1 stack synth, Pulumi (with caveats).
+- **Declarative** — describe *what*: "I want a VPC with these subnets and an IGW attached." The engine figures out the order. Examples: CloudFormation, Terraform (HCL), Kubernetes manifests.
+
+Declarative IaC is preferred because it composes (idempotent re-apply) and the engine handles ordering and dependency resolution automatically.
+
+## CloudFormation — the AWS-native IaC service
+
+**AWS CloudFormation** lets you describe a set of AWS resources in a YAML or JSON **template**, then ask CloudFormation to provision and manage them as a **stack**. CloudFormation is free; you pay only for the resources it creates.
+
+The two core abstractions:
+
+- **Template** — a YAML/JSON file describing what to create.
+- **Stack** — a running collection of resources created from a template. Templates are like classes; stacks are like objects.
+
+CloudFormation manages the lifecycle: `create-stack`, `update-stack`, `delete-stack`. It tracks every resource it creates and removes them all when the stack is deleted — clean cleanup, no orphaned resources.
+
+```bash
+aws cloudformation create-stack \
+  --stack-name my-vpc \
+  --template-body file://vpc.yaml \
+  --parameters ParameterKey=Env,ParameterValue=prod
+
+aws cloudformation describe-stack-events --stack-name my-vpc
+aws cloudformation update-stack --stack-name my-vpc --template-body file://vpc-v2.yaml
+aws cloudformation delete-stack --stack-name my-vpc
+```
+
+## Template anatomy
+
+A CloudFormation template has nine optional sections plus a required one:
+
+```yaml
+AWSTemplateFormatVersion: "2010-09-09"   # version of the language
+Description: A three-tier web app stack  # human description
+
+Metadata:                                # extra info for tools
+  AWS::CloudFormation::Interface:
+    ParameterGroups: ...
+
+Parameters:                              # inputs supplied at create/update
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+    Description: SSH key for EC2
+
+Rules:                                   # pre-creation parameter validation
+  ValidateRegion:
+    Assertions:
+      - Assert: !Equals [!Ref "AWS::Region", "ap-southeast-2"]
+
+Mappings:                                # lookup tables, e.g. AMIs per Region
+  RegionMap:
+    ap-southeast-2: { AMI: ami-0abc }
+    us-east-1:      { AMI: ami-0xyz }
+
+Conditions:                              # boolean flags for conditional resources
+  IsProd: !Equals [!Ref Env, prod]
+
+Transform:                               # macros, e.g. AWS::Serverless (SAM)
+  - AWS::Serverless-2016-10-31
+
+Resources:                               # REQUIRED — the actual resources
+  Bucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${AWS::StackName}-data"
+
+Outputs:                                 # values to expose to other stacks/users
+  BucketArn:
+    Value: !GetAtt Bucket.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-BucketArn"
+```
+
+**Only `Resources` is required**. Everything else is optional. YAML is the recommended format — less verbose, supports comments — but JSON works identically.
+
+## Resources — the heart of the template
+
+Each resource has a **logical ID** (unique within the template, chosen by you), a **Type**, and **Properties** dictated by the type:
+
+```yaml
+Resources:
+  WebServer:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: ami-0abc
+      InstanceType: t3.micro
+      KeyName: !Ref KeyName
+      SubnetId: !Ref PublicSubnet
+      SecurityGroupIds:
+        - !Ref WebSG
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          yum install -y nginx
+          systemctl enable --now nginx
+      Tags:
+        - { Key: Name, Value: web }
+```
+
+Resource Types follow the `AWS::Service::Resource` pattern. The full list is in the AWS docs; common ones to memorise: `AWS::EC2::Instance`, `AWS::EC2::VPC`, `AWS::EC2::Subnet`, `AWS::EC2::SecurityGroup`, `AWS::S3::Bucket`, `AWS::RDS::DBInstance`, `AWS::IAM::Role`, `AWS::Lambda::Function`.
+
+## Parameters — making templates reusable
+
+Parameters let one template produce many stacks:
+
+```yaml
+Parameters:
+  Env:
+    Type: String
+    AllowedValues: [dev, staging, prod]
+    Default: dev
+  InstanceCount:
+    Type: Number
+    Default: 2
+    MinValue: 1
+    MaxValue: 10
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName       # AWS-specific type
+    Description: Existing EC2 key pair
+  LatestAmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
+```
+
+`AWS::SSM::Parameter::Value<...>` is the trick to always pick the latest AMI without hardcoding an ID — AWS publishes well-known parameters in SSM Parameter Store.
+
+## Intrinsic functions — wiring resources together
+
+Templates need to refer to each other ("the EC2 instance is in the subnet I just created"). Intrinsic functions do that:
+
+- **`!Ref`** — returns the value of a parameter or the physical ID of a resource. `!Ref KeyName` returns the parameter value. `!Ref WebServer` returns the EC2 instance ID.
+- **`!GetAtt`** — returns a specific attribute of a resource. `!GetAtt WebServer.PublicDnsName`, `!GetAtt Bucket.Arn`. Each resource type lists its attributes in the AWS docs.
+- **`!Sub`** — string substitution with `${VarName}`. `!Sub "https://${LoadBalancer.DNSName}/health"`.
+- **`!Join`** — concatenate with a separator. `!Join [",", [!Ref A, !Ref B]]`.
+- **`!Select`** — pick the Nth element. `!Select [0, !GetAZs ""]` returns the first AZ.
+- **`!GetAZs`** — list AZ names in the current Region.
+- **`!ImportValue`** — reads an `Outputs.Export` value from another stack. Used for cross-stack references.
+- **`!FindInMap`** — look up a value in `Mappings`. `!FindInMap [RegionMap, !Ref "AWS::Region", AMI]`.
+- **`!If`**, **`!Equals`**, **`!Not`**, **`!And`**, **`!Or`** — conditionals.
+
+Pseudo parameters (always available): `AWS::Region`, `AWS::AccountId`, `AWS::StackName`, `AWS::Partition`, `AWS::URLSuffix`.
+
+```yaml
+Resources:
+  WebSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Web tier
+      VpcId: !Ref VPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+          CidrIp: 0.0.0.0/0
+
+Outputs:
+  WebSGId:
+    Value: !Ref WebSG
+    Export:
+      Name: !Sub "${AWS::StackName}-WebSGId"
+```
+
+Pitfall (frequently exam-tested): when you `Ref` an `AWS::EC2::SecurityGroup` that has no `VpcId`, it returns the **group name**, not the **group ID**. RDS, ALB, etc. want the ID, so they fail with "Invalid security group". Fix by setting `VpcId` on the SG, or use `!GetAtt SG.GroupId` to be safe.
+
+## DependsOn — explicit ordering
+
+CloudFormation figures out dependencies from references (`!Ref`, `!GetAtt`) automatically. When a dependency isn't expressible as a reference (e.g. "the IGW must be attached before the EC2 instance launches in a public subnet"), use **`DependsOn`**:
+
+```yaml
+EC2:
+  Type: AWS::EC2::Instance
+  DependsOn: VPCGatewayAttachment
+  Properties: ...
+```
+
+## Outputs — exposing values
+
+Outputs surface values for users or other stacks:
+
+```yaml
+Outputs:
+  InstanceId:
+    Description: ID of the web server
+    Value: !Ref WebServer
+  PublicDns:
+    Description: Public DNS of the web server
+    Value: !GetAtt WebServer.PublicDnsName
+  BucketArn:
+    Value: !GetAtt Bucket.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-BucketArn"
+```
+
+`Export.Name` makes the output globally visible in the Region; other stacks reference it via `!ImportValue`.
+
+## Stack lifecycle and operations
+
+- **Create** — `create-stack` provisions resources in dependency order. Watch events; failures roll back automatically.
+- **Update** — `update-stack` computes the diff and applies. Some property changes require **replacement** (e.g. changing an EC2 `ImageId`) — CloudFormation will create the new resource, swap references, then delete the old one. Replacement causes downtime; check the docs for which properties trigger it.
+- **Change set** — `create-change-set` previews what an update would do before applying. Critical for production: review the change set, especially watching for replacements of stateful resources (databases!).
+- **Delete** — `delete-stack` removes every resource the stack created. **`DeletionPolicy: Retain`** on a resource keeps it after stack deletion; **`DeletionPolicy: Snapshot`** snapshots databases first.
+- **Stack policy** — a JSON document attached to a stack that protects specific resources from updates (e.g. "never modify the production RDS DB"). Forces use of `--stack-policy-during-update-body` to override.
+
+## Nested stacks and StackSets
+
+- **Nested stacks** — a parent stack references child stacks via `AWS::CloudFormation::Stack` resource. Lets you compose reusable modules (VPC stack + app stack + DB stack).
+- **StackSets** — apply the same template to many accounts and Regions in one operation. Used by central platform teams to enforce baselines (CloudTrail, Config, GuardDuty).
+
+## Drift detection
+
+Manual changes in the console can cause **drift** — actual state diverges from the template. CloudFormation can detect drift on demand (`detect-stack-drift`) and report which properties differ. The fix is usually to update the template to match reality (if the manual change was intentional) or to re-apply the template (if not). Even better: prevent drift with IAM SCPs that block manual edits.
+
+## AWS CDK — IaC in a programming language
+
+The **AWS Cloud Development Kit (CDK)** lets you write infrastructure in TypeScript, Python, Java, Go, or C# using object-oriented constructs. The CDK synthesises a CloudFormation template under the hood — so you get loops, conditionals, helper functions, and high-level constructs ("create a complete Fargate web service") while still using CloudFormation as the engine.
+
+```ts
+import * as ec2 from 'aws-cdk-lib/aws-ec2';
+const vpc = new ec2.Vpc(this, 'Vpc', { maxAzs: 2, natGateways: 2 });
+```
+
+The CDK has become AWS's preferred IaC story; CloudFormation YAML is increasingly the compile target, not the source.
+
+## Terraform — the cross-cloud declarative IaC
+
+**HashiCorp Terraform** is provider-agnostic — same workflow across AWS, Azure, GCP, GitHub, Datadog, etc. Key differences from CloudFormation:
+
+- Language is **HCL** (HashiCorp Configuration Language), not YAML/JSON.
+- **State file** — Terraform keeps state separately (in S3 + DynamoDB lock table is the AWS convention), allowing it to compute diffs without querying AWS for everything.
+- **Providers** — each cloud has a provider plugin. Mix and match.
+- Update semantics — `terraform plan` is the change-set equivalent; `terraform apply` executes.
+
+```hcl
+resource "aws_instance" "web" {
+  ami           = "ami-0abc"
+  instance_type = "t3.micro"
+  tags = { Name = "web" }
+}
+```
+
+Pitfall: corrupting the Terraform state file. Always use remote state with locking (`backend "s3"` + DynamoDB), and never commit `terraform.tfstate` to Git.
+
+## AWS Systems Manager — config management
+
+Systems Manager (SSM) is AWS's swiss-army-knife management plane:
+
+- **Run Command** — run shell/PowerShell on tagged EC2/on-prem hosts. No SSH needed.
+- **Patch Manager** — orchestrate OS patching during maintenance windows.
+- **State Manager** — keep instances in a desired state (file content, services running).
+- **Automation runbooks** — multi-step playbooks (e.g. "create AMI, share with another account, update launch template").
+- **Inventory** — collect installed software, network config across the fleet.
+- **Session Manager** — browser-based shell into instances without SSH or bastion.
+- **Parameter Store** — config and SecureString secrets.
+
+SSM works on EC2 and on-prem (via SSM Agent). It's how you manage *running* infrastructure once CloudFormation has provisioned it.
+
+## AWS CodeDeploy, CodeBuild, CodePipeline — CI/CD
+
+AWS's first-party CI/CD trio (covered more in Week 9):
+
+- **CodeCommit / GitHub** — source.
+- **CodeBuild** — compile, test, package via `buildspec.yml`.
+- **CodeDeploy** — deploy to EC2/ECS/Lambda with traffic shifting and rollback hooks.
+- **CodePipeline** — orchestration of source → build → test → deploy stages.
+
+Infrastructure pipelines that ship CloudFormation templates typically: source → `cfn-lint` validate → change set → manual approval → execute change set.
+
+## AMI baking vs config management vs immutable infrastructure
+
+Three philosophies for keeping running instances consistent with the template:
+
+- **AMI baking** — build a fully configured AMI ahead of time (Packer). Launch instances are ready-to-serve immediately. ASG replaces instances by terminating and launching new ones from the latest AMI. **Immutable infrastructure** in its purest form.
+- **Configuration management at boot** — use user data + Ansible/Chef/Puppet to install software when the instance starts. Slower boot, more moving parts at the worst possible time. Acceptable for small fleets.
+- **Configuration management on running instances** — mutate instances in place. Drifts over time. Mostly avoided in modern shops.
+
+AMI baking + immutable infrastructure pairs naturally with CloudFormation and ASGs.
+
+## Debugging stack failures
+
+The reading flags one common failure: a CloudFormation stack with an RDS instance fails with "Invalid security group" because the security group `Ref` returned the group name (no VPC attached), and RDS needs the ID. The fix: set `VpcId` on the SG.
+
+General debugging recipe:
+
+1. Look at the failed event in `describe-stack-events`. Read the message carefully.
+2. If the error is a resource-handler error, check the resource's properties against the AWS docs (especially required properties and the ARN/ID type expected).
+3. `cfn-lint <template>` catches a lot pre-flight: bad property names, wrong types, missing required props.
+4. `aws cloudformation validate-template --template-body file://t.yaml` catches syntax errors.
+5. For partial successful deployment, use **rollback configuration** + alarms (auto-rollback on metric breach during deploy).
+
+## Common exam traps
+
+- "Required template section" — only `Resources` is required.
+- "Difference between template and stack" — template is the spec, stack is a running instantiation. Like class vs object.
+- "Ref vs GetAtt" — Ref returns the canonical ID (parameter value, resource physical ID); GetAtt returns a specific attribute. Knowing what each resource returns from Ref is in the docs.
+- "SG Ref returns name not ID" — only when `VpcId` is omitted. Otherwise returns the SG ID.
+- "DependsOn" — required only when CloudFormation can't infer the dependency from a Ref/GetAtt.
+- "DeletionPolicy" — `Retain`, `Snapshot`, `Delete` (default). Always `Snapshot` for production RDS.
+- "Change set" — preview before applying; never `update-stack` blindly on production.
+- "Cross-stack references" — `Outputs.Export.Name` + `!ImportValue`.
+- "Drift" — manual edits diverge state from template; detect and re-apply.
+- "Terraform vs CloudFormation" — Terraform multi-cloud + state file; CloudFormation AWS-native + state-on-AWS.
+- "CDK" — write IaC in a programming language; compiles to CloudFormation.
+
+## A worked CloudFormation template — VPC + EC2 + RDS
+
+The Week 8 lab walks through a real template you should be able to read end-to-end:
+
+```yaml
+AWSTemplateFormatVersion: "2010-09-09"
+Description: Two-tier app stack — VPC + 2 subnets + EC2 + RDS subnet group
+
+Parameters:
+  LatestAmiId:
+    Type: AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>
+    Default: /aws/service/ami-amazon-linux-latest/al2023-ami-kernel-default-x86_64
+  KeyName:
+    Type: AWS::EC2::KeyPair::KeyName
+
+Resources:
+  VPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      EnableDnsHostnames: true
+
+  IGW:
+    Type: AWS::EC2::InternetGateway
+
+  AttachIGW:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref VPC
+      InternetGatewayId: !Ref IGW
+
+  PublicSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.1.0/24
+      AvailabilityZone: !Select [0, !GetAZs ""]
+      MapPublicIpOnLaunch: true
+
+  PrivateSubnetA:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.11.0/24
+      AvailabilityZone: !Select [0, !GetAZs ""]
+
+  PrivateSubnetB:
+    Type: AWS::EC2::Subnet
+    Properties:
+      VpcId: !Ref VPC
+      CidrBlock: 10.0.12.0/24
+      AvailabilityZone: !Select [1, !GetAZs ""]
+
+  PublicRouteTable:
+    Type: AWS::EC2::RouteTable
+    Properties: { VpcId: !Ref VPC }
+
+  PublicRoute:
+    Type: AWS::EC2::Route
+    DependsOn: AttachIGW
+    Properties:
+      RouteTableId: !Ref PublicRouteTable
+      DestinationCidrBlock: 0.0.0.0/0
+      GatewayId: !Ref IGW
+
+  AppSG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      VpcId: !Ref VPC                          # <-- without this, !Ref returns name not ID
+      GroupDescription: app server SG
+      SecurityGroupIngress:
+        - { IpProtocol: tcp, FromPort: 80,  ToPort: 80,  CidrIp: 0.0.0.0/0 }
+        - { IpProtocol: tcp, FromPort: 22,  ToPort: 22,  CidrIp: 0.0.0.0/0 }
+
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: RDS in 2 AZs
+      SubnetIds: [!Ref PrivateSubnetA, !Ref PrivateSubnetB]
+
+  EC2:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref LatestAmiId
+      InstanceType: t3.micro
+      KeyName: !Ref KeyName
+      SubnetId: !Ref PublicSubnetA
+      SecurityGroupIds: [!Ref AppSG]
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          dnf install -y nginx
+          systemctl enable --now nginx
+
+Outputs:
+  EC2PublicIp:
+    Value: !GetAtt EC2.PublicIp
+  EC2PublicDns:
+    Value: !GetAtt EC2.PublicDnsName
+```
+
+Notice five things:
+
+1. `LatestAmiId` uses the SSM parameter type so the template always picks the current Amazon Linux 2023.
+2. The route to the IGW depends on the attachment via `DependsOn` — without it CloudFormation might try to add the route before the IGW is attached.
+3. `AppSG` declares `VpcId` so a `!Ref AppSG` returns the SG ID (not the SG name) — important when feeding into RDS/ALB.
+4. `DBSubnetGroup` spans two AZs, the minimum for Multi-AZ RDS.
+5. Outputs surface the public IP and DNS for the user; they could be referenced cross-stack via `Outputs.Export.Name`.
+
+## Stack policies — protecting production resources
+
+A **stack policy** is a JSON document attached to a stack that restricts which resources can be modified by `update-stack`. Example: never modify the RDS DB unless explicitly overridden.
+
+```json
+{
+  "Statement": [
+    { "Effect": "Allow", "Action": "Update:*", "Principal": "*", "Resource": "*" },
+    { "Effect": "Deny",  "Action": "Update:Replace", "Principal": "*",
+      "Resource": "LogicalResourceId/ProdDB" }
+  ]
+}
+```
+
+To override, pass `--stack-policy-during-update-body` with a more permissive policy on a one-off basis.
+
+## Custom resources — bridging CloudFormation gaps
+
+CloudFormation supports almost every AWS resource type, but occasionally you need to call a non-AWS API or do something CloudFormation doesn't model (e.g. wait for a third-party SaaS to provision a tenant). **`AWS::CloudFormation::CustomResource`** invokes a Lambda function with CREATE/UPDATE/DELETE events. Your function does the work and signals success or failure back.
+
+## Conditions and conditional resources
+
+`Conditions` and `!If` let you toggle resources on/off based on parameters:
+
+```yaml
+Parameters:
+  Env: { Type: String, AllowedValues: [dev, prod] }
+
+Conditions:
+  IsProd: !Equals [!Ref Env, prod]
+
+Resources:
+  MultiAzDb:
+    Type: AWS::RDS::DBInstance
+    Properties:
+      MultiAZ: !If [IsProd, true, false]
+      BackupRetentionPeriod: !If [IsProd, 30, 7]
+
+  ReadReplica:
+    Type: AWS::RDS::DBInstance
+    Condition: IsProd        # only created in prod
+    Properties: { SourceDBInstanceIdentifier: !Ref MultiAzDb }
+```
+
+This is how you share one template across dev/staging/prod with environment-specific tweaks.
+
+## CFN-init and helper scripts
+
+For more complex EC2 bootstrap than a simple user-data shell script, CloudFormation provides `AWS::CloudFormation::Init` metadata that the `cfn-init` script (installed in the AMI) reads to install packages, write files, start services, in a structured way. Pair with `cfn-signal` to wait for the EC2 to complete initialisation before the stack creation completes.
+
+```yaml
+WebServer:
+  Type: AWS::EC2::Instance
+  Metadata:
+    AWS::CloudFormation::Init:
+      config:
+        packages: { yum: { nginx: [] } }
+        files:
+          /usr/share/nginx/html/index.html:
+            content: "<h1>Hello</h1>"
+        services:
+          systemd:
+            nginx: { enabled: true, ensureRunning: true }
+  Properties:
+    ImageId: !Ref LatestAmiId
+    InstanceType: t3.micro
+    UserData:
+      Fn::Base64: !Sub |
+        #!/bin/bash
+        /opt/aws/bin/cfn-init -v --stack ${AWS::StackName} --resource WebServer
+        /opt/aws/bin/cfn-signal -e $? --stack ${AWS::StackName} --resource WebServer
+```
+
+## Terraform vs CloudFormation in practice
+
+The honest comparison: CloudFormation is AWS-native, free, and the integration is tight (drift detection, change sets, StackSets), but the language is rigid and error messages can be opaque. Terraform has a richer expression language, faster iteration cycle (you can `terraform plan` locally), and multi-cloud, but you must manage state separately and pay for HCP Terraform or self-host.
+
+Mature teams use CloudFormation for AWS-only workloads inside an Organisation (especially with Control Tower / StackSets), and Terraform for multi-cloud or when the local-iteration speed matters.
+
+## AWS CDK in depth
+
+CDK constructs are bundled into **L1** (direct CloudFormation mappings), **L2** (opinionated single-resource wrappers), and **L3** (multi-resource patterns like "complete Fargate service with ALB"). Typical usage:
+
+```ts
+import * as cdk from 'aws-cdk-lib';
+import * as ec2 from 'aws-cdk-lib/aws-ec2';
+import * as ecs from 'aws-cdk-lib/aws-ecs';
+import * as ecsp from 'aws-cdk-lib/aws-ecs-patterns';
+
+const app = new cdk.App();
+const stack = new cdk.Stack(app, 'OrdersStack');
+
+const vpc = new ec2.Vpc(stack, 'Vpc', { maxAzs: 2 });
+new ecsp.ApplicationLoadBalancedFargateService(stack, 'Service', {
+  vpc,
+  cpu: 256,
+  memoryLimitMiB: 512,
+  taskImageOptions: { image: ecs.ContainerImage.fromRegistry('public.ecr.aws/.../orders:1.0') },
+});
+```
+
+`cdk synth` produces a CloudFormation template; `cdk deploy` applies it. The trade-off vs raw CloudFormation is that you have a programming language available — loops, conditionals, helper libraries — at the cost of an extra build step.

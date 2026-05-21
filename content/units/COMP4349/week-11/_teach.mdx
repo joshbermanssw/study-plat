@@ -1,0 +1,487 @@
+---
+title: "Week 11 — Kubernetes"
+unit: COMP4349
+week: 11
+type: overview
+status: done
+---
+
+Week 11 dives into Kubernetes — the container orchestrator that won the open-source platform wars. The Week 13 review explicitly calls Kubernetes one of the three exam-dominant topics. You need to be fluent in the vocabulary (Pod, Deployment, Service, Ingress, HPA), able to read a YAML manifest, and able to explain how EKS specifics (IAM Roles for Service Accounts, managed node groups vs Fargate profiles) interact with the upstream model.
+
+Note: the canvas-extract for Week 11 in the source notes is labelled "lecture-11-serverless-computing" — the lecturer appears to have reordered Kubernetes and serverless, but the per-week syllabus has Kubernetes here. We cover Kubernetes thoroughly below; serverless is in Week 12.
+
+## What Kubernetes is for
+
+Kubernetes (often abbreviated **k8s**) is an open-source platform for declarative deployment, scaling, and operation of containerised applications. You write YAML describing the desired state ("run 3 replicas of this image with these env vars behind this service") and Kubernetes converges actual state toward it, replacing failed pods, scaling up under load, rolling updates, secrets, networking.
+
+The originals were Google's Borg (internal) and Omega; Kubernetes (2014) is the open-source spiritual successor. Every cloud provider has a managed Kubernetes offering: EKS on AWS, AKS on Azure, GKE on Google Cloud.
+
+## Cluster architecture — control plane and data plane
+
+A Kubernetes cluster has two parts:
+
+### Control plane
+
+The brain of the cluster. Components run on dedicated control-plane nodes (with EKS, AWS runs and patches them for you across multiple AZs):
+
+- **kube-apiserver** — the single front-door for the REST API. Every action (kubectl, controllers, kubelets) flows through here.
+- **etcd** — distributed key-value store (Raft consensus) that holds all cluster state. The source of truth.
+- **kube-scheduler** — watches for new Pods with no assigned node, picks a node based on resource requests, affinity rules, taints/tolerations.
+- **kube-controller-manager** — runs the built-in controllers (Deployment, ReplicaSet, Node, Endpoint, ServiceAccount).
+- **cloud-controller-manager** — talks to the cloud provider (provisions load balancers, manages routes, attaches storage).
+
+### Data plane — worker nodes
+
+Each worker node runs:
+
+- **kubelet** — the node-level agent that talks to the API server, pulls images, starts/stops containers via the runtime, reports node health.
+- **kube-proxy** — implements Service networking via iptables, IPVS, or eBPF.
+- **Container runtime** — `containerd` is the default (Docker is deprecated as a runtime, though Docker-built images still run fine).
+
+## Core objects — the things you create
+
+### Pod
+
+The atomic unit of scheduling. One or more **co-located containers** that share network namespace and storage volumes. In practice most pods have one main container plus optional sidecars (logging agent, service mesh proxy).
+
+```yaml
+apiVersion: v1
+kind: Pod
+metadata:
+  name: orders
+spec:
+  containers:
+    - name: app
+      image: 123.dkr.ecr.../orders:1.0
+      ports:
+        - containerPort: 3000
+      env:
+        - name: DB_HOST
+          valueFrom: { secretKeyRef: { name: db-secret, key: host } }
+      resources:
+        requests: { cpu: 100m, memory: 128Mi }
+        limits:   { cpu: 500m, memory: 512Mi }
+```
+
+Pods are **ephemeral and disposable**. You don't normally create them directly — you create a controller (Deployment, StatefulSet, DaemonSet, Job) that creates Pods for you.
+
+### ReplicaSet
+
+Ensures a specified number of Pod replicas are running. Modern users don't write ReplicaSets directly; they're created by Deployments.
+
+### Deployment
+
+The most common workload object. Declarative way to manage stateless replicas with rolling updates.
+
+```yaml
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: orders
+spec:
+  replicas: 3
+  selector:
+    matchLabels: { app: orders }
+  strategy:
+    type: RollingUpdate
+    rollingUpdate: { maxSurge: 1, maxUnavailable: 0 }
+  template:
+    metadata:
+      labels: { app: orders }
+    spec:
+      containers:
+        - name: app
+          image: 123.dkr.ecr.../orders:1.2
+          ports: [{ containerPort: 3000 }]
+```
+
+Updating the image triggers a rolling update: new Pods come up; old Pods go down once the new ones are ready.
+
+### StatefulSet
+
+For stateful workloads that need stable network identity and stable persistent storage: each Pod gets a predictable name (`db-0`, `db-1`), keeps its volume across rescheduling, and Pods come up in order. Used for Postgres clusters, Cassandra, Kafka, etc.
+
+### DaemonSet
+
+Runs exactly one Pod per node (or per node matching a selector). Used for log collectors (Fluent Bit), node-level monitoring (CloudWatch Agent), CNI plugins.
+
+### Job and CronJob
+
+- **Job** — run a Pod to completion. Retries on failure. For one-off batch tasks.
+- **CronJob** — schedule a Job on a cron-like schedule.
+
+```yaml
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: nightly-cleanup
+spec:
+  schedule: "0 2 * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+            - name: cleaner
+              image: my-cleaner:1.0
+          restartPolicy: OnFailure
+```
+
+## Networking — Services and Ingress
+
+Pods get an internal IP from the cluster network, but Pod IPs are ephemeral. A **Service** gives a stable network identity for a set of Pods.
+
+### Service types
+
+- **ClusterIP** (default) — virtual IP reachable only inside the cluster. For internal communication.
+- **NodePort** — exposes the Service on a port (30000-32767) on every node. Crude; rarely used in production.
+- **LoadBalancer** — provisions a cloud load balancer (in EKS, by default an NLB or AWS Load Balancer Controller-managed ALB) pointing at the Service.
+- **ExternalName** — DNS alias to an external name; no proxying.
+- **Headless Service** (`clusterIP: None`) — no virtual IP; DNS returns Pod IPs directly. Used by StatefulSets for stable per-Pod DNS names.
+
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: orders
+spec:
+  type: ClusterIP
+  selector: { app: orders }
+  ports:
+    - port: 80
+      targetPort: 3000
+```
+
+The Service uses **label selectors** to find Pods. As Pods come and go, kube-proxy updates iptables/IPVS rules to keep the Service backends current.
+
+### Ingress
+
+An **Ingress** is an HTTP/HTTPS reverse proxy in front of multiple Services, with host-based and path-based routing. By itself an Ingress is just a manifest; you need an **Ingress controller** to implement it. On EKS the **AWS Load Balancer Controller** translates Ingress objects into AWS ALBs.
+
+```yaml
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: web
+  annotations:
+    kubernetes.io/ingress.class: alb
+    alb.ingress.kubernetes.io/scheme: internet-facing
+spec:
+  rules:
+    - host: shop.example.com
+      http:
+        paths:
+          - path: /api
+            pathType: Prefix
+            backend: { service: { name: api,    port: { number: 80 } } }
+          - path: /
+            pathType: Prefix
+            backend: { service: { name: orders, port: { number: 80 } } }
+```
+
+### Network policies
+
+By default, all Pods can talk to all other Pods. **NetworkPolicy** objects restrict that — a stateful firewall at the Pod level. Requires a CNI that supports it (Calico, Cilium, AWS VPC CNI with policy enforcement).
+
+## Configuration — ConfigMaps and Secrets
+
+- **ConfigMap** — key-value pairs of non-sensitive config (feature flags, URLs, config files). Mountable as env vars or files.
+- **Secret** — same shape as ConfigMap but base64-encoded and treated as sensitive. *Not* encrypted at rest by default — you must configure etcd encryption-at-rest (EKS does this automatically for KMS-encrypted clusters).
+
+```yaml
+apiVersion: v1
+kind: Secret
+metadata: { name: db-secret }
+type: Opaque
+data:
+  host: cm9vdC0xLmVuZHBvaW50LWFzaWE=
+  password: c3VwZXItc2VjcmV0
+```
+
+For production, use **External Secrets Operator** or **AWS Secrets and Configuration Provider** to inject secrets from AWS Secrets Manager / Parameter Store on demand.
+
+## Storage — PV, PVC, StorageClass
+
+The Kubernetes storage abstraction is three-layer:
+
+- **PersistentVolume (PV)** — a cluster-level disk; can be statically provisioned or dynamically created.
+- **PersistentVolumeClaim (PVC)** — a Pod's request for storage of a given size and class.
+- **StorageClass** — describes a class of storage (the provisioner, parameters); enables dynamic provisioning.
+
+On EKS, the default classes use **EBS CSI driver** (block storage; one Pod at a time) or **EFS CSI driver** (file storage; many Pods).
+
+```yaml
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata: { name: data }
+spec:
+  accessModes: [ ReadWriteOnce ]
+  storageClassName: gp3
+  resources: { requests: { storage: 20Gi } }
+```
+
+Access modes: `ReadWriteOnce` (block; one node), `ReadOnlyMany`, `ReadWriteMany` (file; many nodes — needs EFS).
+
+## Scaling — HPA, VPA, Cluster Autoscaler, Karpenter
+
+Three levels of autoscaling in Kubernetes:
+
+- **Horizontal Pod Autoscaler (HPA)** — adjust Pod replica count based on CPU, memory, or custom metrics. The standard scaling primitive.
+- **Vertical Pod Autoscaler (VPA)** — adjust Pod resource requests/limits. Less common; conflicts with HPA on CPU.
+- **Cluster Autoscaler** — add/remove worker nodes when Pods are unschedulable due to capacity. Works with ASGs.
+- **Karpenter** — AWS's newer node provisioner; faster, more flexible than Cluster Autoscaler.
+
+```yaml
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata: { name: orders }
+spec:
+  scaleTargetRef: { apiVersion: apps/v1, kind: Deployment, name: orders }
+  minReplicas: 3
+  maxReplicas: 30
+  metrics:
+    - type: Resource
+      resource: { name: cpu, target: { type: Utilization, averageUtilization: 60 } }
+```
+
+## Deployment strategies
+
+- **Rolling update** (default for Deployment) — incrementally replace old Pods with new. `maxSurge` allows extra Pods during rollout; `maxUnavailable` allows fewer Pods.
+- **Recreate** — kill all old Pods, then create new. Brief downtime; useful when versions can't coexist.
+- **Blue/green** — run both versions simultaneously, switch traffic via Service selector swap. Requires double capacity briefly.
+- **Canary** — release to a small percentage of traffic first; expand if metrics look good. Implemented via two Deployments + traffic split (Ingress weights, service mesh).
+
+## Namespaces, RBAC, ServiceAccounts
+
+- **Namespace** — a logical partition of the cluster. Most resources live in a namespace; some (Node, PersistentVolume) are cluster-scoped.
+- **ServiceAccount** — an identity for Pods to authenticate against the API server.
+- **Role / ClusterRole** — a set of API permissions (verbs on resources).
+- **RoleBinding / ClusterRoleBinding** — binds a Role to a user/group/ServiceAccount.
+
+This is Kubernetes RBAC. Combined with namespaces it provides multi-tenancy: dev team gets full access to `dev` namespace, read-only to `prod`.
+
+```yaml
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata: { namespace: dev, name: pod-reader }
+rules:
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list", "watch"]
+```
+
+## Helm — the Kubernetes package manager
+
+**Helm** packages a set of templated Kubernetes manifests into a **chart** with parameterised values. Install a chart with `helm install`; upgrade with `helm upgrade`. Used to deploy off-the-shelf software (Prometheus, ingress-nginx, cert-manager) and to template your own apps.
+
+A chart is a directory with `Chart.yaml`, `values.yaml`, and `templates/*.yaml` files using Go templates.
+
+## EKS specifics — managed Kubernetes on AWS
+
+AWS's **Elastic Kubernetes Service** runs the control plane for you across multiple AZs. You bring worker nodes. Specifics that the exam may probe:
+
+### Compute options
+
+- **Managed node groups** — EKS provisions and manages EC2 Auto Scaling Groups for you. AWS handles AMI updates with rolling rollout.
+- **Self-managed nodes** — you create the ASG and EKS-optimised AMI yourself. More control, more work.
+- **Fargate profiles** — runs Pods on serverless Fargate. No EC2. Selector-based: Pods in matching namespaces/labels go to Fargate.
+
+### IAM Roles for Service Accounts (IRSA)
+
+The single most important EKS specific. By default a Pod inherits the node IAM role — every Pod on a node gets the same AWS permissions. **IRSA** lets you bind an IAM role to a Kubernetes ServiceAccount; Pods using that ServiceAccount assume the role via OIDC federation.
+
+```yaml
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: orders-sa
+  namespace: prod
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::123:role/orders-role
+```
+
+Pods that mount this ServiceAccount get a projected JWT token; the AWS SDK exchanges it via STS for temporary credentials. Per-Pod IAM — exactly what you need to apply least-privilege.
+
+### VPC CNI
+
+The default EKS CNI plugin allocates **VPC IPs to every Pod** — Pods are first-class VPC citizens. They can talk to RDS, hit security groups, get traced by VPC Flow Logs. Downside: you can run out of IPs in a small VPC.
+
+### EKS networking
+
+- Pods get VPC IPs from the VPC CIDR.
+- Services use ClusterIP from the service CIDR (e.g. `172.20.0.0/16`).
+- ALB-backed Ingress via AWS Load Balancer Controller.
+- NLB-backed Services via the same controller or built-in cloud-controller.
+
+### Upgrades
+
+EKS supports Kubernetes versions for ~14 months; AWS auto-upgrades the control plane on a schedule if you don't act. You upgrade nodes via the managed node group rolling update. Always test on staging first because deprecated APIs (`extensions/v1beta1`, etc.) get removed between versions.
+
+## Observability in Kubernetes
+
+- **Logs** — containers write to stdout/stderr; node-level Fluent Bit ships to CloudWatch Logs / OpenSearch / S3.
+- **Metrics** — Prometheus scrapes `/metrics` endpoints; **AWS Managed Service for Prometheus** plus **AWS Managed Grafana** for the AWS-native stack.
+- **Traces** — OpenTelemetry collectors; AWS X-Ray.
+- **Container Insights** — CloudWatch's pre-built Kubernetes dashboard (CPU, memory, network per workload).
+
+## Common patterns to recognise
+
+- **Microservice per Deployment** — one Deployment + one Service + one Ingress rule per microservice.
+- **Sidecar** — main container + helper container (logging agent, mTLS proxy) in the same Pod sharing network and volumes.
+- **Init container** — short-lived container that runs before the main containers; for migrations, fetching configs.
+- **Job for migrations** — run a one-off Job before bumping the Deployment image.
+- **External Secrets Operator** — sync AWS Secrets Manager values into Kubernetes Secrets.
+
+## ECS vs EKS — when to pick which
+
+| Aspect | ECS | EKS |
+|---|---|---|
+| API | AWS proprietary | Upstream Kubernetes |
+| Portability | AWS-only | Multi-cloud, on-prem |
+| Complexity | Lower; deeply integrated with AWS | Higher; broader ecosystem |
+| Worker compute | EC2 / Fargate | EC2 / Fargate |
+| IAM per workload | Task role | IRSA / Pod Identity |
+| Service discovery | Cloud Map, Service Connect | DNS via CoreDNS, optional service mesh |
+| Best when | AWS-only, simpler ops | Already invested in k8s, multi-cloud, large ecosystem |
+
+## Security checklist
+
+- Use IRSA for AWS API access; never node-wide roles.
+- Use NetworkPolicies to limit Pod-to-Pod traffic.
+- Use Pod Security Standards (restricted) to prevent privileged containers, host networking, etc.
+- Enable etcd encryption at rest (default in EKS when using a KMS key).
+- Scan images in ECR; sign images and verify via admission controller.
+- Audit logs to CloudWatch Logs.
+- Patch nodes promptly; the managed node group rolling update is your friend.
+- Don't expose the API server publicly unless necessary; use private endpoints.
+
+## Common exam traps
+
+- "Pod vs container" — a Pod is one or more containers that share network and storage; the container is the lower unit.
+- "Why is my Pod IP changing?" — Pods are ephemeral. Front them with a Service for a stable address.
+- "How does a Service find its Pods?" — label selectors. The Endpoints / EndpointSlice resources track current Pod IPs.
+- "Difference between ClusterIP and LoadBalancer" — ClusterIP is internal-only; LoadBalancer provisions an external cloud LB.
+- "Ingress controller is required" — yes; the Ingress object is just a spec, the controller implements it.
+- "Deployment vs StatefulSet" — Deployment is for stateless interchangeable replicas; StatefulSet gives stable identity and storage.
+- "DaemonSet" — one Pod per node (or per matching node).
+- "HPA needs metrics" — install the metrics-server (CPU/memory) or KEDA (event-driven, custom).
+- "Cluster Autoscaler" — adds nodes when Pods are unschedulable; doesn't add Pods (that's HPA).
+- "IRSA" — bind an IAM role to a ServiceAccount so a Pod gets per-workload AWS credentials via OIDC.
+- "Fargate profile" — selector-based; Pods matching the profile run on Fargate instead of EC2.
+- "EKS upgrades" — Kubernetes versions are time-limited; plan upgrades on a known cadence.
+
+## Reading a kubectl session
+
+The day-to-day commands you should be able to recognise and use:
+
+```bash
+# Cluster + node level
+kubectl cluster-info
+kubectl get nodes
+kubectl top nodes                          # CPU/memory usage (requires metrics-server)
+
+# Namespace and workload inspection
+kubectl get pods -A                        # all namespaces
+kubectl get deploy,svc,ingress -n prod
+kubectl describe pod orders-7d6b -n prod   # events, env, mounts, status
+kubectl logs orders-7d6b -n prod -c app -f # tail logs from container "app"
+kubectl exec -it orders-7d6b -n prod -- /bin/sh
+
+# Apply/diff/delete
+kubectl apply -f manifests/                # idempotent declarative apply
+kubectl diff -f manifests/                 # show diff vs cluster
+kubectl delete -f manifests/
+
+# Debug a failing Pod
+kubectl get events --sort-by=.lastTimestamp -n prod
+kubectl rollout status deploy/orders -n prod
+kubectl rollout undo deploy/orders -n prod # roll back to previous revision
+```
+
+## Resource requests vs limits — the scheduling primitives
+
+Every container should declare:
+
+- **requests** — guaranteed amount; the scheduler reserves this. Used for scheduling decisions.
+- **limits** — hard cap; container is throttled (CPU) or OOM-killed (memory) above this.
+
+```yaml
+resources:
+  requests: { cpu: 100m, memory: 256Mi }
+  limits:   { cpu: 1000m, memory: 1Gi }
+```
+
+If you set requests but not limits, the container can burst freely (good for batch jobs); if you set limits but not requests, Kubernetes treats them as equal (Guaranteed QoS). Most production deployments set both.
+
+## Probes — readiness, liveness, startup
+
+Three optional probes:
+
+- **Readiness probe** — "ready to accept traffic?" If failing, the Pod is removed from Service endpoints but kept running. Use for slow-warm-up apps.
+- **Liveness probe** — "still alive?" If failing, the Pod is restarted. Use to recover from deadlocks. Be careful — a too-aggressive liveness probe causes restart loops under load.
+- **Startup probe** — "finished starting up?" Disables liveness/readiness until it succeeds. Use for slow-starting apps (e.g. Java warmup).
+
+```yaml
+readinessProbe:
+  httpGet: { path: /healthz, port: 3000 }
+  periodSeconds: 5
+livenessProbe:
+  httpGet: { path: /alive, port: 3000 }
+  periodSeconds: 10
+  failureThreshold: 3
+```
+
+## Affinity, taints, and tolerations
+
+Three mechanisms to influence scheduling:
+
+- **nodeSelector / affinity** — "this Pod should run on nodes with label X." Used to pin workloads to GPU nodes, spot nodes, or specific zones.
+- **podAffinity / podAntiAffinity** — "co-locate with / avoid Pods that have label X." Useful for spreading replicas across zones (`topologyKey: failure-domain.beta.kubernetes.io/zone`).
+- **taints and tolerations** — node-level "stay away unless you opt in." A spot node could have a `spot=true:NoSchedule` taint; Pods that tolerate it can land there.
+
+## Storage classes on EKS — gp3 EBS vs EFS
+
+Two CSI drivers cover most needs:
+
+- **EBS CSI** — block storage, `ReadWriteOnce` access, AZ-pinned. Default storage class on EKS (`gp3`). Used for StatefulSet volumes.
+- **EFS CSI** — NFS-mounted file storage, `ReadWriteMany`, multi-AZ. Used when multiple Pods share a filesystem.
+
+```yaml
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata: { name: gp3 }
+provisioner: ebs.csi.aws.com
+parameters:
+  type: gp3
+  fsType: ext4
+  encrypted: "true"
+volumeBindingMode: WaitForFirstConsumer
+```
+
+`WaitForFirstConsumer` defers volume creation until a Pod actually consumes it — important because the volume must be in the same AZ as the Pod.
+
+## Pod Disruption Budgets (PDB)
+
+A **PodDisruptionBudget** declares the minimum number of Pods of a workload that must remain available during voluntary disruptions (node drain, cluster autoscaler shrinkage). Critical for HA during cluster maintenance.
+
+```yaml
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata: { name: orders-pdb }
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels: { app: orders }
+```
+
+## CoreDNS — service discovery
+
+Every Kubernetes cluster runs **CoreDNS** to resolve `service-name.namespace.svc.cluster.local`. Pods inherit this resolver via their `/etc/resolv.conf`. CoreDNS also handles ExternalName services, headless services (returns Pod IPs), and arbitrary plugins (e.g. caching, log).
+
+## Multi-cluster patterns
+
+Large organisations run multiple EKS clusters per Region (per team, per blast radius). Connectivity options:
+
+- **Service mesh federation** (Istio multi-primary, Linkerd multi-cluster) — apps in cluster A can call services in cluster B via mesh DNS.
+- **Cluster API + GitOps** — manage many clusters declaratively from a central control plane.
+- **VPC peering / Transit Gateway** between cluster VPCs.

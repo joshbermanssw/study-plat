@@ -1,0 +1,603 @@
+---
+title: "Week 10 — Web services"
+unit: COMP4347
+week: 10
+type: overview
+status: done
+---
+
+## What a "web service" actually is
+
+**A web service is any program-to-program conversation over HTTP (or an HTTP-like protocol).** A browser fetching `/products` is one. A mobile app posting JSON to `/orders` is another. A backend pulling rates from `payments-svc:50051` over gRPC is another. The whole week is about the *shapes* those conversations can take and the *disciplines* that keep them maintainable once real traffic hits them.
+
+The slides frame this through **Service-Oriented Architecture (SOA)** — the older idea that you compose large systems out of services that each own a piece of business capability, communicating over a network. SOA matters historically because it explains why web services exist at all: integrating heterogeneous platforms (a J2EE retail app calling a Win2K3 COM+ bank service calling a Solaris/CORBA supplier) without rewriting everything in one language. The point of "service" is **platform independence** plus **abstraction from end users**.
+
+The first major implementation was **SOAP** — XML-formatted RPC with a mandatory `Envelope`/`Body`, optional `Header`, described by **WSDL**, discoverable via **UDDI** (the "yellow pages" registry that nobody actually used). SOAP is verbose, contract-driven, and still alive in banking and government integrations.
+
+The dominant style today is **REST**, an architectural style (not a protocol) that leans on the HTTP verbs and URLs the web already had. Then come the newer shapes: **GraphQL** (one endpoint, client picks the fields) and **gRPC** (binary RPC over HTTP/2 for service-to-service), plus the cross-cutting concerns — pagination, idempotency, caching, schema docs — that make any of them survive contact with users.
+
+## REST as Fielding actually defined it
+
+**REST is a set of six architectural constraints from Roy Fielding's 2000 PhD thesis.** Most APIs called "REST" today satisfy some constraints and ignore others — that's fine in practice, but you should know which.
+
+Fielding's constraints:
+
+1. **Client–server** — separation of concerns. Clients evolve independently from servers.
+2. **Stateless** — every request contains everything needed to process it. The server keeps no per-client session for the operation itself; auth tokens count as *part of the request*, not server-side state.
+3. **Cacheable** — responses must declare whether they're cacheable so clients/intermediaries can avoid repeat work.
+4. **Uniform interface** — identified resources, manipulation through representations, self-descriptive messages, and **HATEOAS** (hypermedia as the engine of application state — the server returns links the client follows).
+5. **Layered system** — clients can't tell whether they're talking to the origin server or a proxy/CDN/load balancer in front of it.
+6. **Code on demand** (optional) — servers can ship code (JavaScript) for clients to execute.
+
+The constraint most APIs skip is HATEOAS. Pure-REST advocates argue that without hypermedia you have **RPC over HTTP**, not REST. Pragmatic teams ship without it and document the URL templates separately.
+
+**Why "stateless" is load-bearing.** If a request carries everything it needs, any replica can handle it — that's what makes horizontal scaling and CDN caching tractable. Bolt server-side sessions onto "REST" and you've thrown that away: requests must hit *the same* server (or share session state), and your nice resource-shaped API is sneakily stateful again.
+
+The slides reframe REST in plain words: **resources are addressable, identified by URI; the representation of a resource is fetched with `GET` without affecting it; the small number of generic methods (GET, POST, PUT, DELETE) plus the URI vocabulary is what makes the web simple and scalable.**
+
+## HTTP verbs and idempotency
+
+**Idempotency** means: sending the same request once or N times produces the same observable result. **Safety** means: the verb doesn't change server state at all.
+
+| Verb | Safe? | Idempotent? | Typical use |
+|---|---|---|---|
+| `GET` | yes | yes | read a resource |
+| `HEAD` | yes | yes | metadata / existence check |
+| `OPTIONS` | yes | yes | discovery, CORS preflight |
+| `PUT` | no | **yes** | full replace |
+| `DELETE` | no | **yes** | remove |
+| `PATCH` | no | usually | partial update |
+| `POST` | no | **no** | create / non-idempotent action |
+
+`GET` should never modify data. Caches, prefetchers, and search-engine crawlers assume safety — a `GET /delete/42` link will get hit by the first Googlebot that finds it and you'll lose your data.
+
+**Why idempotency matters in production: networks fail.** A `PUT /users/42` that times out can be retried without worrying about double-application; the second `PUT` overwrites with the same body and the state is the same. A `POST /payments` retry, on the other hand, could double-charge the customer. That's why payment APIs require an **idempotency key** — a client-generated UUID the server records, so a retry with the same key returns the *original* response, not a fresh charge.
+
+```http
+POST /payments HTTP/1.1
+Idempotency-Key: 4f5a9e0c-1b2d-4a3b-8c4f-9e0d2a1b3c4d
+Content-Type: application/json
+
+{"amount": 1000, "currency": "AUD", "to": "acct_42"}
+```
+
+Server logic: look up the key; if present, return the stored response. If absent, reserve it, do the work, store the response under the key with a 24h TTL, return it. On failure, *delete* the key so the client can retry cleanly.
+
+**PUT vs POST is exactly the idempotency question.** `PUT /users/42` is idempotent because the URL identifies *which user* — a retry overwrites the same one. `POST /users` is not, because each call would create a new user with a new id. If the client picks the id (`PUT /users/{uuid}`), POST collapses into idempotent PUT — common in modern designs.
+
+## Resource modelling: URLs as nouns
+
+**The URL identifies a resource; the verb describes the action.** That's the whole game. Get the resource right and the rest of the API falls out.
+
+The lecture uses a "revisions" example:
+
+| Action | URL path | Verb |
+|---|---|---|
+| Create new revision | `/revisions` | `POST` |
+| Get all revisions | `/revisions` | `GET` |
+| Get a revision | `/revisions/:id` | `GET` |
+| Update a revision | `/revisions/:id` | `PUT` (or `PATCH`) |
+| Delete a revision | `/revisions/:id` | `DELETE` |
+
+Generalising:
+
+```text
+GET    /users                 # collection
+POST   /users                 # create
+GET    /users/42              # single resource
+PUT    /users/42              # full replace
+PATCH  /users/42              # partial update
+DELETE /users/42              # remove
+
+GET    /users/42/posts        # sub-collection
+POST   /users/42/posts        # create a post owned by user 42
+GET    /users/42/posts/9      # specific post under user 42
+```
+
+Conventions worth absorbing: **pluralise collection names** (`/users`, not `/user`); **kebab-case in URLs** (`/blog-posts/3`, not `/blogPosts/3`); **no verbs in paths** (`POST /users`, not `POST /createUser`); **filter and paginate in the query string** (`/users?status=active&limit=20`, not `/users/active/page/2`).
+
+When an action doesn't map cleanly to a verb on a resource, **introduce a sub-resource** rather than a verb-y URL. Cancelling an order? Don't `POST /orders/42/cancel`; do `POST /orders/42/cancellations`. The cancellation is itself a resource — it has an id, a timestamp, a reason. The verb is `POST` (creating it).
+
+Nesting direction is **a design choice you make per domain**. The slides flag this: `/movies/ForrestGump/actors/TomHanks` and `/directors/AngLee/movies/LifeOfPi` both describe the same graph; you pick whichever direction matches how clients navigate. Don't nest more than two levels deep — clients eventually want to deep-link, and `/users/42/posts/9/comments/3/likes/7` is a maintenance horror. Expose `/comments/3` and `/likes/7` as top-level too.
+
+## Status codes for REST design
+
+**Status codes are part of the API contract.** Pick the right one and a generic HTTP client behaves correctly without your client SDK doing anything special.
+
+The ones you should reach for, and what they signal:
+
+- `200 OK` — success, with a body. Plain `GET` reads, `PUT`/`PATCH` updates that return the updated resource.
+- `201 Created` — `POST` succeeded and produced a new resource. **Set the `Location` header** to the new resource's URL.
+- `204 No Content` — success, intentionally empty body. `DELETE` and "fire-and-forget" actions.
+- `301 Moved Permanently` / `308 Permanent Redirect` — resource has a new URL; clients should update their links.
+- `304 Not Modified` — conditional `GET` matched the client's `ETag`/`If-Modified-Since`; client should reuse its cached copy.
+- `400 Bad Request` — the server couldn't parse the request (malformed JSON, missing required header).
+- `401 Unauthorized` — no credentials, or credentials invalid.
+- `403 Forbidden` — credentials fine, but you're not allowed.
+- `404 Not Found` — resource doesn't exist (or you don't have permission to know).
+- `409 Conflict` — state collision: duplicate `POST`, delete-already-deleted, optimistic-concurrency mismatch on a write.
+- `412 Precondition Failed` — `If-Match` ETag check failed (someone else wrote in between).
+- `422 Unprocessable Entity` — request was syntactically fine but semantically invalid (validation errors).
+- `429 Too Many Requests` — rate-limited. Include `Retry-After`.
+- `500 Internal Server Error` — server bug; the client did nothing wrong.
+- `503 Service Unavailable` — temporary outage / overload. Include `Retry-After`.
+
+A REST error body should be machine-parseable. **RFC 7807 ("Problem Details for HTTP APIs")** is the standard most teams converge on:
+
+```json
+{
+  "type": "https://example.com/probs/insufficient-funds",
+  "title": "Insufficient funds",
+  "status": 422,
+  "detail": "Account 42 has $5; you tried to transfer $100.",
+  "instance": "/transactions/abc"
+}
+```
+
+`type` is a stable URI for the *kind* of error (clients switch on it); `instance` identifies *this specific* failure for support / log correlation.
+
+## HATEOAS, maturity levels, and pagination
+
+**HATEOAS — Hypermedia As The Engine Of Application State — is the constraint that the server tells the client what URLs to follow next, instead of clients hardcoding URL templates.**
+
+```json
+{
+  "id": 42,
+  "name": "Ada",
+  "_links": {
+    "self":   { "href": "/users/42" },
+    "posts":  { "href": "/users/42/posts" },
+    "update": { "href": "/users/42", "method": "PATCH" }
+  }
+}
+```
+
+The client renders "Ada — view posts — edit" by walking the `_links` map, not by string-concatenating `"/users/" + id + "/posts"`. The server can change URL structure without breaking clients. Cost: more bytes per response, and clients still need to know what `posts` *means* semantically.
+
+**Richardson's Maturity Model** grades how RESTful an API really is:
+
+- **Level 0** — one URL, one HTTP verb. RPC tunnelled through HTTP (classic SOAP-over-POST).
+- **Level 1** — multiple URLs (one per resource), still mostly one verb.
+- **Level 2** — multiple URLs **and** multiple HTTP verbs with proper semantics (`GET`/`POST`/`PUT`/`DELETE`) and correct status codes. **Almost every "REST" API in the wild is Level 2.**
+- **Level 3** — adds hypermedia / HATEOAS.
+
+Very few public APIs are Level 3 (GitHub's is a famous example). Most teams accept Level 2 and use OpenAPI to document URL templates.
+
+### Pagination: offset vs cursor
+
+**Pagination matters because collections grow.** A `GET /posts` that returns the entire table is a denial-of-service waiting to happen.
+
+**Offset pagination** is the SQL `LIMIT 20 OFFSET 40` style — "page 3 of 20-row pages":
+
+```text
+GET /posts?page=3&pageSize=20
+```
+
+Easy to implement; users can jump straight to page 47. **Two failure modes:**
+
+1. **Inconsistency under writes.** If a new post is inserted between fetching page 2 and page 3, an item appears on both pages, or one gets skipped entirely. Anything that supports infinite-scroll feeds suffers.
+2. **Slow on large offsets.** The database still walks the first 40 rows just to discard them. `OFFSET 1000000` is brutal — it reads a million rows it'll never return.
+
+**Cursor pagination** uses an opaque token pointing "after this row":
+
+```text
+GET /posts?limit=20
+→ { "items": [...], "nextCursor": "eyJpZCI6OTV9" }
+
+GET /posts?limit=20&cursor=eyJpZCI6OTV9
+→ { "items": [...], "nextCursor": "eyJpZCI6NzV9" }
+```
+
+The server decodes the cursor (often `{ id: lastId }` base64'd) and queries `WHERE id < :cursor ORDER BY id DESC LIMIT 20`. **Constant-time regardless of depth, and immune to mid-pagination inserts** — the cursor names a specific row, so you always continue from there.
+
+Trade-offs: cursors don't support "jump to page 47" — only next/previous; the opaque token is harder to debug; you need a stable sort key with no ties (a `(createdAt, id)` composite is typical). **Rule of thumb:** cursor for real-time feeds, infinite scroll, or large datasets; offset for admin tables where users want random-access paging. The response should carry `nextCursor` (null at the end) and ideally a `prevCursor` for backwards navigation.
+
+### Caching with ETags
+
+**Caching is one of Fielding's six constraints, not an optional optimisation.** REST is designed so HTTP caches (browsers, CDNs, reverse proxies) can sit in front of your service for free.
+
+```http
+GET /users/42 HTTP/1.1
+
+HTTP/1.1 200 OK
+ETag: "abc123"
+Cache-Control: private, max-age=60
+Content-Type: application/json
+
+{"id":42,"name":"Ada"}
+```
+
+The `ETag` is typically a hash of the response body (or a version number on the row). On the next request the client sends `If-None-Match`:
+
+```http
+GET /users/42 HTTP/1.1
+If-None-Match: "abc123"
+
+HTTP/1.1 304 Not Modified
+```
+
+Server computes the current ETag, sees it matches, returns `304` with **no body**. The client reuses its cached copy. Cheap for the server (no JSON serialisation), cheap on the wire (no body bytes) — but the round trip still happens.
+
+`Cache-Control` directs *how long* and *who* can cache:
+
+- `public` — CDNs/proxies may cache.
+- `private` — only the end client (browser) may cache.
+- `max-age=60` — fresh for 60s; reuse without revalidating.
+- `no-cache` — must revalidate every time (but can use ETag).
+- `no-store` — don't even keep a copy (auth tokens, payment data).
+
+ETags also drive **optimistic concurrency control** on writes:
+
+```http
+PUT /users/42 HTTP/1.1
+If-Match: "abc123"
+Content-Type: application/json
+
+{"name":"Ada Lovelace"}
+
+# If someone else wrote in between:
+HTTP/1.1 412 Precondition Failed
+```
+
+The client either retries (re-fetch, re-edit, re-PUT) or shows a conflict UI. This is the "lost update" prevention pattern — without it, two simultaneous edits silently clobber each other.
+
+## GraphQL: schema, queries, mutations, subscriptions
+
+**GraphQL is a query language for APIs and a server-side runtime.** One endpoint (`POST /graphql`), one HTTP verb. The client describes exactly the fields it needs; the server returns exactly those — nothing more, nothing less.
+
+A **schema** is the contract. It's strongly typed and lives on the server:
+
+```graphql
+type User {
+  id: ID!
+  email: String!
+  posts(limit: Int = 10): [Post!]!
+}
+type Post {
+  id: ID!
+  title: String!
+  author: User!
+}
+type Query {
+  user(id: ID!): User
+  posts(authorId: ID, limit: Int = 20, cursor: String): PostConnection!
+}
+type Mutation {
+  createPost(title: String!, body: String!): Post!
+}
+type Subscription {
+  postCreated: Post!
+}
+```
+
+A `!` means non-null. Three "operation roots": `Query` (reads), `Mutation` (writes), `Subscription` (realtime).
+
+A client **query** picks fields:
+
+```graphql
+query UserWithPosts($id: ID!) {
+  user(id: $id) {
+    email
+    posts(limit: 5) {
+      title
+    }
+  }
+}
+```
+
+The response mirrors the query shape:
+
+```json
+{
+  "data": {
+    "user": {
+      "email": "ada@x.com",
+      "posts": [{ "title": "Note 1" }, { "title": "Note 2" }]
+    }
+  }
+}
+```
+
+**Strengths.** Clients request exactly what they need (saves bytes on mobile); one round trip walks an arbitrary graph; the schema doubles as documentation; codegen produces typed clients.
+
+**Trade-offs.** HTTP caching is harder (single endpoint, `POST` body) — need persisted queries or query hashing. File uploads need a separate spec. Authorisation moves from per-endpoint to per-field. A careless `posts: [Post!]!` with no pagination lets a client request *every* post in one query.
+
+**Subscriptions** push updates over a WebSocket (typically `graphql-ws`); backend uses a pub/sub (Redis Streams, NATS) to fan events across servers.
+
+### The N+1 problem and DataLoader
+
+**The single most-asked GraphQL bug.** Resolvers run *per field*. Naive resolvers look fine in isolation and are catastrophic at scale.
+
+```js
+const resolvers = {
+  Query: {
+    posts: () => db.post.findMany(),
+  },
+  Post: {
+    // runs once per post
+    author: (post) => db.user.findUnique({ where: { id: post.authorId } }),
+  },
+};
+```
+
+A query for 20 posts triggers **1 query for the posts + 20 queries for the authors = 21 round trips** to the database. With 200 posts, 201. This is the **N+1 problem**.
+
+The fix is **batching** — collect all the `author` lookups happening in this tick, issue *one* `WHERE id IN (…)` query, distribute the results. The library is **DataLoader**:
+
+```js
+import DataLoader from "dataloader";
+
+const userLoader = new DataLoader(async (ids) => {
+  const users = await db.user.findMany({ where: { id: { in: ids } } });
+  // must return results in the SAME ORDER as the input ids
+  return ids.map(id => users.find(u => u.id === id));
+});
+
+const resolvers = {
+  Post: {
+    author: (post) => userLoader.load(post.authorId),
+  },
+};
+```
+
+DataLoader batches all `userLoader.load(x)` calls within the same JS event-loop tick into a single batch function call. It also **caches** per-request — if `userLoader.load(7)` is requested twice during the same query, the second call returns the cached result without a database hit.
+
+**Key rules.** Create a *new* DataLoader per request (so the cache doesn't leak across users). The batch function must return results in the **same order** as the input keys (DataLoader maps positionally). Use DataLoader for *every* foreign-key relationship in your resolvers, not just the hot ones. The same pattern applies anywhere you have nested per-item lookups — REST endpoints that fan out, server-rendered pages resolving a list.
+
+## gRPC: binary RPC over HTTP/2
+
+**gRPC is Google's open-source RPC framework: Protocol Buffers as the IDL, HTTP/2 as the transport, code generation for client and server stubs in any language.**
+
+```proto
+// items.proto
+syntax = "proto3";
+package items;
+
+service Items {
+  rpc Get    (GetRequest)    returns (Item);
+  rpc List   (ListRequest)   returns (stream Item);     // server streaming
+  rpc Create (CreateRequest) returns (Item);
+}
+
+message Item {
+  int32  id    = 1;
+  string name  = 2;
+  double price = 3;
+}
+message GetRequest    { int32 id = 1; }
+message ListRequest   { int32 limit = 1; }
+message CreateRequest { string name = 1; double price = 2; }
+```
+
+`protoc` consumes the `.proto` file and produces typed client and server stubs in Go, Java, TypeScript, Python — whatever you ask for. You call `client.Get({ id: 42 })` and it feels like a local function; under the hood it's a Protobuf-encoded request over HTTP/2.
+
+**Why teams use gRPC for internal services.**
+
+- **Binary wire format** — Protobuf is roughly 3-10× smaller than JSON, faster to parse, and field numbers (`= 1`, `= 2`) make forward/backward compatibility explicit.
+- **HTTP/2 multiplexes** many concurrent requests over one TCP connection — no head-of-line blocking, no per-request handshake.
+- **Streaming RPCs are first-class** — server-streaming, client-streaming, bidirectional. Useful for log tailing, chat, telemetry.
+- **Deadlines propagate** end-to-end. A 100ms client deadline travels through every hop so the leaf service knows to give up.
+- **Strong contract** — the `.proto` is the source of truth; both sides regenerate from it.
+
+**Limitations.** Browsers can't speak gRPC natively — no raw HTTP/2 frame access from JavaScript. You need **gRPC-Web** plus an Envoy proxy. For *public* APIs, REST or GraphQL is friendlier; for *internal* service-to-service traffic in a polyglot stack, gRPC is the right default.
+
+## OpenAPI / Swagger
+
+**OpenAPI is a YAML/JSON document that describes your REST API: endpoints, parameters, request/response schemas, error shapes, auth.** Tools generate documentation, client SDKs, request validators, and mock servers from it.
+
+```yaml
+openapi: 3.0.3
+info:
+  title: Items API
+  version: 1.0.0
+paths:
+  /items/{id}:
+    get:
+      summary: Get an item by id
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema: { type: integer }
+      responses:
+        '200':
+          description: OK
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Item' }
+        '404':
+          description: Not found
+components:
+  schemas:
+    Item:
+      type: object
+      required: [id, name]
+      properties:
+        id:    { type: integer }
+        name:  { type: string  }
+        price: { type: number, minimum: 0 }
+```
+
+The spec is only useful if you *generate* things from it. Common pipeline:
+
+```bash
+# Generate TypeScript types from the spec
+npx openapi-typescript ./openapi.yaml -o ./api-types.ts
+```
+
+```ts
+import createClient from "openapi-fetch";
+import type { paths } from "./api-types";
+
+const client = createClient<paths>({ baseUrl: "https://api.example.com" });
+
+const { data, error } = await client.GET("/items/{id}", {
+  params: { path: { id: 42 } },
+});
+// `data` is typed Item | undefined; `error` is the documented error shape.
+```
+
+**Swagger UI** renders an interactive "try it" console from the spec. **Prism** runs a mock server straight from the spec, so frontend can build against the contract before backend exists. **Spectral** lints the spec for design-rule violations.
+
+**Single source of truth matters.** If the spec is hand-maintained next to handwritten controllers, it drifts within a sprint. Either go **code-first** (annotations like `@nestjs/swagger` emit the spec on build) or **schema-first** (Zod / TypeBox schemas → emitted OpenAPI via `zod-to-openapi`, same schemas validate at runtime). **One source, many outputs** — never hand-edit the YAML if the controllers are authoritative.
+
+## REST vs GraphQL vs gRPC: choosing
+
+**There's no single best; each shape fits different traffic.** A short decision guide.
+
+**Pick REST when:**
+
+- Public-facing API, especially one consumed by third parties.
+- Heavy read traffic that benefits from HTTP caching / CDNs (`GET` with ETags is unbeatable).
+- Resources map cleanly to CRUD shapes (users, orders, posts).
+- You want zero-tooling discoverability — anyone can hit it with `curl`.
+
+**Pick GraphQL when:**
+
+- Many client types (web, iOS, Android, smart TV) each wanting different shapes of the same data graph. One schema serves all.
+- Mobile clients on bad networks where bytes matter — they request only the fields they render.
+- The data is a deeply connected graph (`user → posts → comments → author → posts`) and round trips dominate.
+- You want strongly typed client codegen as a first-class concern.
+
+**Pick gRPC when:**
+
+- Internal microservice-to-microservice traffic where you control both ends.
+- Latency and throughput matter (high-frequency RPCs, streaming telemetry, video pipelines).
+- Polyglot stack — generated stubs in Go, Java, Rust, Python share one `.proto`.
+- You need streaming or bidirectional channels and don't want to invent your own framing.
+
+**The slides' framing.** COMP4347 emphasises SOAP vs REST contrast (SOAP being the historical baseline). Exam expectations: design a RESTful URL scheme + verb mapping, write or critique an Express route exposing/consuming a REST endpoint, contrast SOAP (XML, WS-\*, WSDL, UDDI) with REST (JSON, stateless, URL-as-resource, no central registry).
+
+**You don't pick one for the whole system.** It's normal to expose a public REST or GraphQL gateway, with gRPC internally between services. The gateway translates protocols and concentrates cross-cutting concerns (auth, rate limiting, logging) at the edge.
+
+## Building REST endpoints in Express
+
+**Express maps URL patterns to handler functions; route parameters become `req.params`, query strings become `req.query`, request bodies become `req.body` (with the right middleware).**
+
+```js
+const express = require("express");
+const app = express();
+app.use(express.json()); // parses JSON request bodies
+
+// route parameters: :userId, :bookId become req.params.userId, etc.
+app.get("/users/:userId/books/:bookId", (req, res) => {
+  res.send(req.params);
+});
+
+// collection
+app.get("/revisions", async (req, res) => {
+  const { title } = req.query;       // /revisions?title=BBC
+  const docs = title
+    ? await Revision.find({ title })
+    : await Revision.find({});
+  res.json(docs);                     // 200 OK + JSON body
+});
+
+// single item
+app.get("/revisions/:id", async (req, res) => {
+  const doc = await Revision.findById(req.params.id);
+  if (!doc) return res.status(404).json({ error: "Not found" });
+  res.json(doc);
+});
+
+// create
+app.post("/revisions", async (req, res) => {
+  const doc = await Revision.create(req.body);
+  res.status(201).location(`/revisions/${doc._id}`).json(doc);
+});
+
+// replace
+app.put("/revisions/:id", async (req, res) => {
+  const doc = await Revision.findByIdAndUpdate(req.params.id, req.body, { new: true, runValidators: true });
+  if (!doc) return res.status(404).end();
+  res.json(doc);
+});
+
+// delete
+app.delete("/revisions/:id", async (req, res) => {
+  const { deletedCount } = await Revision.deleteOne({ _id: req.params.id });
+  if (deletedCount === 0) return res.status(404).end();
+  res.status(204).end();
+});
+```
+
+The lecture splits this into **model / controller / route** files:
+
+```js
+// model
+RevisionSchema.statics.getByTitle = function (title, cb) {
+  return this.find({ title }).exec(cb);
+};
+
+// controller
+exports.getByTitle = (req, res) => {
+  Revision.getByTitle(req.params.title, (err, result) => {
+    if (err) return res.status(500).json({ error: err.message });
+    res.json(result);
+  });
+};
+
+// route
+router.get("/revisions/:title", controller.getByTitle);
+app.use("/revision", router);  // final URL: /revision/revisions/:title
+```
+
+Three places client data arrives: **route parameters** (`/users/:userId` → `req.params.userId`, identifies *which* resource); **query string** (`?status=active&limit=20` → `req.query.status`, for filter/paginate/sort); **request body** (JSON/form → `req.body`, needs `express.json()` middleware, for create/update payloads).
+
+### Consuming REST services from a server
+
+**Sometimes your Express app is the *client* — it needs to call out to another web service and forward/transform the data.** Modern Node has `fetch` built in (since Node 18):
+
+```js
+async function getWikipediaRevisions(title) {
+  const params = new URLSearchParams({
+    action:  "query",
+    format:  "json",
+    prop:    "revisions",
+    titles:  title,
+    rvprop:  "timestamp|userid|user|ids",
+    rvlimit: "max",
+  });
+  const url = `https://en.wikipedia.org/w/api.php?${params}`;
+
+  const res = await fetch(url, { headers: { Accept: "application/json" } });
+  if (!res.ok) throw new Error(`Wikipedia returned ${res.status}`);
+  const json = await res.json();
+
+  const pages = json.query.pages;
+  const firstPage = pages[Object.keys(pages)[0]];
+  return firstPage.revisions ?? [];
+}
+```
+
+The lecture's older example uses raw `https` with callbacks:
+
+```js
+const https = require("https");
+https.get({
+  host: "en.wikipedia.org",
+  path: "/w/api.php?action=query&format=json&prop=revisions&titles=australia",
+  headers: { Accept: "application/json" },
+}, (res) => {
+  let data = "";
+  res.on("data", (chunk) => { data += chunk; });   // streams in chunks
+  res.on("end",  () => { JSON.parse(data); /* ... */ });
+}).on("error", (e) => console.log(e));
+```
+
+Two slide gotchas worth absorbing: **responses arrive in chunks** (concatenate the `data` events before parsing — `fetch().json()` hides this); and the **`error` event fires on the request object**, not on `res`. Wrap any third-party API behind your own service class so you can mock it in tests, add retries / circuit breakers, and keep auth concerns in one place.
+
+## Common exam patterns
+
+- **Safe vs idempotent.** `GET`/`HEAD` are *both*. `PUT`/`DELETE` are idempotent but not safe. `POST` is *neither*. `PATCH` is usually not idempotent (depends on the patch format).
+- **Status-code picking.** Created (`201` + `Location`), deleted (`204`), validation failure (`422`), state conflict / duplicate (`409`), missing auth (`401`) vs forbidden (`403`), rate-limited (`429` + `Retry-After`), optimistic-concurrency mismatch (`412`).
+- **Design a URL scheme.** Given a domain ("revisions", "movies/actors", "orders/cancellations"), produce the CRUD table: collection vs single resource, sub-resources, verbs per row. Pluralise. No verbs in paths. Filters in the query string.
+- **Stateless argument.** Why is statelessness load-bearing? Because any replica can answer any request → horizontal scale + caching. Pin sessions and you've broken both.
+- **Idempotency keys.** When does `POST` need them? Payments, anything externally observable, anything you'd cry about doing twice. Server stores `key → response` with TTL; retries return the stored response.
+- **N+1 in GraphQL.** Spot the per-field resolver doing one DB lookup per parent. Fix with DataLoader: one batch function, returned in the *same order* as input keys, new instance per request.
+- **Offset vs cursor pagination.** Offset: slow at large offsets, inconsistent under writes. Cursor: constant-time, stable under writes, but no random-access. Pick cursor for feeds/infinite scroll.
+- **SOAP vs REST contrast.** SOAP: XML-over-HTTP RPC, mandatory `Envelope`/`Body`, WSDL describes, UDDI discovers (unused), strict contract. REST: resource-centric, HTTP verbs as actions, JSON typical, stateless, URL-as-identifier.
+- **HATEOAS / Richardson levels.** Level 0 = RPC-in-HTTP; Level 1 = many URLs; Level 2 = many URLs + correct verbs and codes (most real APIs); Level 3 = hypermedia.
+- **REST vs GraphQL vs gRPC.** Public REST; mobile data-graphs GraphQL; internal microservices gRPC. Be ready to justify in one sentence per option.
+- **Express route critique.** Given a buggy route, identify: wrong verb, wrong status code (`200` for a create instead of `201`), missing `Location` header on create, missing error handling on `findById` returning `null`, body-parser middleware missing so `req.body` is `undefined`.
+- **Chunked response handling.** Why does the raw `https.get` example concatenate `data` across multiple `data` events? Because the body is streamed; one event ≠ one full body.

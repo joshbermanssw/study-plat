@@ -1,0 +1,307 @@
+---
+title: "Week 13 — Unit of Study Review"
+unit: COMP4349
+week: 13
+type: overview
+status: done
+---
+
+Week 13 is your last lift before the exam. The unit outline calls out Weeks 5 (Networking), 6 (Security), and 11 (Kubernetes) as the heaviest exam topics — but past papers reliably draw from every week. This review distils the top themes, the comparison tables you will be asked to recite, the common question patterns, and a worked past-paper-style multi-part scenario.
+
+## Top exam themes — what consistently appears
+
+From every recent paper:
+
+1. **Define cloud computing and the service/deployment models** — quote NIST, list the five essential characteristics, place AWS services on the IaaS/PaaS/SaaS/FaaS spectrum.
+2. **Pick the storage class for an access pattern** — Standard vs IA vs One Zone-IA vs Glacier tiers; lifecycle policies.
+3. **Multi-AZ vs Read Replicas vs Aurora replicas** — synchronous vs async, HA vs read scaling.
+4. **Design a 3-tier VPC topology** — subnets, route tables, IGW, NAT GW, SGs vs NACLs.
+5. **Read an IAM JSON policy and predict the decision** — explicit deny > explicit allow > implicit deny.
+6. **CloudWatch + ASG + ALB** — design an elastic web tier; explain target tracking, ELB health checks.
+7. **Read or write a CloudFormation snippet** — parameters, resources, intrinsic functions, outputs.
+8. **Decoupling with SQS / SNS / EventBridge** — fan-out pattern, queue vs topic, idempotency.
+9. **ECS task definition + service + ALB target group** — dynamic port mapping, Fargate vs EC2 launch type.
+10. **Kubernetes vocabulary and YAML** — Pod, Deployment, Service, Ingress, HPA, IRSA.
+11. **Lambda execution model + two permission planes** — invoke (resource policy) vs execute (IAM role).
+12. **Pick the right compute (EC2 / ECS / Lambda)** for a given workload.
+
+Each of these has a comparison table or design diagram associated. Drill until the diagrams are reflex.
+
+## Comparison table — RDS vs Aurora vs DynamoDB
+
+| Dimension | RDS (MySQL/PostgreSQL/etc.) | Aurora (MySQL/PG compatible) | DynamoDB |
+|---|---|---|---|
+| Type | Managed relational | Cloud-native relational | Managed NoSQL key/value/document |
+| Engines | MySQL, PG, MariaDB, Oracle, SQL Server | MySQL-compatible, PG-compatible | n/a (proprietary) |
+| Storage | EBS attached to instance | Distributed across 3 AZs, 6 copies, 4/6 write quorum | Managed; per-table |
+| Max read replicas | 5 (async) | 15 (sub-10 ms replication via shared storage) | N/A — scale through partitions |
+| Multi-AZ HA | Sync standby | Built-in via storage layer | Multi-region with Global Tables |
+| Cross-region | Read replicas / snapshots | Aurora Global Database (&lt;1 s lag) | DynamoDB Global Tables |
+| Consistency | Strong | Strong | Eventually consistent default; strong on demand |
+| ACID | Yes | Yes | Limited (single-item ACID; transactions API) |
+| Joins | Yes | Yes | No (denormalise) |
+| Scaling | Vertical + read replicas | Vertical + 15 replicas; Aurora Serverless v2 | Horizontal, automatic |
+| Use case | Lift-and-shift OLTP | Cloud-native OLTP; need 15 reads | Massive scale key/document |
+
+## Comparison table — ALB vs NLB vs CLB vs GWLB
+
+| Property | ALB | NLB | CLB | GWLB |
+|---|---|---|---|---|
+| OSI Layer | 7 (HTTP/HTTPS/gRPC) | 4 (TCP/UDP/TLS) | 4 + 7 | 3 (IP via GENEVE) |
+| Routing | Host, path, headers, methods, query, source IP | 5-tuple | Limited | n/a |
+| Latency | ~ms | sub-ms | ms | depends on appliance |
+| Static IPs | No (DNS) | Yes (per AZ) | No | n/a |
+| Source IP preserved | No (X-Forwarded-For) | Yes | No | Yes |
+| Auth integration | Cognito / OIDC | No | No | No |
+| Targets | Instance, IP, Lambda | Instance, IP, ALB | Instance | Appliance |
+| Best for | Modern web/microservice | High-throughput TCP, gaming, mTLS pass-through | Legacy | Inserting firewalls/IDS |
+
+## Comparison table — ECS vs EKS vs Lambda
+
+| Aspect | ECS | EKS | Lambda |
+|---|---|---|---|
+| Workload unit | Task (1+ containers) | Pod (1+ containers) | Function |
+| Orchestrator | AWS-native | Upstream Kubernetes | AWS-native |
+| Portability | AWS-only | Multi-cloud, on-prem | AWS-only (with adapters elsewhere) |
+| Idle cost | Pay for instances (EC2 launch) or 0 (Fargate) | Control plane $\$$, nodes pay-while-up | Zero idle |
+| Max runtime | Unbounded | Unbounded | 15 min |
+| Compute options | EC2, Fargate, ECS Anywhere | Managed nodes, Self-managed, Fargate | Firecracker microVMs only |
+| Per-workload IAM | Task role | IRSA / Pod Identity | Execution role |
+| Best for | AWS-only container workloads, simpler ops | Already on K8s, multi-cloud, large ecosystem | Spiky/event-driven, short tasks |
+
+## Comparison table — SQS vs SNS vs EventBridge
+
+| Property | SQS | SNS | EventBridge |
+|---|---|---|---|
+| Model | Point-to-point queue | Pub/sub topic | Event bus + rules |
+| Distribution | One-to-one | One-to-many | One-to-many with routing |
+| Delivery | Pull (consumer polls) | Push | Push |
+| Persistence | Durable until consumed (up to 14 days) | None (best-effort) | None |
+| Filtering | n/a | Subscription filter policies | Rich JSON pattern matching |
+| Ordering | Standard: best-effort; FIFO: yes | Standard: best-effort; FIFO: yes (SQS subs only) | n/a |
+| Schemas | None | None | Schema registry |
+| Targets | Consumers | HTTP, SQS, Lambda, email, SMS, mobile push, Firehose | 25+ AWS targets, partner sources, custom |
+| Sched / cron | No | No | Yes (EventBridge Scheduler) |
+| Best for | Buffering work for workers | Fan-out to multiple subscribers | Modern serverless event routing |
+
+## Comparison table — Multi-AZ vs Read Replica vs Aurora
+
+| Property | RDS Multi-AZ | RDS Read Replica | Aurora replica |
+|---|---|---|---|
+| Purpose | HA | Read scaling | Both |
+| Replication | Synchronous | Asynchronous | Storage-level shared |
+| Reads from standby? | No | Yes | Yes |
+| Lag | None | Seconds | &lt;10 ms |
+| Max count | 1 standby | 5 | 15 |
+| Cross-region | No (within Region) | Yes | Aurora Global Database |
+| Failover | Automatic, ~60-120s | Manual promotion | Automatic within cluster |
+
+## Comparison table — Synchronous vs Asynchronous
+
+| Property | Synchronous | Asynchronous |
+|---|---|---|
+| Replication | RDS Multi-AZ, EBS within AZ | RDS Read Replicas, S3 CRR, Aurora Global secondary |
+| RPO | Zero | Non-zero (seconds typically) |
+| Cross-region practical? | No (latency too high) | Yes |
+| Cost | Slightly higher (double writes) | Lower |
+| Use | HA | DR, latency, scaling |
+
+## Comparison table — On-demand vs Reserved vs Spot vs Savings Plans
+
+| Pricing | Commitment | Discount | Best for |
+|---|---|---|---|
+| On-demand | None | 0% | Bursty/unknown |
+| Reserved Instance | 1 or 3 yr, specific family/Region | up to 72% | Steady baseline |
+| Compute Savings Plan | 1 or 3 yr, $/hr commit across EC2/Fargate/Lambda | up to 66% | Flexible steady |
+| Spot | None, can be reclaimed with 2 min notice | up to 90% | Fault-tolerant batch |
+
+## Past-paper question patterns
+
+### Pattern 1 — "Choose and justify"
+
+You are given a workload description (peak RPS, latency requirement, regulatory constraint, budget pressure) and asked to choose AWS services + justify.
+
+Approach:
+
+1. Restate the workload's key constraints in one sentence.
+2. For each major component (compute, storage, database, network, security), name the service and one or two pillar/Well-Architected justifications.
+3. Always mention HA via multi-AZ for production-grade.
+4. Always mention IAM and encryption (you get marks for free).
+5. Sketch a diagram.
+
+### Pattern 2 — "Read the policy"
+
+You are given an IAM JSON policy and asked "can user X do action Y?" or "what happens if Z?"
+
+Approach:
+
+1. Identify all statements relevant to the action/resource.
+2. Apply explicit deny first (any match → deny).
+3. Apply explicit allow (any match → allow).
+4. Otherwise implicit deny.
+5. Watch for conditions (IP, tags, region) — verify the request would satisfy them.
+
+### Pattern 3 — "Design a topology"
+
+"Draw a 3-tier highly available VPC topology for application X in `ap-southeast-2`."
+
+Sketch:
+
+- VPC `10.0.0.0/16`, two AZs (`a` and `b`).
+- Public subnets `10.0.0.0/20`, `10.0.16.0/20` with route to IGW; ALB + NAT GW in each.
+- Private app subnets `10.0.32.0/20`, `10.0.48.0/20` with route to NAT in same AZ; ASG of EC2 / ECS tasks.
+- Private DB subnets `10.0.64.0/20`, `10.0.80.0/20`; RDS Multi-AZ.
+- Security groups: sg-alb (443 from internet) → sg-app (80 from sg-alb) → sg-db (3306 from sg-app).
+- VPC endpoints for S3 and Secrets Manager.
+
+Annotate every box; mark every route.
+
+### Pattern 4 — "Compare with justification"
+
+"Compare A and B for workload X. Recommend one."
+
+Approach:
+
+1. Write a quick three-row table contrasting the relevant axes (latency, cost, operational burden, scaling model).
+2. Pick one explicitly and tie back to the workload constraints.
+3. Note the trade-off you accept.
+
+### Pattern 5 — "Identify the anti-pattern"
+
+You are given a diagram or code and asked what's wrong.
+
+Common targets:
+
+- Recursive S3 → Lambda → same S3.
+- Lambda calling Lambda synchronously waiting.
+- SG allowing 0.0.0.0/0 on port 22.
+- Public S3 bucket holding PII.
+- Single-AZ DB.
+- Hardcoded access keys.
+- Tightly-coupled monolith where a microservice would isolate failure.
+
+## Exam strategy
+
+1. **Read the question twice** before writing. Underline what's actually asked. The marks are in the verbs (define, compare, design, justify, evaluate).
+2. **Plan the answer in 1 minute**. Even for a 5-mark question, jot keywords. Avoid stream-of-consciousness.
+3. **Lead with definition + named example**. "Lambda is AWS's Function-as-a-Service offering — for example, an image-resize function triggered by an S3 ObjectCreated event."
+4. **Always name the Well-Architected pillar** you're satisfying when you design. "Multi-AZ RDS satisfies the Reliability pillar." Cheap marks.
+5. **Always draw the topology in the margin** if the question touches networking, even if not explicitly asked. Markers reward you for showing the picture.
+6. **Cite limits when you know them**. "Lambda has a 15-minute max duration." "S3 objects up to 5 TB." "Multi-AZ failover within 60-120 seconds." Cited specifics signal mastery.
+7. **Manage time**. Roughly 1 mark per minute. If you're at 1 min for 1 mark and still writing, move on.
+8. **Don't write what wasn't asked**. If the question says "compare A and B", you don't need to introduce C. Mark schemes are tight.
+
+## Worked example — a multi-part past-paper-style question
+
+> Scenario: SaaSpoclypse Pty Ltd is launching a SaaS image-recognition product. Customers upload images via mobile app; results are returned within 1 second. Traffic is bursty (1 to 5000 requests per second). Images are kept for 30 days then archived for 7 years for legal reasons. Customers in EU must have data residency in `eu-west-1`.
+>
+> (a) Describe a serverless architecture (4 marks).
+> (b) Specify storage classes and lifecycle (3 marks).
+> (c) Identify two IAM permission planes for the Lambda function (2 marks).
+> (d) How does your design address data residency? (2 marks).
+> (e) Identify two anti-patterns to avoid (3 marks).
+> (f) Compare your design against an ECS-Fargate alternative (3 marks).
+
+### Sketched answer
+
+**(a) Serverless architecture (4 marks).**
+
+Mobile app → Amazon API Gateway HTTP API → AWS Lambda (image-recognition function, Python with Amazon Rekognition SDK call, memory 3008 MB for proportional CPU). Lambda reads uploaded image from S3 (the API Gateway returns a pre-signed PUT URL on a separate `/upload-url` endpoint; mobile uploads directly). Results written to DynamoDB (`user_id` partition, `upload_id` sort). Async pipeline: S3 ObjectCreated → SNS → SQS → Lambda for post-processing (thumbnails). Each function has its own execution role; provisioned concurrency of 20 keeps cold starts &lt;100 ms.
+
+**(b) Storage classes and lifecycle (3 marks).**
+
+S3 Standard for first 30 days (frequent reads on the user's gallery). Lifecycle rule transitions to S3 Glacier Flexible Retrieval at day 30 (cheap, minutes-hours retrieval acceptable for legal review). Expiration at day 7 * 365 + 30 = 2585 days. Versioning enabled to protect against accidental delete; Object Lock in compliance mode for the 7-year window.
+
+**(c) Two permission planes (2 marks).**
+
+(i) **Resource-based policy on the Lambda function** — allows `apigateway.amazonaws.com` (with SourceArn = API stage ARN) to call `lambda:InvokeFunction`. Allows `s3.amazonaws.com` (with SourceArn = the upload bucket) for the async post-processing Lambda.
+
+(ii) **Execution role on the Lambda function** — allows `s3:GetObject` on the upload bucket, `rekognition:DetectLabels` on `*`, `dynamodb:PutItem` on the results table, and the standard `logs:*` for CloudWatch Logs.
+
+**(d) Data residency (2 marks).**
+
+Deploy a separate stack in the `eu-west-1` Region for EU customers. Route 53 latency-based or geo-routing policy directs EU mobile clients to the EU API Gateway. EU S3 bucket lives in `eu-west-1`; cross-region replication is *disabled* to prevent leakage. EU CloudFormation parameters force resources to `eu-west-1` only.
+
+**(e) Two anti-patterns (3 marks).**
+
+1. **Recursive S3 → Lambda → same S3** — would cause an infinite loop. Mitigated by writing thumbnails to a *different* bucket (`processed-images`).
+2. **Lambda monolith handling both sync API and async post-processing in one function** — different access patterns, different scaling needs, harder to apply least privilege. Split into two functions.
+
+**(f) ECS-Fargate alternative (3 marks).**
+
+| Aspect | Serverless (Lambda) | ECS Fargate |
+|---|---|---|
+| Idle cost | ~zero | Pays for running tasks |
+| Scaling latency | Near-instant, cold starts | Service Auto Scaling adds tasks (~30 s) |
+| Max duration | 15 min | Unbounded |
+| Operational burden | Lower | Higher (task definitions, ALB) |
+
+Lambda wins on cost and scale for bursty 1-5000 RPS; Fargate would be better if average load was steady at >2000 RPS (Lambda's per-invocation costs dominate at high steady scale). Recommend Lambda for this workload.
+
+---
+
+That's the standard depth and structure of a full-marks answer.
+
+## Final checklist before exam day
+
+- Can you name the five NIST characteristics? Yes / No.
+- Can you place RDS, Lambda, S3, EC2, Salesforce in the right service model? Yes / No.
+- Can you sketch a 3-tier VPC with two AZs, route tables, IGW + NAT, SG rules? Yes / No.
+- Can you read an IAM policy and apply the deny-allow-implicit-deny rule? Yes / No.
+- Can you write a CloudFormation snippet for an EC2 instance with parameter and output? Yes / No.
+- Can you list the 6 Well-Architected pillars? Yes / No.
+- Can you name the right service for each of: pub/sub, queue, event bus, state machine? Yes / No.
+- Can you explain why Aurora is 4/6 write quorum? Yes / No.
+- Can you state the two Lambda permission planes? Yes / No.
+- Can you contrast Multi-AZ vs Read Replica in one sentence each? Yes / No.
+
+If any "No": revisit that week's teach file before the exam. Good luck.
+
+## Quick-recall capsules — definitions you must produce on demand
+
+These are the one-line definitions that buy you the first mark on definition questions. Drill until reflexive:
+
+- **Cloud computing** — On-demand network access to a shared pool of configurable computing resources that can be rapidly provisioned and released with minimal management effort (NIST).
+- **IaaS** — Customer manages OS+runtime+app+data; provider manages hypervisor below. Example: EC2.
+- **PaaS** — Customer manages app+data; provider manages OS+runtime+infra. Example: Elastic Beanstalk.
+- **SaaS** — Customer manages data only; provider runs the application. Example: Salesforce.
+- **FaaS** — Customer provides a function; provider runs it on demand, scaling from zero. Example: AWS Lambda.
+- **Region** — A geographic area with multiple AZs; isolated jurisdiction.
+- **Availability Zone** — An isolated set of data centres within a Region with low-latency inter-AZ links.
+- **Edge Location** — A CDN/PoP for CloudFront and Route 53; serves cached content close to users.
+- **RPO** — Maximum acceptable data loss expressed in time.
+- **RTO** — Maximum acceptable downtime.
+- **HA** — Tolerates failure of a part of the system within a Region (usually an AZ).
+- **DR** — Tolerates failure of an entire Region.
+- **Synchronous replication** — Write returns only after the secondary acknowledges; RPO = 0.
+- **Asynchronous replication** — Write returns immediately; replicates in background; non-zero RPO.
+- **Shared responsibility model** — AWS secures of the cloud (infra); customer secures in the cloud (config, data).
+- **Well-Architected** — Six pillars: Operational Excellence, Security, Reliability, Performance Efficiency, Cost Optimisation, Sustainability.
+- **ACID** — Atomicity, Consistency, Isolation, Durability.
+- **BASE** — Basically Available, Soft state, Eventually consistent.
+- **CAP theorem** — At most two of Consistency, Availability, Partition tolerance.
+- **Idempotency** — Multiple identical requests have the same effect as one.
+- **Least privilege** — Grant the minimum permissions needed to do the job.
+
+## Pillars-to-services mapping (for "name the pillar" marks)
+
+- **Operational Excellence** — CloudFormation, CodePipeline, CloudWatch, AWS Config.
+- **Security** — IAM, KMS, Cognito, WAF, Shield, GuardDuty, Macie, CloudTrail, Security Hub.
+- **Reliability** — Multi-AZ RDS, ASG, Route 53 health checks, Aurora Global Database, S3 Cross-Region Replication.
+- **Performance Efficiency** — CloudFront, ElastiCache, Aurora Serverless, Compute Optimizer.
+- **Cost Optimisation** — Cost Explorer, Budgets, Savings Plans, Spot Instances, S3 Intelligent-Tiering.
+- **Sustainability** — Graviton instances, right-sizing, choosing low-carbon Regions.
+
+## Final wrap
+
+You've covered:
+
+- The conceptual foundations (Weeks 1, 13).
+- Storage at every layer (Week 2).
+- Compute from VMs (Week 3) to containers (Week 10) to serverless (Week 12) to Kubernetes (Week 11).
+- Data (Week 4).
+- Networking (Week 5) and Security (Week 6).
+- Observability and elasticity (Week 7).
+- Automation (Week 8) and decoupling (Week 9).
+
+The exam patterns are stable across years; the comparison tables in this file are the highest-value drill targets. Spend your last few hours testing yourself on them rather than re-reading prose. Sketch the three-tier VPC and the canonical S3 to SNS to SQS to Lambda fan-out from memory at least twice. You'll be ready.

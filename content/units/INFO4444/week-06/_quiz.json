@@ -1,0 +1,319 @@
+{
+  "unit": "INFO4444",
+  "week": 6,
+  "topic": "IP protection: methods and strategies",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "Which form of IP protects an invention that is novel, useful, and non-obvious?",
+      "choices": [
+        "Trademark",
+        "Copyright",
+        "Patent",
+        "Trade secret"
+      ],
+      "correctIndex": 2,
+      "explanation": "Patents protect inventions meeting the novelty / utility / non-obviousness tests. Trademarks protect brand identifiers, copyright protects expression of ideas, trade secrets rely on secrecy."
+    },
+    {
+      "id": "q2",
+      "stem": "The standard term of a utility patent from filing is typically:",
+      "choices": [
+        "5 years",
+        "10 years",
+        "20 years",
+        "Life of the inventor plus 70 years"
+      ],
+      "correctIndex": 2,
+      "explanation": "Most jurisdictions grant utility patents for 20 years from filing date. Life-plus-70 is the copyright term, not patent."
+    },
+    {
+      "id": "q3",
+      "stem": "What is the duration of trademark protection?",
+      "choices": [
+        "20 years from filing",
+        "Life of the registrant plus 70 years",
+        "Indefinite, as long as the mark remains in use and is renewed",
+        "10 years, non-renewable"
+      ],
+      "correctIndex": 2,
+      "explanation": "Trademarks can be renewed indefinitely as long as the mark remains in commercial use. Coca-Cola has been trademarked since 1893."
+    },
+    {
+      "id": "q4",
+      "stem": "Copyright in most jurisdictions (including Australia) lasts for:",
+      "choices": [
+        "20 years from creation",
+        "Life of the author plus 70 years for individual works",
+        "Indefinite if registered",
+        "50 years from publication"
+      ],
+      "correctIndex": 1,
+      "explanation": "Life-plus-70 is the standard copyright term in Berne Convention countries for individual works."
+    },
+    {
+      "id": "q5",
+      "stem": "The Coca-Cola formula is famously protected as a:",
+      "choices": [
+        "Patent",
+        "Trademark",
+        "Copyright",
+        "Trade secret"
+      ],
+      "correctIndex": 3,
+      "explanation": "The formula has been a trade secret since 1886. A patent would have expired more than 100 years ago; a trade secret persists as long as secrecy is maintained."
+    },
+    {
+      "id": "q6",
+      "stem": "Which is the key trade-off in choosing a patent over a trade secret?",
+      "choices": [
+        "Patents are cheaper to obtain.",
+        "Patents require public disclosure in exchange for a limited monopoly; trade secrets keep information private but offer no protection against independent discovery or lawful reverse engineering.",
+        "Patents last forever; trade secrets do not.",
+        "Trade secrets require registration; patents do not."
+      ],
+      "correctIndex": 1,
+      "explanation": "The patent-vs-secret decision turns on disclosure: patent = disclose now, exclude for 20 years; secret = keep private forever, but lose if someone independently discovers or reverse-engineers."
+    },
+    {
+      "id": "q7",
+      "stem": "Copyright protects:",
+      "choices": [
+        "Ideas themselves",
+        "The specific expression of ideas, not the ideas themselves (idea-expression dichotomy)",
+        "Inventions that are novel, useful, and non-obvious",
+        "Trade names and logos"
+      ],
+      "correctIndex": 1,
+      "explanation": "The idea-expression dichotomy is fundamental: copyright protects how you expressed the idea (text, code, image), not the underlying idea."
+    },
+    {
+      "id": "q8",
+      "stem": "Apple's lawsuit against Samsung over the rectangular phone with rounded corners and grid of app icons primarily concerned:",
+      "choices": [
+        "Utility patents",
+        "Design patents (ornamental appearance)",
+        "Trade secrets",
+        "Copyright on iOS"
+      ],
+      "correctIndex": 1,
+      "explanation": "Design patents protect the ornamental appearance of a product. The Apple-Samsung dispute featured both utility and design patents but the iconic claims were design-patent claims."
+    },
+    {
+      "id": "q9",
+      "stem": "Which is a primary risk of relying on a trade secret rather than a patent?",
+      "choices": [
+        "Trade secrets are unenforceable.",
+        "If a competitor independently develops the same invention or lawfully reverse-engineers your product, you have no protection.",
+        "Trade secrets must be renewed annually.",
+        "Trade secrets cannot cover software."
+      ],
+      "correctIndex": 1,
+      "explanation": "Trade secrets only protect against breach of confidence or theft. Independent discovery and lawful reverse engineering defeat the protection."
+    },
+    {
+      "id": "q10",
+      "stem": "Which IP type arises AUTOMATICALLY on creation without registration in most jurisdictions?",
+      "choices": [
+        "Patent",
+        "Trademark",
+        "Copyright",
+        "Trade secret (does not arise automatically — requires secrecy measures)"
+      ],
+      "correctIndex": 2,
+      "explanation": "Copyright arises automatically on creation in Berne Convention countries. Registration is optional but useful for litigation."
+    },
+    {
+      "id": "q11",
+      "stem": "A pharmaceutical company holds many patents on chemical analogues around its lead compound. This is best classified as:",
+      "choices": [
+        "A defensive patent strategy via cross-licensing",
+        "An offensive (blocking) patent strategy",
+        "A patent troll strategy",
+        "Trade-secret protection"
+      ],
+      "correctIndex": 1,
+      "explanation": "Blocking patents around a lead compound prevent competitors from making minor variants. Classical offensive patent strategy in pharma."
+    },
+    {
+      "id": "q12",
+      "stem": "A 'patent troll' (non-practising entity) is a firm that:",
+      "choices": [
+        "Manufactures patented products in large volumes.",
+        "Holds patents without producing products and earns income by suing operating companies for infringement.",
+        "Files defensive patents only.",
+        "Donates patents to the public domain."
+      ],
+      "correctIndex": 1,
+      "explanation": "NPEs hold and litigate patents without operating products. Controversial; targeted by reforms like Alice and IPR proceedings in the US."
+    },
+    {
+      "id": "q13",
+      "stem": "Tesla's 2014 decision to allow others to use its EV patents 'in good faith' is best understood as:",
+      "choices": [
+        "Pure altruism with no strategic value.",
+        "An open-innovation move to accelerate EV market growth, expanding the pie in which Tesla holds the strongest position.",
+        "Required by regulation.",
+        "Defensive cross-licensing."
+      ],
+      "correctIndex": 1,
+      "explanation": "Tesla framed it as removing IP friction to grow the EV market — expanding the total addressable market in which Tesla had a head start in batteries, charging, and brand."
+    },
+    {
+      "id": "q14",
+      "stem": "A patent POOL (e.g. MPEG-LA) is used primarily to:",
+      "choices": [
+        "Reduce the cost of filing patents.",
+        "Aggregate overlapping patents from multiple owners so licensees can obtain a bundled license, navigating the patent thicket.",
+        "Eliminate the need for patents.",
+        "Replace trade secrets."
+      ],
+      "correctIndex": 1,
+      "explanation": "Patent pools solve the thicket problem: licensees get one license instead of dozens; owners share royalties via the pool. MPEG-LA for video codecs is canonical."
+    },
+    {
+      "id": "q15",
+      "stem": "The 'genericisation' risk of trademarks means that:",
+      "choices": [
+        "Trademarks expire after 20 years.",
+        "A trademark can be lost if it becomes the generic term for a product category (e.g. escalator, aspirin, thermos).",
+        "Trademarks cannot cover sounds or colours.",
+        "Trademarks cannot be enforced internationally."
+      ],
+      "correctIndex": 1,
+      "explanation": "Genericide: marks that become the everyday word for the category lose distinctiveness and protection. Famous near-losses include Google, Xerox, and Velcro."
+    },
+    {
+      "id": "q16",
+      "stem": "Software source code is protected by copyright. Software functionality (what the software does) is generally:",
+      "choices": [
+        "Also protected by copyright.",
+        "Not protected by copyright; requires patent (where available) or trade-secret protection.",
+        "Protected by trademark.",
+        "Unprotectable in any form."
+      ],
+      "correctIndex": 1,
+      "explanation": "Copyright protects expression (the code), not function. Functional protection requires patents (limited in EU/AU for pure software) or trade-secret protection."
+    },
+    {
+      "id": "q17",
+      "stem": "Which IP type would BEST protect a novel server-side recommender algorithm that users never see directly?",
+      "choices": [
+        "Patent only",
+        "Trade secret (with copyright on the implementation and trademark on the brand)",
+        "Trademark",
+        "Copyright on the algorithm itself"
+      ],
+      "correctIndex": 1,
+      "explanation": "Server-side, invisible algorithms are ideal trade-secret candidates: no reverse engineering risk. Copyright covers the implementation; the algorithm itself is best kept secret."
+    },
+    {
+      "id": "q18",
+      "stem": "Which is NOT a requirement for trade-secret protection?",
+      "choices": [
+        "The information must be secret.",
+        "The information must have commercial value because it is secret.",
+        "The holder must take reasonable steps to keep it secret.",
+        "The information must be registered with the trademark office."
+      ],
+      "correctIndex": 3,
+      "explanation": "Trade secrets do not require registration. The three requirements are secrecy, commercial value from secrecy, and reasonable protective measures."
+    },
+    {
+      "id": "q19",
+      "stem": "Reverse engineering of a lawfully purchased product is, in most jurisdictions:",
+      "choices": [
+        "Illegal in all cases.",
+        "Generally allowed, which is one reason trade secrets are weaker than patents for products visible to the customer.",
+        "Allowed only with the manufacturer's permission.",
+        "Allowed only for non-commercial purposes."
+      ],
+      "correctIndex": 1,
+      "explanation": "Lawful reverse engineering is generally permitted, which limits trade-secret protection for products the customer can examine."
+    },
+    {
+      "id": "q20",
+      "stem": "Which is the cleanest one-line difference between copyright and patent?",
+      "choices": [
+        "Copyright protects ideas; patents protect expressions.",
+        "Copyright protects expressions automatically; patents protect novel useful non-obvious inventions and require registration plus disclosure.",
+        "Copyright lasts 20 years; patents last life-plus-70.",
+        "Copyright requires reverse engineering; patents do not."
+      ],
+      "correctIndex": 1,
+      "explanation": "The defining contrasts: expression vs invention, automatic vs registered, no-disclosure vs disclosure-required, life-plus-70 vs 20 years."
+    },
+    {
+      "id": "q21",
+      "stem": "The 'fair use' (US) or 'fair dealing' (AU/UK) doctrines apply to:",
+      "choices": [
+        "Patent infringement",
+        "Limited unauthorised use of copyrighted material for purposes such as criticism, parody, education, or news",
+        "Trademark dilution",
+        "Trade-secret misappropriation"
+      ],
+      "correctIndex": 1,
+      "explanation": "Fair use/fair dealing are copyright exceptions, allowing limited unauthorised use for socially valuable purposes (research, news, parody, etc.)."
+    },
+    {
+      "id": "q22",
+      "stem": "A firm that files patents primarily to deter competitor litigation through cross-licensing is pursuing a:",
+      "choices": [
+        "Offensive patent strategy",
+        "Defensive patent strategy",
+        "Patent troll strategy",
+        "Trade-secret strategy"
+      ],
+      "correctIndex": 1,
+      "explanation": "Defensive portfolios deter rather than monetise. Big tech firms (Google, Microsoft, Apple) maintain large defensive portfolios precisely to enable cross-licensing."
+    },
+    {
+      "id": "q23",
+      "stem": "A startup discovers a 3D-printed alloy that performs 30% better than incumbents. It can fully describe the alloy in a patent disclosure, but the formula could also be kept secret. Which factor MOST favours filing a patent?",
+      "choices": [
+        "The startup has no intention of commercialising.",
+        "The alloy can be reverse-engineered from a finished part using metallurgical analysis.",
+        "The startup intends to operate quietly with no public profile.",
+        "Patents are cheap relative to manufacturing costs."
+      ],
+      "correctIndex": 1,
+      "explanation": "If the secret will leak via reverse engineering, the patent's 20-year exclusion is more valuable than fragile secrecy. The patent decision turns on reverse-engineerability."
+    },
+    {
+      "id": "q24",
+      "stem": "A 'moral right' under copyright law typically includes:",
+      "choices": [
+        "The right to relicence the work for any fee.",
+        "The right of attribution and the right of integrity (objecting to derogatory treatment of the work).",
+        "The right to extend copyright duration.",
+        "The right to assign trade-secret protection."
+      ],
+      "correctIndex": 1,
+      "explanation": "Moral rights (attribution + integrity) are generally inalienable and persist even when economic rights are transferred. Strong in civil-law jurisdictions; recognised in Australia since 2000."
+    },
+    {
+      "id": "q25",
+      "stem": "A patent THICKET refers to:",
+      "choices": [
+        "A backlog of patents at the patent office.",
+        "A technology area where many overlapping patents from different owners create barriers to product development, often resolved by patent pools or cross-licensing.",
+        "A failed patent application.",
+        "An expired patent."
+      ],
+      "correctIndex": 1,
+      "explanation": "Thickets (smartphones, video codecs, biotech) are dense overlapping patent claims. Navigated via patent pools (MPEG-LA), cross-licenses, or design-around engineering."
+    },
+    {
+      "id": "q26",
+      "stem": "Which combination of protections would be MOST sensible for a new SaaS product?",
+      "choices": [
+        "Patent the marketing strategy and copyright the company name.",
+        "Trade secret on backend algorithms and operations, copyright on code, trademark on product name and logo, patents only where strong jurisdictional protection exists.",
+        "Trademark the algorithm and patent the website copy.",
+        "Rely on copyright alone."
+      ],
+      "correctIndex": 1,
+      "explanation": "Layered IP: secrets for invisible backend, copyright for code, trademark for brand, selective patents. SaaS rarely justifies broad patenting given software-patent limits in the EU/AU."
+    }
+  ]
+}

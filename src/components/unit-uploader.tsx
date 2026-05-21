@@ -37,7 +37,13 @@ function inferType(name: string): Queued["type"] {
 }
 
 function inferWeek(name: string, fallback: number): number {
-  const m = name.match(/week[\s_-]*(\d{1,2})/i) ?? name.match(/\bw(\d{1,2})\b/i) ?? name.match(/^0?(\d{1,2})[_-]/);
+  // Match `week 5`, `week_05`, `week-5`, `_W2_`, `-W12_`, `W5.pdf`, `^04-...`
+  // Underscores are word chars in regex, so \b doesn't fire inside `_W2_` —
+  // explicit separator class fixes it.
+  const m =
+    name.match(/week[\s_-]*(\d{1,2})/i) ??
+    name.match(/(?:^|[\s_\-.])w(\d{1,2})(?=[\s_\-.]|$)/i) ??
+    name.match(/^0?(\d{1,2})[_\-.]/);
   return m ? Number(m[1]) : fallback;
 }
 

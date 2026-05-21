@@ -145,6 +145,15 @@ export async function reExtractItems(items: ItemRef[]): Promise<ItemResult[]> {
   return results;
 }
 
+// Milkdown's remark-stringify escapes `*` to `\*`, corrupting our JSX comment
+// markers (open-brace slash star ... star slash close-brace) into the escaped
+// form. Restore them defensively before writing.
+function unescapeJsxComments(body: string): string {
+  const BAD_OPEN = "{/" + "\\" + "*";
+  const BAD_CLOSE = "\\" + "*/}";
+  return body.split(BAD_OPEN).join("{/" + "*").split(BAD_CLOSE).join("*/}");
+}
+
 /** Save edited MDX body back to disk, preserving frontmatter. Auto-promotes stub → draft on first save. */
 export async function saveNoteBody(unit: string, slug: string, body: string): Promise<{ ok: boolean; message?: string }> {
   try {
@@ -152,7 +161,8 @@ export async function saveNoteBody(unit: string, slug: string, body: string): Pr
     const fm = { ...(stub.parsed.data as Record<string, unknown>) };
     if (fm.status === "stub") fm.status = "draft";
     fm.editedAt = new Date();
-    await fs.writeFile(stub.path, matter.stringify(body, fm), "utf8");
+    const safeBody = unescapeJsxComments(body);
+    await fs.writeFile(stub.path, matter.stringify(safeBody, fm), "utf8");
     try { revalidatePath(`/${unit}/${slug}`); } catch {}
     return { ok: true };
   } catch (e) {

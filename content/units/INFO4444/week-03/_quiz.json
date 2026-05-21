@@ -1,0 +1,307 @@
+{
+  "unit": "INFO4444",
+  "week": 3,
+  "topic": "Innovation Frameworks II: Disruptive Innovation",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "Christensen defines a disruptive innovation primarily by:",
+      "choices": [
+        "How technologically radical it is.",
+        "The market trajectory it creates relative to mainstream customer needs.",
+        "Whether it is patented.",
+        "Whether it originated in a startup."
+      ],
+      "correctIndex": 1,
+      "explanation": "Disruption is a market-trajectory concept, not a technology-radicalness concept. The disruptor enters below mainstream needs and improves faster than those needs rise."
+    },
+    {
+      "id": "q2",
+      "stem": "Which is the best example of a low-end disruption?",
+      "choices": [
+        "Tesla's Roadster",
+        "The original Kodak Brownie camera",
+        "Korean steel mini-mills attacking integrated steel mills",
+        "The iPhone"
+      ],
+      "correctIndex": 2,
+      "explanation": "Mini-mills entered at the lowest grade of steel (rebar), where integrated mills were happy to cede share, then climbed up the quality ladder. Textbook low-end disruption."
+    },
+    {
+      "id": "q3",
+      "stem": "Which is the best example of a new-market disruption?",
+      "choices": [
+        "Mobile money (M-Pesa) in East Africa reaching the unbanked",
+        "Faster Intel CPUs",
+        "Premium audio gear from Bose",
+        "Boeing's next-generation jetliner"
+      ],
+      "correctIndex": 0,
+      "explanation": "M-Pesa created a market among non-consumers of banking — a textbook new-market disruption."
+    },
+    {
+      "id": "q4",
+      "stem": "Which statement is CORRECT about Tesla relative to Christensen's framework?",
+      "choices": [
+        "Tesla is a textbook low-end disruption.",
+        "Tesla entered at the high end (Roadster, Model S) and moved down, so it does NOT fit Christensen's disruption pattern in the strict sense.",
+        "Tesla is a new-market disruption because EVs were a new category.",
+        "Tesla is sustaining innovation in the gas-engine market."
+      ],
+      "correctIndex": 1,
+      "explanation": "Christensen himself argued Tesla is not a classic disruptor — it entered high-end and works down, the opposite of low-end disruption. A favourite exam nuance."
+    },
+    {
+      "id": "q5",
+      "stem": "The 'innovator's dilemma' refers to the fact that:",
+      "choices": [
+        "Innovators struggle to choose between competing technologies.",
+        "Well-managed incumbents fail to respond to disruption precisely because they listen to their best customers and chase the highest margins.",
+        "Startups cannot decide whether to bootstrap or raise capital.",
+        "Universities cannot decide whether to commercialise their research."
+      ],
+      "correctIndex": 1,
+      "explanation": "The dilemma is that the practices that make incumbents successful (customer-listening, margin focus, big-market focus) are the same practices that blind them to disruption."
+    },
+    {
+      "id": "q6",
+      "stem": "Performance overshoot in Christensen's model means:",
+      "choices": [
+        "The disruptor's product overshoots the incumbent's at launch.",
+        "The incumbent improves its product faster than mainstream customers' needs rise, making the product 'too good' for many users.",
+        "The market grows faster than supply can meet.",
+        "Patents expire before the product becomes profitable."
+      ],
+      "correctIndex": 1,
+      "explanation": "Performance overshoot opens the door to a disruptor: customers are paying for performance they no longer value, and a simpler/cheaper alternative becomes attractive."
+    },
+    {
+      "id": "q7",
+      "stem": "Christensen's preferred organisational response for an incumbent facing disruption is to:",
+      "choices": [
+        "Lower prices on the existing product line.",
+        "Spin out a separate autonomous unit with its own P&L, cost structure, and salesforce.",
+        "Acquire the disruptor and integrate it into the existing business.",
+        "Sue the disruptor for patent infringement."
+      ],
+      "correctIndex": 1,
+      "explanation": "An autonomous unit can adopt the disruptor's cost structure and customer focus without being killed by the parent's resource-allocation immune system."
+    },
+    {
+      "id": "q8",
+      "stem": "Which adopter category in Rogers' diffusion model makes up about 34% of the curve and is characterised by pragmatism and the need for references?",
+      "choices": [
+        "Innovators",
+        "Early adopters",
+        "Early majority",
+        "Laggards"
+      ],
+      "correctIndex": 2,
+      "explanation": "Early majority (~34%) are pragmatists. They require proof, references, and standards before adopting. Moore's chasm sits just before this group."
+    },
+    {
+      "id": "q9",
+      "stem": "Moore's 'chasm' in Crossing the Chasm refers to the gap between:",
+      "choices": [
+        "Innovators and early adopters",
+        "Early adopters and early majority",
+        "Early majority and late majority",
+        "Late majority and laggards"
+      ],
+      "correctIndex": 1,
+      "explanation": "The chasm separates visionary early adopters from pragmatist early majority. Many disruptive products die in this gap."
+    },
+    {
+      "id": "q10",
+      "stem": "Netflix's 1998 DVD-by-mail entry is best classified as:",
+      "choices": [
+        "Sustaining innovation in the video rental market.",
+        "A disruption (mostly new-market plus some low-end on the convenience axis) relative to Blockbuster.",
+        "Process innovation only.",
+        "Position innovation only."
+      ],
+      "correctIndex": 1,
+      "explanation": "DVD-by-mail created new consumption (long-tail catalogue) and undercut Blockbuster on the convenience axis (no late fees). Blockbuster's customers were not the target."
+    },
+    {
+      "id": "q11",
+      "stem": "Why are MARGINS a structural reason incumbents fail to respond to disruptors?",
+      "choices": [
+        "Incumbents cannot calculate margins accurately.",
+        "Disruptors target lower price points where the incumbent's margins look unattractive, so resource allocation goes elsewhere.",
+        "Margins on disruptive products are always higher than on incumbent products.",
+        "Tax law penalises low-margin businesses."
+      ],
+      "correctIndex": 1,
+      "explanation": "The incumbent's CFO rationally favours high-margin investments. The disruptor's lower-margin opportunity loses every internal budget battle until it is too late."
+    },
+    {
+      "id": "q12",
+      "stem": "Which of these is best classified as a SUSTAINING innovation?",
+      "choices": [
+        "A new generation of jet engines making airliners 15% more fuel efficient.",
+        "Mobile money replacing bank accounts in East Africa.",
+        "Mini-mills replacing integrated steel mills.",
+        "Personal computers displacing mainframes."
+      ],
+      "correctIndex": 0,
+      "explanation": "Better fuel efficiency improves the existing product on the dimension mainstream customers value. Incumbents (engine makers) typically win these battles."
+    },
+    {
+      "id": "q13",
+      "stem": "Approximately what percentage of the population are 'innovators' in Rogers' diffusion model?",
+      "choices": [
+        "2.5%",
+        "13.5%",
+        "16%",
+        "34%"
+      ],
+      "correctIndex": 0,
+      "explanation": "Rogers' innovator share is ~2.5%. Early adopters ~13.5%, early/late majority ~34% each, laggards ~16%."
+    },
+    {
+      "id": "q14",
+      "stem": "Which of the following is NOT a reason incumbents fail to respond to disruption?",
+      "choices": [
+        "Their best customers are not asking for the disruptor's product.",
+        "The disruptor's initial market is too small to justify investment.",
+        "Their salesforce is paid on commission and won't push the cheaper product.",
+        "Their R&D scientists are less talented than the disruptor's."
+      ],
+      "correctIndex": 3,
+      "explanation": "Christensen's whole point is that incumbents fail despite having strong R&D and engineering. The failure is organisational/economic, not technical."
+    },
+    {
+      "id": "q15",
+      "stem": "Uber's ride-hailing service is best classified as:",
+      "choices": [
+        "Pure low-end disruption of taxis.",
+        "Mostly new-market (reaching people who would not have taken a taxi) with some low-end characteristics.",
+        "Sustaining innovation in the taxi industry.",
+        "Architectural innovation in dispatch systems."
+      ],
+      "correctIndex": 1,
+      "explanation": "Christensen argued Uber created new ride-hailing demand among people who avoided taxis. Some price effect too, but the core is new-market expansion."
+    },
+    {
+      "id": "q16",
+      "stem": "Which is the strongest signal that an industry is ripe for disruption?",
+      "choices": [
+        "Performance overshoot: incumbents are improving faster than customers need.",
+        "Strong customer loyalty.",
+        "Heavy patent protection.",
+        "Low capital intensity."
+      ],
+      "correctIndex": 0,
+      "explanation": "Overshoot creates a pool of over-served customers who would accept a worse-but-cheaper or simpler-and-more-convenient alternative. The disruption entry point."
+    },
+    {
+      "id": "q17",
+      "stem": "The original Kodak Brownie camera (1900) is cited as a disruption because:",
+      "choices": [
+        "It was the highest-quality camera available.",
+        "It created a mass market for photography among non-photographers who could not previously afford or operate cameras — a new-market disruption.",
+        "It used patented chemistry.",
+        "It was an architectural innovation in lens design."
+      ],
+      "correctIndex": 1,
+      "explanation": "Brownies brought photography to ordinary people. Image quality was worse than professional cameras, but it reached non-consumers — a textbook new-market disruption."
+    },
+    {
+      "id": "q18",
+      "stem": "Which is a defining characteristic of a sustaining innovation?",
+      "choices": [
+        "It targets non-consumers.",
+        "It improves performance on the dimensions mainstream customers already value.",
+        "It is always low-margin.",
+        "It always originates outside the incumbent."
+      ],
+      "correctIndex": 1,
+      "explanation": "Sustaining = better-on-existing-metrics. It does not have to be incremental — it can be radical (jet engines) — but it always improves on the dimensions mainstream customers value."
+    },
+    {
+      "id": "q19",
+      "stem": "An incumbent acquires a disruptor and immediately integrates it into the parent business. Christensen would predict:",
+      "choices": [
+        "Success: the disruptor benefits from the parent's resources.",
+        "Failure or stagnation: the parent's resource-allocation processes will starve the disruptor.",
+        "Indeterminate outcome with no theoretical guidance.",
+        "Success only if the disruptor's founders stay."
+      ],
+      "correctIndex": 1,
+      "explanation": "Integration kills the disruptor's distinct cost structure, customer focus, and decision speed. Christensen recommends preserving autonomy."
+    },
+    {
+      "id": "q20",
+      "stem": "On the performance-trajectory diagram, the moment when the disruptor's product crosses the mainstream-customer-need line is:",
+      "choices": [
+        "The point at which the incumbent's response becomes possible.",
+        "The point at which the disruptor becomes 'good enough' for the mainstream and the incumbent rapidly loses share.",
+        "The point at which patents are filed.",
+        "The point at which the standards body intervenes."
+      ],
+      "correctIndex": 1,
+      "explanation": "At the crossover, mainstream customers no longer need the incumbent's overshoot; they can buy the simpler, cheaper disruptor. Share shift accelerates."
+    },
+    {
+      "id": "q21",
+      "stem": "Which feature does Rogers identify as the strongest predictor of adoption rate?",
+      "choices": [
+        "Relative advantage over what is replaced.",
+        "Number of patents.",
+        "Marketing budget.",
+        "Government subsidies."
+      ],
+      "correctIndex": 0,
+      "explanation": "Rogers' five attributes are relative advantage, compatibility, complexity, trialability, and observability. Relative advantage is the strongest single predictor."
+    },
+    {
+      "id": "q22",
+      "stem": "Which of the following is a typical NEW-MARKET disruptor characteristic?",
+      "choices": [
+        "It steals customers from the incumbent's best segment.",
+        "It targets non-consumers who previously had no money, no skill, or no access.",
+        "It immediately matches the incumbent on all performance dimensions.",
+        "It uses the incumbent's distribution channels."
+      ],
+      "correctIndex": 1,
+      "explanation": "New-market disruption expands the total market into non-consumption. The incumbent does not initially lose share — but loses share later, when the disruptor improves."
+    },
+    {
+      "id": "q23",
+      "stem": "Why is acquiring AND keeping autonomous a viable disruption response, while acquiring AND integrating typically is not?",
+      "choices": [
+        "Integration triggers regulatory review.",
+        "Autonomy preserves the disruptor's distinct cost structure, customer focus, and decision-making — integration imposes the incumbent's incompatible processes.",
+        "Autonomous units are tax-advantaged.",
+        "Integration violates Christensen's theorem."
+      ],
+      "correctIndex": 1,
+      "explanation": "The whole point of the spin-out logic. Once integrated, the parent's resource-allocation processes apply, and the disruptor reverts to incumbent behaviour."
+    },
+    {
+      "id": "q24",
+      "stem": "Christensen's framework is sometimes criticised because:",
+      "choices": [
+        "It is too narrowly applied — many cases labelled 'disruption' do not actually fit the model.",
+        "It only applies to manufacturing.",
+        "It contradicts the Utterback-Abernathy model.",
+        "It ignores process innovation."
+      ],
+      "correctIndex": 0,
+      "explanation": "The term 'disruption' is widely abused. Christensen and successors have pushed back on calling every successful startup a Christensen disruptor (e.g. Uber, Tesla edge cases)."
+    },
+    {
+      "id": "q25",
+      "stem": "A budget airline (Ryanair, Southwest) attacking full-service carriers is best classified as:",
+      "choices": [
+        "Sustaining innovation.",
+        "Low-end disruption — accepting worse performance on amenities for far lower price, eventually moving upmarket.",
+        "Pure new-market disruption.",
+        "Architectural innovation."
+      ],
+      "correctIndex": 1,
+      "explanation": "Budget carriers attacked the price-sensitive low end. Full-service carriers initially ceded the segment, then lost share even on profitable routes as budget carriers added features."
+    }
+  ]
+}

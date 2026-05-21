@@ -1,0 +1,307 @@
+{
+  "unit": "INFO4444",
+  "week": 5,
+  "topic": "Distributed innovation II: crowdsourcing, FOSS, user innovation",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "Who coined the term 'crowdsourcing'?",
+      "choices": [
+        "Eric von Hippel",
+        "Henry Chesbrough",
+        "Jeff Howe",
+        "James Surowiecki"
+      ],
+      "correctIndex": 2,
+      "explanation": "Jeff Howe coined 'crowdsourcing' in Wired magazine in 2006."
+    },
+    {
+      "id": "q2",
+      "stem": "Howe's typology of crowdsourcing includes which four categories?",
+      "choices": [
+        "Collective intelligence, crowd creation, crowd voting, crowdfunding",
+        "Wisdom, work, wealth, wonder",
+        "Open, closed, hybrid, community",
+        "Inside-out, outside-in, coupled, parallel"
+      ],
+      "correctIndex": 0,
+      "explanation": "Howe's classical four buckets are collective intelligence (wisdom of crowds), crowd creation, crowd voting, and crowdfunding."
+    },
+    {
+      "id": "q3",
+      "stem": "A 'lead user' in von Hippel's framework is:",
+      "choices": [
+        "The first customer to buy a product.",
+        "A user at the leading edge of a market trend who experiences needs ahead of the mass market and has strong incentives to develop solutions themselves.",
+        "A user employed by the manufacturer.",
+        "A user with the highest spend."
+      ],
+      "correctIndex": 1,
+      "explanation": "Lead users are ahead of market needs (e.g. downhill mountain bikers prototyping suspension) and self-motivated to solve their own problems."
+    },
+    {
+      "id": "q4",
+      "stem": "Wikipedia is best classified on Howe's typology as:",
+      "choices": [
+        "Crowdfunding",
+        "Crowd voting",
+        "Crowd creation (with collective editing)",
+        "Mechanical Turk style microtasking"
+      ],
+      "correctIndex": 2,
+      "explanation": "Wikipedia is primarily crowd creation. Editorial governance adds collective intelligence/voting elements, but creation is the dominant mode."
+    },
+    {
+      "id": "q5",
+      "stem": "Which is the canonical copyleft software licence?",
+      "choices": [
+        "MIT",
+        "Apache 2.0",
+        "BSD",
+        "GPL"
+      ],
+      "correctIndex": 3,
+      "explanation": "The GNU General Public Licence (GPL) is the canonical copyleft licence — derivative works must remain open under the same licence."
+    },
+    {
+      "id": "q6",
+      "stem": "The MIT and Apache 2.0 licences differ from GPL in that:",
+      "choices": [
+        "They prohibit commercial use.",
+        "They are permissive — derivative works may be released under any licence, including proprietary.",
+        "They require explicit royalties.",
+        "They cannot be combined with proprietary code."
+      ],
+      "correctIndex": 1,
+      "explanation": "Permissive licences (MIT, Apache, BSD) impose minimal obligations and allow proprietary derivatives. Copyleft requires derivatives to remain open."
+    },
+    {
+      "id": "q7",
+      "stem": "Linux under Linus Torvalds' historical leadership is the textbook example of which governance model?",
+      "choices": [
+        "Pure community (Debian-style)",
+        "Benevolent dictator for life (BDFL)",
+        "Meritocratic foundation (Apache-style)",
+        "Corporate-led"
+      ],
+      "correctIndex": 1,
+      "explanation": "Linus serves (or served) as BDFL: a single trusted maintainer with final authority over the codebase."
+    },
+    {
+      "id": "q8",
+      "stem": "Which is a key argument from von Hippel for why users 'free reveal' their innovations?",
+      "choices": [
+        "Free revealing is required by law.",
+        "The community improvement and reputation benefits from revealing typically exceed the cost of giving up exclusive IP, especially when the innovator cannot easily commercialise alone.",
+        "Free revealing is the only way to attract VC funding.",
+        "Free revealing increases patent value."
+      ],
+      "correctIndex": 1,
+      "explanation": "Free revealing is rational when the innovator benefits from community improvement, reputation, or downstream adoption more than from secrecy."
+    },
+    {
+      "id": "q9",
+      "stem": "Threadless (T-shirt design platform) is best classified as:",
+      "choices": [
+        "Crowdfunding",
+        "Crowd creation plus crowd voting",
+        "Pure crowd voting",
+        "User innovation with manufacturer-provided toolkits"
+      ],
+      "correctIndex": 1,
+      "explanation": "Threadless users submit designs (creation) and the community votes on which to print (voting). The combination is the platform's signature."
+    },
+    {
+      "id": "q10",
+      "stem": "Surowiecki's 'wisdom of crowds' requires which conditions?",
+      "choices": [
+        "Homogeneous expert opinion, central coordination, and disclosure.",
+        "Diversity of opinion, independence, decentralisation, and aggregation.",
+        "Patented IP, paid contributors, and centralised review.",
+        "A BDFL, a foundation, and a permissive licence."
+      ],
+      "correctIndex": 1,
+      "explanation": "Surowiecki's four conditions: diversity, independence, decentralisation, aggregation. Violate any and the wisdom collapses into herd behaviour or noise."
+    },
+    {
+      "id": "q11",
+      "stem": "Kickstarter is best classified as:",
+      "choices": [
+        "Crowdfunding",
+        "Crowd voting",
+        "Crowd creation",
+        "User innovation"
+      ],
+      "correctIndex": 0,
+      "explanation": "Kickstarter is reward-based crowdfunding — many backers pool capital for a project in exchange for rewards or early access."
+    },
+    {
+      "id": "q12",
+      "stem": "Which FOSS governance model is best illustrated by the Apache Software Foundation?",
+      "choices": [
+        "BDFL",
+        "Meritocratic foundation",
+        "Pure community",
+        "Corporate captured"
+      ],
+      "correctIndex": 1,
+      "explanation": "Apache projects use a meritocratic foundation model: contributions earn committer status; PMC committees govern; foundation provides legal/infra umbrella."
+    },
+    {
+      "id": "q13",
+      "stem": "Lego Mindstorms is a frequently cited example of:",
+      "choices": [
+        "Crowdfunding",
+        "User innovation toolkits — a manufacturer providing constrained design tools so users can produce their own variants",
+        "Pure FOSS",
+        "Corporate-led open source"
+      ],
+      "correctIndex": 1,
+      "explanation": "Mindstorms is von Hippel's textbook toolkit example: Lego provides a constrained design space and users innovate within it."
+    },
+    {
+      "id": "q14",
+      "stem": "Galaxy Zoo, eBird, and Foldit are best classified as:",
+      "choices": [
+        "Crowdfunding platforms",
+        "Citizen-science / crowd-sourced data and analysis projects",
+        "User-innovation toolkits",
+        "FOSS projects"
+      ],
+      "correctIndex": 1,
+      "explanation": "These platforms recruit non-expert volunteers to classify astronomical images, log bird sightings, and fold proteins — citizen-science forms of crowdsourcing."
+    },
+    {
+      "id": "q15",
+      "stem": "Kubernetes is best classified governance-wise as:",
+      "choices": [
+        "Pure community",
+        "BDFL",
+        "Corporate-led open source (Google, then CNCF foundation)",
+        "Proprietary with open APIs"
+      ],
+      "correctIndex": 2,
+      "explanation": "Kubernetes started as a Google project, then moved to the CNCF (Cloud Native Computing Foundation). Strong corporate backing with community contributors."
+    },
+    {
+      "id": "q16",
+      "stem": "Which is NOT a typical contributor motivation in FOSS (per Lakhani & Wolf)?",
+      "choices": [
+        "Scratching one's own itch (use value)",
+        "Career signalling and reputation",
+        "Learning",
+        "Tax incentives"
+      ],
+      "correctIndex": 3,
+      "explanation": "Use value, career signalling, learning, identity, and paid employment are the main motivators. Tax incentives are not significant in the empirical literature."
+    },
+    {
+      "id": "q17",
+      "stem": "A surgical-instrument firm convenes a panel of leading surgeons to identify unmet needs, gives them prototyping tools, and commercialises the result. This is best described as:",
+      "choices": [
+        "Crowdfunding",
+        "Lead-user methodology (von Hippel)",
+        "Open-source software",
+        "Position innovation"
+      ],
+      "correctIndex": 1,
+      "explanation": "Identifying lead users (here, top surgeons), tapping their innovations, then commercialising is von Hippel's lead-user method."
+    },
+    {
+      "id": "q18",
+      "stem": "Which is a typical FAILURE MODE of crowdsourcing?",
+      "choices": [
+        "Tasks requiring deep, integrated, tacit expertise that resists decomposition.",
+        "Tasks that can be cleanly decomposed into independent units.",
+        "Tasks with strong intrinsic motivation for contributors.",
+        "Tasks with clear aggregation mechanisms."
+      ],
+      "correctIndex": 0,
+      "explanation": "Crowdsourcing relies on decomposition. Deeply integrated, tacit-knowledge work (e.g. designing a jet engine) does not decompose well."
+    },
+    {
+      "id": "q19",
+      "stem": "A strategic implication of choosing the GPL licence for a corporate-released project is:",
+      "choices": [
+        "Adopters can ship proprietary derivatives without sharing changes.",
+        "Adopters making derivative works must release them under GPL, potentially forcing competitors to open their forks — but deterring some commercial adoption.",
+        "The project becomes ineligible for patenting.",
+        "Adopters must pay royalties."
+      ],
+      "correctIndex": 1,
+      "explanation": "GPL's viral copyleft can be a strategic moat (competitors must share back) but reduces commercial adoption versus permissive licences like MIT or Apache."
+    },
+    {
+      "id": "q20",
+      "stem": "Open data initiatives (data.gov, OpenStreetMap) are best understood as extensions of which innovation paradigm?",
+      "choices": [
+        "Closed innovation",
+        "Distributed / open innovation applied to data rather than code",
+        "Sustaining innovation",
+        "Christensen-style disruption"
+      ],
+      "correctIndex": 1,
+      "explanation": "Open data applies the same distributed-innovation logic to data: lower coordination costs, enable derivative work, accept governance complexity."
+    },
+    {
+      "id": "q21",
+      "stem": "A common risk of corporate-led open source is:",
+      "choices": [
+        "It cannot be combined with proprietary code.",
+        "Vendor lock-in if the corporate sponsor captures governance and external contributors become dependent.",
+        "It cannot scale.",
+        "It cannot accept external contributions."
+      ],
+      "correctIndex": 1,
+      "explanation": "If the foundation is dominated by one vendor, the 'open' project effectively becomes a proprietary moat. Forks (e.g. MariaDB from MySQL) are the community's response."
+    },
+    {
+      "id": "q22",
+      "stem": "Amazon Mechanical Turk is best classified as:",
+      "choices": [
+        "Crowdfunding",
+        "Crowdsourced micro-tasking labour",
+        "Lead-user innovation",
+        "Crowd voting"
+      ],
+      "correctIndex": 1,
+      "explanation": "MTurk decomposes tasks into HITs (human intelligence tasks) and distributes them to a paid global crowd. The 'labour' variant of crowdsourcing."
+    },
+    {
+      "id": "q23",
+      "stem": "Which is the strongest theoretical reason Wikipedia outperforms Encyclopedia Britannica in coverage breadth?",
+      "choices": [
+        "Wikipedia editors are paid more.",
+        "A globally distributed, intrinsically motivated contributor base can cover topics no centralised editorial team could afford.",
+        "Wikipedia uses better software.",
+        "Britannica is now defunct."
+      ],
+      "correctIndex": 1,
+      "explanation": "The crowdsourcing logic: low marginal cost per contributor, vast pool of niche expertise, intrinsic motivation. Britannica's centralised model cannot scale to long-tail topics."
+    },
+    {
+      "id": "q24",
+      "stem": "A 'pure community' governance model like Debian's is characterised by:",
+      "choices": [
+        "Decisions made by a single benevolent dictator.",
+        "A constitution, elections, and no dominant corporate sponsor; potentially slow decision-making.",
+        "Decisions made by the largest corporate contributor.",
+        "Annual votes by paying members only."
+      ],
+      "correctIndex": 1,
+      "explanation": "Debian has an elected leader, a constitution, and explicit voting procedures. Maximally democratic; can be slow but resistant to capture."
+    },
+    {
+      "id": "q25",
+      "stem": "Stack Overflow and Wikipedia differ most in which dimension?",
+      "choices": [
+        "Crowd model — both use creation plus voting.",
+        "Ownership and value-capture — Wikipedia is non-profit (Wikimedia); Stack Overflow is a commercial platform monetising via ads and SaaS.",
+        "Geographic distribution of contributors.",
+        "Use of upvotes."
+      ],
+      "correctIndex": 1,
+      "explanation": "Mechanically they overlap (creation + voting + reputation). They differ on ownership and monetisation, which shapes long-term contributor trust and platform evolution."
+    }
+  ]
+}

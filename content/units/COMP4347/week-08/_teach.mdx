@@ -1,0 +1,477 @@
+---
+title: "Week 8 — Client-side frameworks (jQuery + AJAX)"
+unit: COMP4347
+week: 8
+type: overview
+status: done
+---
+
+## Why "client-side framework" was a thing before React existed
+
+By 2006 browsers were powerful enough to host real applications, but the standard library for doing so was a mess. **DOM APIs were verbose, inconsistent across browsers, and full of footguns.** Internet Explorer attached events with `attachEvent`; Firefox used `addEventListener`. Selecting a single element took `document.getElementById`; selecting a class of elements meant writing a loop over `getElementsByTagName` and filtering by `className`. AJAX itself required wrapping `XMLHttpRequest` differently for IE6 (which used `ActiveXObject`) than for everyone else.
+
+**jQuery emerged in 2006 as the fix.** It was a single JavaScript file you dropped in via a `<script>` tag, and overnight your client code became readable, portable, and roughly half the length. Within two years it was on more than half the websites in the world.
+
+This week sits at a careful spot in the unit's arc. Week 7 was the Mongoose/Express server-side model layer. Week 9 jumps to React. **W8 is the bridge — it explains how the client side evolved from "scripts that animate a page" into "applications that own their own state, render their own views, and talk to the server asynchronously".** jQuery + AJAX is the historical stepping-stone; understanding it is what makes React's design choices stop looking like magic.
+
+You will be expected to:
+
+1. Translate vanilla DOM code into idiomatic jQuery (and back).
+2. Write an `$.ajax`, `$.get`, or `.load` call against a given Express route.
+3. Predict the effect of a chained jQuery selector on a piece of HTML.
+4. Identify the same-origin policy issue when an AJAX request fails.
+5. Explain why frameworks eventually replaced jQuery — what jQuery couldn't do.
+
+The lecture's exam questions are almost always one of those five.
+
+## The `$` function, in one sentence
+
+**`$(selector)` returns a jQuery-wrapped *set* of every DOM element matching the CSS-style selector, and every method you call on that set runs on every element and returns the set back so you can chain.**
+
+That single sentence captures more than half of jQuery. Read it again. Three properties:
+
+- **Selector-driven**: you describe what to operate on with a CSS selector.
+- **Set-valued**: even `$("#id")` returns a set (of zero or one element). There is no "one vs many" branching.
+- **Chainable**: methods return the set, so `$("p").addClass("warn").show().on("click", fn)` does three things in one line.
+
+```js
+// vanilla
+const ps = document.querySelectorAll("p.warn");
+for (const p of ps) {
+  p.style.display = "";
+  p.addEventListener("click", () => alert("clicked"));
+}
+
+// jQuery
+$("p.warn").show().on("click", () => alert("clicked"));
+```
+
+The vanilla version is fine — `querySelectorAll` and `addEventListener` are themselves part of the W3C DOM standard that arrived *because* jQuery showed what a clean API should look like. The reason jQuery still gets taught is partly historical, partly because **the chaining pattern shows up everywhere in modern JS** (Promise chains, RxJS, Mongoose query builders, even React's `useState` updater pattern is a descendant). Learn the shape, not just the library.
+
+The function name `$` is just a JavaScript identifier — dollar signs are legal in identifiers. The full name is `jQuery`; `$ = jQuery` is set up by the library itself. If another library also wants `$` (Prototype.js did), you can release it with `jQuery.noConflict()`.
+
+## Selectors, including the ones that aren't CSS
+
+The four basic selectors map one-to-one with CSS:
+
+| jQuery | CSS | Picks |
+|--------|-----|-------|
+| `$("*")` | `*` | every element (slow — avoid) |
+| `$("p")` | `p` | every `<p>` |
+| `$(".warn")` | `.warn` | every element with class `warn` |
+| `$("#main")` | `#main` | the element with id `main` |
+
+You can compose them just like CSS: `$("ul#sidebar li.active a")` picks `<a>` tags inside active list items inside the sidebar `<ul>`. Comma-separate for unions: `$("h1, h2, h3")`. Greater-than for direct children: `$("ul > li")`.
+
+**Beyond CSS**, jQuery added *filter* pseudo-classes that CSS didn't have at the time:
+
+```js
+$("tr:odd")              // every odd table row (banded rows)
+$("li:first")            // first list item in each <ul>
+$("li:last")
+$("li:eq(2)")            // the third <li> overall (0-indexed)
+$("p:contains('warning')") // every <p> whose text contains "warning"
+$(":input")              // every form control (input, select, textarea, button)
+$(":checked")            // every checkbox/radio currently checked
+$(":visible")            // every element actually rendered
+```
+
+Some of these (`:nth-child`, `:not`, `:checked`) did make it into CSS3 eventually. Others (`:contains`, `:eq`, `:odd`) are jQuery-only — they have no native equivalent and won't work in `document.querySelector`.
+
+**Form selectors** are shortcuts: `$(":text")` is `$("input[type=text]")`, `$(":checkbox")` is `$("input[type=checkbox]")`, and so on. They make form-handling code read like English.
+
+A common exam trap: **jQuery selectors always return a *set***. `$("#nonexistent")` doesn't throw — it returns an empty set. `.length` tells you how many matched; `if ($("#x").length) { ... }` is the idiomatic "does this element exist?" check.
+
+## DOM manipulation: getters, setters, and chains
+
+jQuery methods do double duty. **Called with no argument, they read. Called with an argument, they write.** Same name, different mode.
+
+```js
+const href = $("a.home").attr("href");        // read
+$("a.home").attr("href", "/dashboard");       // write
+
+const html = $("#card").html();               // read inner HTML
+$("#card").html("<p>Hello</p>");              // write
+
+const val  = $("#email").val();               // read form value
+$("#email").val("me@example.com");            // write
+
+const bg   = $("#box").css("background-color"); // read computed style
+$("#box").css("background-color", "#f00");      // write
+```
+
+`attr` vs `prop` is a subtle distinction: **`attr` reads the HTML attribute as written in the source; `prop` reads the live DOM property.** For a `<input type="checkbox" checked>`, `attr("checked")` returns the string `"checked"` (the attribute), but `prop("checked")` returns `true` (the boolean property that updates as the user clicks). Use `prop` for `checked`, `disabled`, `selected`, `readOnly`.
+
+Insertion methods build new elements:
+
+```js
+$("ul#todo").append("<li>Buy milk</li>");       // add as last child
+$("ul#todo").prepend("<li>Important</li>");     // add as first child
+$(".banner").before("<hr>");                    // insert immediately before
+$(".banner").after("<hr>");                     // insert immediately after
+$(".old").remove();                             // detach from DOM entirely
+$(".old").empty();                              // remove children, keep node
+```
+
+You can also pass a jQuery object instead of an HTML string:
+
+```js
+const link = $("<a>").attr("href", "/about").text("About");
+$("#nav").append(link);
+```
+
+**Chaining is what makes jQuery feel like a fluent DSL.** Every mutating method returns the same set, so:
+
+```js
+$("ul#todo")
+  .find("li.done")
+  .addClass("strikethrough")
+  .fadeOut(500)
+  .promise()
+  .done(() => console.log("all gone"));
+```
+
+`.find` narrows the set; `.end()` un-narrows it back to the previous set if you need to keep chaining on the outer scope.
+
+## Events: `on`, `off`, and delegated handlers
+
+Plain DOM events look like this:
+
+```js
+document.querySelector("#button").addEventListener("click", handleClick);
+```
+
+jQuery wraps that with `.on`:
+
+```js
+$("#button").on("click", handleClick);
+$("#button").off("click", handleClick);     // remove
+```
+
+There are convenience shorthands: `.click(fn)` is `.on("click", fn)`; same for `dblclick`, `mouseenter`, `mouseleave`, `focus`, `blur`, `submit`, `change`, `keydown`, `keypress`, `keyup`. Modern jQuery (post-3.0) recommends always using `.on` because it's consistent and supports delegation.
+
+**Delegation** is the powerful trick. Suppose you have a todo list and you want every `<li>` to be clickable — *including ones you'll add later*. Attaching `.click` directly only catches `<li>`s that exist *now*:
+
+```js
+// breaks for items added later
+$("ul#todo li").on("click", handleToggle);
+```
+
+Delegation: attach the handler to a stable ancestor and let jQuery match the selector at event time.
+
+```js
+$("ul#todo").on("click", "li", handleToggle);  // any <li> inside, ever
+```
+
+When the click bubbles up to `ul#todo`, jQuery checks whether the click's target matches `"li"` and runs the handler with `this` set to that `<li>`. This was a huge win in the jQuery era; it's still useful with vanilla `event.target.matches()` today.
+
+**The `$(document).ready(fn)` pattern** wraps your whole script. The browser fires `DOMContentLoaded` once the HTML is parsed but before images and stylesheets finish; jQuery's `ready` is the same idea with cross-browser polish. Why bother? Because if your `<script>` runs before the `<button id="x">` exists in the DOM, `$("#x")` returns an empty set and your handler attaches to nothing.
+
+```js
+$(document).ready(function () {
+  $("#button").on("click", handler);
+});
+
+// shorthand — pass a function directly to $()
+$(function () { /* ... */ });
+```
+
+Putting `<script>` at the end of `<body>` accomplishes the same thing and is now more common.
+
+## Synchronous vs asynchronous: why AJAX exists
+
+Before AJAX, every interaction with the server meant a **full page reload**. Click a link, browser sends GET, server sends HTML, browser parses it, browser repaints. The user stares at a white screen while it happens.
+
+**The asynchronous insight**: a script can ask the server for something, *keep running*, and process the answer when it arrives. The page never blanks. The user keeps interacting.
+
+The cost is that you have to think in callbacks. The browser doesn't pause your code; you have to *register* what to do when the answer comes back.
+
+The 2005 name "AJAX" — **Asynchronous JavaScript And XML** — is a historical accident. The "X" is for XML because Gmail and Google Maps were exchanging XML when the term was coined. **Today the data is almost always JSON**, but the acronym stuck.
+
+The original API is `XMLHttpRequest`:
+
+```js
+const xhr = new XMLHttpRequest();
+xhr.open("GET", "/api/latest?title=BBC");
+xhr.onload = function () {
+  if (xhr.status === 200) {
+    const data = JSON.parse(xhr.responseText);
+    document.querySelector("#results").textContent = data.title;
+  }
+};
+xhr.onerror = function () { console.error("network error"); };
+xhr.send();
+```
+
+That's six lines of plumbing to do one thing. Every jQuery AJAX helper boils down to wrapping `XMLHttpRequest` with sensible defaults.
+
+The same-origin policy applies: **a page served from `a.com` cannot, by default, make an `XMLHttpRequest` to `b.com`.** This stops a malicious page from reading your bank session. We'll come back to how CORS opens the door deliberately.
+
+## jQuery AJAX: `load`, `get`, `post`, `ajax`
+
+jQuery layers four AJAX helpers, each more general than the last.
+
+**`.load`** is the simplest: fetch a URL and stuff the response straight into a set of elements.
+
+```js
+$("#results").load("/revisionajax/getLatest?title=BBC");
+```
+
+That's it. One line. If you pass a data object, it becomes a POST instead of GET; pass a callback as the third argument to run code after load finishes.
+
+**`$.get`** and **`$.post`** are global functions (not on a set) for when you want to *do something with* the response rather than dump it into the DOM:
+
+```js
+$.get("/revisionajax/getLatest", { title: "BBC" }, function (result) {
+  $("#results").html(result);
+});
+
+$.post("/api/login", { user: "ada", pass: "secret" }, function (response) {
+  if (response.ok) window.location = "/dashboard";
+});
+```
+
+The three arguments are URL, data, callback. The data object becomes a query string for GET, a form-encoded body for POST.
+
+**`$.ajax`** is the full-featured one. Use it when you need to set headers, choose the response type, handle errors specifically, or send JSON.
+
+```js
+$.ajax({
+  url: "/api/revisions",
+  type: "POST",
+  contentType: "application/json",
+  data: JSON.stringify({ title: "BBC", year: 2026 }),
+  dataType: "json",
+  success: function (data) { console.log(data); },
+  error:   function (xhr, status, err) { console.error(status, err); },
+});
+```
+
+**The jqXHR object** is what every jQuery AJAX call returns. It looks like an `XMLHttpRequest` but also implements the Promise interface (well, a 2010s version of it):
+
+```js
+const jqxhr = $.get("/api/x");
+jqxhr.done(function (data) { /* success */ });
+jqxhr.fail(function (xhr)  { /* error */ });
+jqxhr.always(function ()    { /* runs either way — like finally */ });
+```
+
+`.done`, `.fail`, `.always` are jQuery's "Deferred" API, the precursor to standard JavaScript Promises. They were close enough to influence the spec.
+
+## Promises and the road out of callback hell
+
+Nested callbacks were jQuery's biggest weakness. You wanted to fetch a user, then fetch their orders, then fetch each order's items. Written as nested callbacks:
+
+```js
+$.get("/api/user/42", function (user) {
+  $.get(`/api/orders?user=${user.id}`, function (orders) {
+    orders.forEach(function (o) {
+      $.get(`/api/items?order=${o.id}`, function (items) {
+        console.log(items);
+      });
+    });
+  });
+});
+```
+
+The indent climbs to the right. Error handling at every level is a separate problem. This shape became known as **callback hell** or "the pyramid of doom".
+
+**Promises flatten it.** A Promise is an object that *will eventually* hold a value (or an error). You chain `.then` to add handlers and `.catch` to handle errors once for the whole chain.
+
+```js
+fetch("/api/user/42")
+  .then(r => r.json())
+  .then(user => fetch(`/api/orders?user=${user.id}`))
+  .then(r => r.json())
+  .then(orders => Promise.all(orders.map(o =>
+    fetch(`/api/items?order=${o.id}`).then(r => r.json())
+  )))
+  .then(allItems => console.log(allItems))
+  .catch(err => console.error("anywhere in the chain:", err));
+```
+
+Note `fetch` — the modern standard, built into every browser, returns a Promise natively. No `XMLHttpRequest`, no jQuery. **`fetch` is essentially what `$.ajax` evolved into after Promises were standardised in ES6.**
+
+**`async`/`await` is sugar on top of Promises** that lets you write asynchronous code as if it were synchronous:
+
+```js
+async function loadUserItems(userId) {
+  const user   = await (await fetch(`/api/user/${userId}`)).json();
+  const orders = await (await fetch(`/api/orders?user=${user.id}`)).json();
+  const items  = await Promise.all(orders.map(async o => {
+    const r = await fetch(`/api/items?order=${o.id}`);
+    return r.json();
+  }));
+  return items;
+}
+
+try {
+  const items = await loadUserItems(42);
+  console.log(items);
+} catch (err) {
+  console.error(err);
+}
+```
+
+Under the hood it's still Promises — `await` is "suspend this function until the Promise resolves". Errors propagate as exceptions through `try/catch`. The W8 tutorial mentions the Bluebird library, which was an early third-party Promise implementation; you'd reach for it before Node.js shipped Promises natively. **Today you use the built-ins.**
+
+## Integrating jQuery into an Express app
+
+The tutorial's running example is an Express app that has a `titleForm.pug` view, a controller, and a model. Without AJAX, submitting the form means a full page reload; with AJAX, the result fills a `<div>` in place.
+
+**Step 1: serve jQuery as a static asset.**
+
+```js
+// app.js
+app.use(express.static("public"));  // public/js/jquery.min.js, public/js/main.js
+```
+
+**Step 2: reference it in the view.** This is Pug, indentation-significant:
+
+```html
+doctype html
+html(lang="en")
+  head
+    title Ajax Search Example
+    script(src="https://code.jquery.com/jquery-3.2.1.js")
+    script(src="/js/main.js")
+  body
+    h2 Simple Form
+    input#title(type="search", placeholder="BBC")
+    button#button(type="button") Search
+    div#results
+```
+
+The form has no `<form>` and no `action` — the submit button is just a `<button type="button">` whose behaviour is entirely driven by JavaScript.
+
+**Step 3: the client-side script.** Two equivalent styles from the slides:
+
+```js
+// using $.get
+$(document).ready(function () {
+  $("#button").on("click", function () {
+    const parameters = { title: $("#title").val() };
+    $.get("/revisionajax/getLatest", parameters, function (result) {
+      $("#results").html(result);
+    });
+  });
+});
+
+// using .load
+$(document).ready(function () {
+  $("#button").on("click", function () {
+    const data = $("#title").val();
+    $("#results").load("/revisionajax/getLatest?title=" + data);
+  });
+});
+```
+
+Both work. The `$.get` version is more flexible (you can transform the result); `.load` is shorter when the response is HTML you want to render verbatim.
+
+**Step 4: server-side wiring.** No big changes — just a new route mapped to a new controller method that responds with HTML (or JSON) rather than rendering a full page:
+
+```js
+// app/routes/revision.server.routes.js
+router.get("/getLatest", revisionController.getLatestAjax);
+
+// app/controllers/revision.server.controller.js
+exports.getLatestAjax = function (req, res) {
+  Revision.findTitleLatestRev(req.query.title, function (err, rev) {
+    if (err) return res.status(500).send(err.message);
+    res.render("revisionPartial", { rev: rev });  // partial, not full page
+  });
+};
+```
+
+**The DevTools network tab** is your friend here: an AJAX call appears as a request of type **XHR** (or "fetch"), initiated by `jquery.min.js`, with the response landing in the same page rather than triggering a navigation.
+
+## Same-origin policy and CORS
+
+The **same-origin policy (SOP)** is a browser security rule. *Origin* = scheme + host + port. `https://a.com:443` and `https://a.com:8080` are different origins. So are `http://a.com` and `https://a.com`.
+
+**SOP forbids cross-origin reads of DOM, cookies, and XHR responses.** Without it, a script on `evil.com` could open a hidden iframe of your bank, read your account balance, and exfiltrate it. SOP is what keeps that script from seeing into a different origin.
+
+For AJAX specifically: `XMLHttpRequest` and `fetch` will *send* the cross-origin request, but the browser blocks the script from *reading* the response unless the server explicitly opts in.
+
+**Two ways to share content lawfully:**
+
+1. **Server-side proxy**: your own server makes the request to the third party, then forwards the response. Your client only ever talks to your own origin. Slow but works everywhere.
+
+2. **CORS** (Cross-Origin Resource Sharing): the third-party server sends an `Access-Control-Allow-Origin` header that explicitly whitelists your origin.
+
+```http
+GET /data HTTP/1.1
+Host: api.partner.com
+Origin: https://a.com
+
+HTTP/1.1 200 OK
+Access-Control-Allow-Origin: https://a.com
+Access-Control-Allow-Methods: GET, POST
+Content-Type: application/json
+```
+
+For non-trivial requests (custom headers, methods other than GET/POST/HEAD, JSON bodies), the browser sends a **preflight** `OPTIONS` request first to check whether the actual request is allowed. The server must respond to the preflight with the appropriate `Allow-*` headers before the browser will send the real request.
+
+**Exam giveaway**: an AJAX request that "works in Postman but fails in the browser" is almost certainly a CORS issue. The fix is on the server (set the headers), not on the client.
+
+## From jQuery to React: why the field moved on
+
+jQuery solved DOM access and AJAX, but **it didn't solve state**. As soon as your client-side app had more than a dozen interactive pieces, you ended up with code like this:
+
+```js
+$("#filter").on("change", function () {
+  const value = $(this).val();
+  $(".item").each(function () {
+    if ($(this).data("category") !== value) {
+      $(this).hide();
+    } else {
+      $(this).show();
+    }
+  });
+  $("#count").text($(".item:visible").length);
+  $("#empty-state").toggle($(".item:visible").length === 0);
+  $("#filter-summary").text("Showing: " + value);
+  // ...and ten more lines updating other parts of the page
+});
+```
+
+Every interaction has to manually update every part of the UI that depends on it. **Source of truth gets scattered**: the filter's current value lives in the `<select>`, the item count lives in `#count`, the empty-state visibility lives in a CSS class — each is updated by some handler, and the handlers don't know about each other. Adding a new feature means finding every handler that should update the new UI piece and threading state into it.
+
+**The successors solved this with the same insight**: stop manipulating the DOM directly. Describe what the UI *should* look like as a pure function of state. Let the framework figure out the DOM updates.
+
+- **Backbone (2010)** — added explicit models with events; views re-render when models change.
+- **AngularJS (2010)** — two-way data binding; HTML attributes like `ng-model` and `ng-repeat` declaratively link state to DOM.
+- **React (2013)** — components are functions of props and state to virtual DOM; framework diffs and patches the real DOM.
+- **Vue (2014)** — single-file components combining template, script, and styles.
+
+**Single-page applications (SPAs)** are the natural endpoint. The browser loads one HTML file plus a big JS bundle, and from then on every "page" is rendered client-side. Navigation is JavaScript, not HTTP. Server requests are AJAX calls returning JSON, not HTML pages. The framework owns routing, state, view rendering, and data fetching.
+
+SPAs have downsides — first-load is heavy, SEO is harder, the back button needs handling — which is why **server-side rendering (Next.js, Nuxt, SvelteKit)** has come back into fashion. But the unit's W9–W10 lectures take you through React/Angular, and they're the conceptual continuation of W8.
+
+## Common exam patterns
+
+**"Translate this vanilla JavaScript into equivalent jQuery"** (and vice versa). Practice the round-trip on `getElementById` ↔ `$("#…")`, `addEventListener` ↔ `.on`, `classList.add` ↔ `.addClass`, `innerHTML` ↔ `.html()`, `style.display = "none"` ↔ `.hide()`.
+
+**"Predict the result of this chained jQuery on the given HTML."** Read left to right. Each method either narrows the set (`.find`, `.filter`, `.children`) or acts on every element in the set. Most chains end on `.end()` or just terminate.
+
+**"Write the client-side script to send `title` to `/api/getLatest` and render the result in `#out`."** A complete answer:
+
+```js
+$(document).ready(function () {
+  $("#button").on("click", function () {
+    $.get("/api/getLatest", { title: $("#title").val() }, function (result) {
+      $("#out").html(result);
+    });
+  });
+});
+```
+
+Equivalent with `.load`: `$("#out").load("/api/getLatest?title=" + $("#title").val())`.
+
+**"Why does the AJAX call fail with no obvious error?"** Likely candidates: missing `$(document).ready` so the selector matches nothing; selector typo so the set is empty (`.length === 0`); same-origin policy (request is cross-origin and the server doesn't send `Access-Control-Allow-Origin`); wrong HTTP verb (`$.get` to a POST-only route).
+
+**"Explain what `jqXHR.done`, `.fail`, `.always` correspond to in modern JavaScript."** They are jQuery's Deferred API and map to `Promise.then`, `Promise.catch`, and `Promise.finally` respectively.
+
+**"Compare callback-style code to Promise/async-await."** Show one example each: nested callback pyramid → flat `.then` chain → `async`/`await` block. Mention that the latter two propagate errors automatically; callbacks require explicit `if (err)` at every level.
+
+**"What problem do client-side frameworks (Angular/React/Vue) solve that jQuery doesn't?"** Single source of truth for application state, automatic re-rendering when state changes, component-level encapsulation, and a programming model that scales past the dozen-handler threshold where jQuery code becomes unmaintainable.

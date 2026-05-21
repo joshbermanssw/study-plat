@@ -1,0 +1,182 @@
+{
+  "unit": "COMP4349",
+  "week": 4,
+  "topic": "Cloud Database",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "Which AWS service is a managed relational database supporting PostgreSQL, MySQL, Oracle, and SQL Server?",
+      "choices": ["DynamoDB", "RDS", "Redshift", "Aurora"],
+      "correctIndex": 1,
+      "explanation": "RDS is the managed relational service. Aurora is AWS's own engine; Redshift is OLAP; DynamoDB is NoSQL."
+    },
+    {
+      "id": "q2",
+      "stem": "RDS Multi-AZ provides:",
+      "choices": ["Read scaling via queryable standby", "Synchronous standby for HA (not queryable)", "Active-active multi-region writes", "Eventual consistency"],
+      "correctIndex": 1,
+      "explanation": "The Multi-AZ standby is synchronous and used only for automatic failover; it's not exposed for reads."
+    },
+    {
+      "id": "q3",
+      "stem": "RDS read replicas are best suited for:",
+      "choices": ["HA failover", "Reducing read load on the primary", "Write scaling", "Cross-Region writes"],
+      "correctIndex": 1,
+      "explanation": "Read replicas asynchronously replicate from the primary; you point read queries at them to offload the writer."
+    },
+    {
+      "id": "q4",
+      "stem": "Aurora's storage layer:",
+      "choices": ["Lives in a single AZ", "Maintains 6 copies across 3 AZs", "Is the same as RDS gp3", "Is held in memory only"],
+      "correctIndex": 1,
+      "explanation": "Aurora storage is a distributed log-structured volume replicated 6 ways across 3 AZs."
+    },
+    {
+      "id": "q5",
+      "stem": "How many Aurora read replicas can you have at most?",
+      "choices": ["5", "10", "15", "100"],
+      "correctIndex": 2,
+      "explanation": "Aurora supports up to 15 read replicas sharing the same storage volume."
+    },
+    {
+      "id": "q6",
+      "stem": "DynamoDB partition key choice should:",
+      "choices": ["Use a low-cardinality value to group items", "Be high-cardinality and evenly distributed to avoid hot partitions", "Always be a timestamp", "Be the same across all items"],
+      "correctIndex": 1,
+      "explanation": "High-cardinality, even partition keys spread traffic; low-cardinality keys produce hot partitions and throttling."
+    },
+    {
+      "id": "q7",
+      "stem": "DynamoDB's default read consistency is:",
+      "choices": ["Strong", "Linearizable", "Eventual", "Causal"],
+      "correctIndex": 2,
+      "explanation": "Reads are eventually consistent by default; you can request strong consistency at higher RCU cost."
+    },
+    {
+      "id": "q8",
+      "stem": "Which service is a managed in-memory key-value cache supporting Redis and Memcached?",
+      "choices": ["DynamoDB", "ElastiCache", "Neptune", "Athena"],
+      "correctIndex": 1,
+      "explanation": "ElastiCache provides managed Redis or Memcached deployments, commonly used as a cache in front of RDS."
+    },
+    {
+      "id": "q9",
+      "stem": "Which service is the best choice for a petabyte-scale analytical (OLAP) data warehouse?",
+      "choices": ["DynamoDB", "Aurora MySQL", "Redshift", "Neptune"],
+      "correctIndex": 2,
+      "explanation": "Redshift is columnar, MPP, and built for OLAP at petabyte scale."
+    },
+    {
+      "id": "q10",
+      "stem": "The CAP theorem says that during a network partition you can choose between:",
+      "choices": ["Consistency and Availability", "Cost and Latency", "Caching and Persistence", "Capacity and Throughput"],
+      "correctIndex": 0,
+      "explanation": "Under a partition you must sacrifice either consistency (return stale data) or availability (refuse requests)."
+    },
+    {
+      "id": "q11",
+      "stem": "BASE stands for:",
+      "choices": ["Basic, Atomic, Sharded, Eventual", "Basically Available, Soft state, Eventually consistent", "Block, Allocate, Sort, Erase", "Backup, Archive, Snapshot, Encrypt"],
+      "correctIndex": 1,
+      "explanation": "BASE is the operational philosophy of many large NoSQL stores: prioritise availability and accept eventual consistency."
+    },
+    {
+      "id": "q12",
+      "stem": "Which AWS service lets you run SQL directly against S3 data without provisioning servers?",
+      "choices": ["Glue", "Athena", "Redshift", "EMR"],
+      "correctIndex": 1,
+      "explanation": "Athena is serverless interactive SQL over S3, ideal for ad-hoc data-lake queries."
+    },
+    {
+      "id": "q13",
+      "stem": "DynamoDB on-demand capacity mode is appropriate when:",
+      "choices": ["You can predict traffic precisely", "Traffic is highly variable or unknown", "You want lowest cost for steady traffic", "You require global tables only"],
+      "correctIndex": 1,
+      "explanation": "On-demand scales transparently to any traffic level; for predictable steady traffic, provisioned capacity is cheaper."
+    },
+    {
+      "id": "q14",
+      "stem": "DynamoDB Streams emit:",
+      "choices": ["S3 events", "VPC flow logs", "Item-level change records consumable by Lambda", "RDS binlog events"],
+      "correctIndex": 2,
+      "explanation": "Streams capture item-level inserts/updates/deletes; commonly consumed by Lambda for event-driven processing."
+    },
+    {
+      "id": "q15",
+      "stem": "Which service is a managed graph database with Gremlin/openCypher/SPARQL support?",
+      "choices": ["DynamoDB", "Neptune", "Aurora", "Timestream"],
+      "correctIndex": 1,
+      "explanation": "Neptune is AWS's managed graph database for property graphs and RDF."
+    },
+    {
+      "id": "q16",
+      "stem": "What is the RDS automated backup default retention period?",
+      "choices": ["1 day", "7 days", "35 days", "90 days"],
+      "correctIndex": 1,
+      "explanation": "Default is 7 days; maximum configurable is 35 days for automated backups."
+    },
+    {
+      "id": "q17",
+      "stem": "An RDS instance must be encrypted at rest. The instance is currently unencrypted. What is the standard procedure?",
+      "choices": ["Toggle encryption in the console", "Take a snapshot, copy with encryption enabled, restore from the encrypted snapshot", "Run an in-place ALTER", "Migrate to DynamoDB"],
+      "correctIndex": 1,
+      "explanation": "You cannot enable encryption in place; you must snapshot, copy the snapshot with encryption, and restore."
+    },
+    {
+      "id": "q18",
+      "stem": "DynamoDB Global Tables provide:",
+      "choices": ["Read replicas in one Region", "Active-passive multi-Region", "Active-active multi-Region replication", "Cold storage"],
+      "correctIndex": 2,
+      "explanation": "Global Tables replicate items between Regions with last-writer-wins, supporting active-active writes."
+    },
+    {
+      "id": "q19",
+      "stem": "Aurora Serverless v2 differs from provisioned Aurora because it:",
+      "choices": ["Has no SQL endpoint", "Auto-scales capacity (ACUs) up and down for variable workloads", "Removes durability guarantees", "Only supports read-only"],
+      "correctIndex": 1,
+      "explanation": "Aurora Serverless v2 adjusts capacity in fine-grained ACUs based on demand, suiting spiky or intermittent workloads."
+    },
+    {
+      "id": "q20",
+      "stem": "Which DynamoDB feature provides microsecond-level in-memory caching for read-heavy items?",
+      "choices": ["DAX", "ElastiCache", "Streams", "Global Tables"],
+      "correctIndex": 0,
+      "explanation": "DynamoDB Accelerator (DAX) is a write-through in-memory cache for DynamoDB."
+    },
+    {
+      "id": "q21",
+      "stem": "Which AWS service is best for storing IoT sensor readings at high write volume with time-based queries?",
+      "choices": ["RDS PostgreSQL", "DynamoDB", "Timestream", "Neptune"],
+      "correctIndex": 2,
+      "explanation": "Amazon Timestream is purpose-built for time-series data with native time aggregations and tiered storage."
+    },
+    {
+      "id": "q22",
+      "stem": "RDS IAM database authentication uses:",
+      "choices": ["Static passwords", "Short-lived auth tokens minted by IAM (no static password in app)", "Kerberos only", "OAuth"],
+      "correctIndex": 1,
+      "explanation": "IAM DB auth issues 15-minute tokens that the application uses as the password — eliminating long-lived secrets."
+    },
+    {
+      "id": "q23",
+      "stem": "Sharding is best described as:",
+      "choices": ["Vertical scaling", "Horizontal partitioning of data across multiple primary nodes", "Replicating reads", "Caching frequent queries"],
+      "correctIndex": 1,
+      "explanation": "Sharding splits data across multiple writer nodes by a partition key, enabling write scale-out at the cost of cross-shard complexity."
+    },
+    {
+      "id": "q24",
+      "stem": "DocumentDB is API-compatible with:",
+      "choices": ["MongoDB", "Cassandra", "Postgres", "Redis"],
+      "correctIndex": 0,
+      "explanation": "Amazon DocumentDB is MongoDB-API-compatible. Keyspaces is the Cassandra-compatible service."
+    },
+    {
+      "id": "q25",
+      "stem": "Which is the BEST primary-key design to avoid hot partitions for a logging table?",
+      "choices": ["Use a constant value", "Use the date as the partition key", "Use a high-cardinality identifier (e.g. requestId) as partition key and timestamp as sort key", "Use the user agent as partition key"],
+      "correctIndex": 2,
+      "explanation": "A high-cardinality partition key spreads writes across partitions; using date alone creates a daily hot partition."
+    }
+  ]
+}

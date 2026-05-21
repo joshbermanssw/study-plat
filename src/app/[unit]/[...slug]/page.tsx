@@ -1,5 +1,6 @@
 import { notFound } from "next/navigation";
 import { MDXRemote } from "next-mdx-remote-client/rsc";
+import { mdxOptions } from "@/lib/mdx-options";
 import { getNote, getUnitData } from "@/lib/content";
 import { ReadToggle } from "@/components/read-toggle";
 import { ConfidenceSlider } from "@/components/confidence-slider";
@@ -27,7 +28,7 @@ export default async function NotePage({
 
   const pdfUrl = localFileToApiUrl(note.localFile);
   const pdfFilename = note.localFile?.split("/").pop();
-  const preview = <MDXRemote source={note.body} />;
+  const preview = <MDXRemote source={note.body} options={mdxOptions} />;
 
   return (
     <div className="mx-auto grid w-full max-w-[110rem] grid-cols-1 gap-6 px-4 py-6 xl:grid-cols-[1fr_240px]">

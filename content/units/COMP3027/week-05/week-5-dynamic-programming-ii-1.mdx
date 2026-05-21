@@ -18,9 +18,9 @@ fileContentType: application/pdf
 Lecture 5 extends DP from 1D prefixes to 2D tables and to intervals; introduces the canonical bioinformatics, RNA, and graph-shortest-path DPs. Final algorithm-design technique before reductions take over from W6.
 
 - **Longest Common Subsequence:** OPT(i, j) = OPT(i-1, j-1) + 1 if X[i] = Y[j], else max(OPT(i-1, j), OPT(i, j-1)). O(nm); SETH says no truly subquadratic improvement.
-- **RNA Secondary Structure (DP over intervals):** OPT(i, j) = max{OPT(i, j-1), 1 + max_{i ≤ t < j-4}(OPT(i, t-1) + OPT(t+1, j-1))}; non-crossing constraint decouples subproblems. O(n^3); evaluation order = shortest intervals first.
-- **Bellman-Ford shortest paths (with negative edges, no negative cycle):** OPT(i, v) = min(OPT(i-1, v), min_{(v,w) ∈ E}(OPT(i-1, w) + c_{vw})). O(mn) time, O(n) space with push-based implementation.
-- **Segmented Least Squares (multiway choice):** OPT(j) = min_{i ≤ j}(e(i, j) + c + OPT(i-1)); O(n^3).
+- **RNA Secondary Structure (DP over intervals):** OPT(i, j) = max&#123;OPT(i, j-1), 1 + max_&#123;i ≤ t &lt; j-4&#125;(OPT(i, t-1) + OPT(t+1, j-1))&#125;; non-crossing constraint decouples subproblems. O(n^3); evaluation order = shortest intervals first.
+- **Bellman-Ford shortest paths (with negative edges, no negative cycle):** OPT(i, v) = min(OPT(i-1, v), min_&#123;(v,w) ∈ E&#125;(OPT(i-1, w) + c_&#123;vw&#125;)). O(mn) time, O(n) space with push-based implementation.
+- **Segmented Least Squares (multiway choice):** OPT(j) = min_&#123;i ≤ j&#125;(e(i, j) + c + OPT(i-1)); O(n^3).
 - **Patterns:** prefixes for 1D; pairs/(item, capacity) for 2D; intervals when problem is "non-crossing".
 
 **Exam focus:** choose the right subproblem shape (prefix vs interval vs 2D), justify why standard prefix DP fails (e.g., LCS step 1 false start), state recurrence and base cases, and compute time/space.

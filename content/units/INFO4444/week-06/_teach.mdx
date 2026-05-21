@@ -1,0 +1,190 @@
+---
+title: "Week 6 — Intellectual Property Protection"
+unit: INFO4444
+week: 6
+type: overview
+status: done
+---
+
+## What this week is really about
+
+Weeks 4 and 5 painted innovation as increasingly *open*, increasingly *distributed*, and increasingly *collaborative*. Week 6 puts the other side of the argument on the table: in a world where ideas can be copied at near-zero cost, **intellectual property law** is what makes innovation economically viable. Without some mechanism for the innovator to capture a slice of the value she creates, the private return to R&D collapses below the social return, and rational private actors under-invest. IP law — patents, trademarks, copyright, trade secrets, design rights, plus a handful of niche statutory regimes — is the state's primary tool for closing that gap. This week is genuinely *legal*, and you should treat it that way: there are tests, criteria, processes, durations, and case law that you must be able to state. By the end you should be able to (a) recite the three patent tests (novelty, inventive step, utility) and the standard term, (b) explain the distinctiveness spectrum for trademarks, (c) explain copyright's *idea/expression dichotomy*, fair use/fair dealing, and the Creative Commons family, (d) define a trade secret and the "reasonable measures" requirement, (e) compare IP strategy across industries (pharma vs software), (f) recite at least one current debate (software patents, AI training data, open-source licence enforcement).
+
+## Why IP protection exists at all
+
+Arrow's *"Economic Welfare and the Allocation of Resources for Invention"* (1962) is the canonical economic argument. Information goods (designs, formulas, code, text) have two awkward properties:
+
+1. **Non-rivalry.** My consumption does not deplete the supply for yours. Once a song exists, an extra listener costs nothing.
+2. **Near-zero marginal copying cost.** Once the first copy exists, additional copies are essentially free.
+
+Together these mean that under perfect competition, the price of information goods would be driven to marginal cost (~zero), and there would be no revenue to recover the *fixed cost* of creating the first copy. Result: private under-investment in creation. The state's response is to grant a *temporary monopoly* — IP — that lets the creator price above marginal cost for some period, recovering fixed costs. The Constitution of the United States (Art. I §8 cl. 8) phrased this neatly: "to promote the Progress of Science and useful Arts, by securing for limited Times to Authors and Inventors the exclusive Right to their respective Writings and Discoveries". The Australian system, derived from English common law and statutory codification (Patents Act 1990, Trade Marks Act 1995, Copyright Act 1968, Designs Act 2003), implements the same principle.
+
+The IP bargain is therefore explicitly *Faustian*: society accepts dead-weight loss from monopoly pricing in exchange for higher rates of creation. The question every IP debate boils down to is: *is the trade favourable?* For some categories (pharmaceuticals) the answer is clearly yes — without patent protection, no firm would spend $2B and 12 years on a single drug. For others (basic software methods) the answer is much more contested.
+
+## Patents
+
+A **patent** grants the inventor a *time-limited* exclusive right to exploit her invention in exchange for a *public disclosure* of how it works. Australian patents are governed by the Patents Act 1990 and administered by IP Australia. Two main types in Australia: standard patents (20-year term) and innovation patents (8-year term, phased out for new applications from 2021). The international system runs on the Paris Convention (1883), the Patent Cooperation Treaty (PCT, 1970), and TRIPS (1995) which set a 20-year minimum term globally.
+
+**The three tests.** To be patentable, an invention must satisfy:
+
+1. **Novelty.** The invention must not be *anticipated* by any prior art (anything publicly available before the filing date). A single public disclosure — including by the inventor — destroys novelty, with some statutory grace periods.
+2. **Inventive step (non-obviousness).** The invention must not be obvious to a *person skilled in the art* given the prior art. This is the hardest test in practice — it asks a counterfactual ("would an ordinary expert have made this leap?") that is hard to apply consistently.
+3. **Utility (industrial applicability).** The invention must have a useful, practical application. This rules out abstract ideas, mathematical formulae per se, and pure laws of nature.
+
+There is also a **subject-matter** requirement — what *types* of things can be patented. Australian law follows the test in *NRDC* (1959): the invention must be a "manner of manufacture", which is a flexible test that has expanded over time. *Diamond v Chakrabarty* (US 1980) is the international landmark: genetically modified organisms can be patented. *Alice Corp v CLS Bank* (US 2014) and *Research Affiliates v Commissioner of Patents* (Australia 2014) restricted business-method and software patents respectively, requiring something more than abstract idea implementation on a computer.
+
+**The application process.** A simplified pipeline:
+
+```
+1. Prior-art search ─── 2. Drafting (claims + spec + drawings) ─── 3. File with IP office
+                                                                       │
+4. Publication at 18 months ◄─────────────────────────────────────────┘
+                                                                       │
+5. Examination request ─── 6. Office actions / amendments ◄────────────┘
+                                                                       │
+7. Grant ─── 8. Maintenance fees (annual) ─── 9. Expiry at 20 years ──┘
+```
+
+Costs in Australia: roughly $4,000–$15,000 to file and prosecute a standard patent (depending on attorney fees and number of office actions), plus annual maintenance fees. International protection via the PCT route can run to $50,000–$200,000 across major jurisdictions over the life of the patent. This is why patent strategy is a *resource-allocation* decision and not an automatic file-everything play.
+
+**Defensive vs offensive patents.** Patents serve two strategic functions:
+
+- *Offensive*: sue or threaten to sue competitors. Pharma and biotech work this way — a granted patent is the foundation of pricing power, and infringement suits are routine.
+- *Defensive*: build a portfolio to *deter* others' suits. If you have nothing to counter-sue with, you are vulnerable. Software firms (which often face accumulating patent claims from non-practising entities) build large defensive portfolios. IBM, Google, Microsoft, and Samsung file thousands of patents per year primarily for defensive purposes; cross-licensing pacts among them keep most disputes out of court.
+
+**Patent thickets** (Carl Shapiro, 2001) are dense webs of overlapping patents in a technology area where any product practising the technology infringes multiple patents held by multiple holders. Smartphones are the canonical patent thicket: ~250,000 active patents cover the device, held by dozens of firms. Thickets *raise* innovation costs (every new entrant must license, or be sued) and can act as barriers to entry.
+
+**Patent trolls / non-practising entities (NPEs)** are firms that own patents but do not produce products — they exist to license or litigate. The economic literature (Bessen and Meurer, *Patent Failure*, 2008) finds that NPE activity imposes substantial deadweight cost: by some estimates, US firms paid $29 billion in 2011 to defend against NPE suits, much of which went to legal fees rather than productive R&D. The US Supreme Court has tightened the law against trolls (*eBay v MercExchange* 2006 on injunctions, *Alice Corp* 2014 on software patents, *TC Heartland* 2017 on venue) but the practice remains material.
+
+## Trademarks
+
+A **trademark** is a sign that distinguishes the goods or services of one trader from those of others. The function is *not* to reward invention — it is to *reduce consumer search costs* and *protect goodwill*. The Australian regime is the Trade Marks Act 1995. Marks can be registered (the ® symbol) or used unregistered (™ symbol — common-law mark in some jurisdictions, more limited rights).
+
+**The distinctiveness spectrum** (US law, *Abercrombie & Fitch v Hunting World* 1976, with parallels in Australian and UK law):
+
+```
+                    REGISTERABILITY
+                    ────────────────►
+   Fanciful  >  Arbitrary  >  Suggestive  >  Descriptive  >  Generic
+   (made-up    (real word    (hints at    (describes      (the name of
+   word, no    unrelated to  product but  the product)    the product
+   meaning)    product)      requires                     itself)
+                             imagination)
+
+   Kodak,      Apple (for    Netflix,     "Best Coffee"   "Software",
+   Xerox,      computers),   Microsoft     for coffee     "Computer"
+   Polaroid    Amazon (for                                ─ never
+               retail)                                    registerable
+```
+
+The spectrum runs from fanciful (strongest, easiest to register) through arbitrary, suggestive, descriptive (registerable only with proof of acquired distinctiveness, also called *secondary meaning*), to generic (never registerable; a mark that becomes generic loses protection — "escalator", "thermos", "aspirin" in the US all originally were trademarks).
+
+**Genericide** is the worst-case outcome for a trademark: a mark becomes so synonymous with the product category that it loses distinctiveness and protection. "Google" is genericised in colloquial use ("just google it") but Google Inc. has aggressively defended the mark in legal contexts to prevent legal genericide. Xerox runs the same defence ("photocopy, don't xerox"). Trademark owners often invest in active *brand policing* to prevent genericide — this is why marketing teams care intensely about consistent capitalisation and noun-not-verb usage.
+
+**Registration tests.** A registerable mark must be (a) distinctive (above), (b) used in trade (or with intent to use), (c) not deceptive, (d) not contrary to law or morality, (e) not too similar to an existing mark in the same class. Trademarks are classified by the Nice Classification (45 classes — e.g. class 9 covers most software products, class 42 covers IT services). Registration is class-specific: Apple (computers, class 9) and Apple (records, class 9/41 — disputed for decades with the Beatles' Apple Corps) is the famous case.
+
+**Duration.** Trademarks last indefinitely as long as they are used and renewed (every 10 years in Australia). Coca-Cola's wordmark dates to 1893 and is still in force. This is a *practical infinity* relative to patents.
+
+## Copyright
+
+**Copyright** protects original expression in literary, dramatic, musical, and artistic works (including computer programs and databases). It arises *automatically* on creation in jurisdictions following the Berne Convention (1886, almost all countries) — no registration required. The Australian regime is the Copyright Act 1968.
+
+**The idea/expression dichotomy.** Copyright protects the *expression* of an idea, not the idea itself. You cannot copyright "a story about a young wizard going to magic school"; you *can* copyright the specific text of *Harry Potter and the Philosopher's Stone*. *Baker v Selden* (US 1879) is the foundational case. The dichotomy is what makes copyright workable: ideas circulate freely, specific expressions are protected.
+
+**Substantial similarity** is the legal test for infringement: does the alleged infringing work copy a *substantial part* of the protected work? "Substantial" is qualitative as well as quantitative — copying a small but critical passage can be infringement; copying many trivial passages may not be. For software, "substantial similarity" applies to expression (specific code) but not to functionality.
+
+**Duration.** In Australia, life of the author plus 70 years for literary, dramatic, musical, and artistic works (post-2004 free trade agreement with the US). For computer software, the same. For sound recordings and films, 70 years from publication. These long terms are economically controversial: the marginal author is not incentivised by income that arrives 70 years after their death, so the long term is mostly a transfer to *existing* IP owners (Disney's Mickey Mouse extension, Bono Act 1998, is the canonical case).
+
+**Fair use (US) vs fair dealing (Australia/UK).** Both are *exceptions* that allow some unauthorised use without infringement, but they differ structurally:
+
+- *US fair use* (s.107 Copyright Act 1976) is a flexible four-factor test: purpose and character of use (transformative? commercial?), nature of the copyrighted work, amount used, market effect.
+- *Australian fair dealing* lists *closed categories* in the Copyright Act 1968: research or study, criticism or review, parody or satire, reporting news, judicial proceedings, professional advice. Outside these categories there is no fair-dealing defence.
+
+The Australian Productivity Commission (2016) recommended Australia adopt US-style fair use; the recommendation was not implemented.
+
+**Creative Commons.** Lawrence Lessig and Hal Abelson founded Creative Commons in 2001 to provide standardised public licences that copyright holders could use to release works under conditions less restrictive than default copyright. The standard family:
+
+- **CC0** — public domain dedication; no rights reserved.
+- **CC BY** — attribution required; otherwise unrestricted use including commercial.
+- **CC BY-SA** — attribution + share-alike (derivative works must use the same licence). The "copyleft" of the CC family. Wikipedia is CC BY-SA.
+- **CC BY-NC** — attribution + non-commercial use only.
+- **CC BY-ND** — attribution + no derivatives.
+- **CC BY-NC-SA**, **CC BY-NC-ND** — combinations.
+
+CC licences are now used by hundreds of millions of works (Flickr, Wikipedia, OpenStax textbooks, OpenStreetMap data uses ODbL which is parallel, much scientific publishing under CC BY mandated by funders).
+
+## Trade secrets
+
+A **trade secret** is information that is (a) commercially valuable because it is secret, and (b) protected by reasonable measures to keep it secret. Unlike patents, there is no registration and no time limit — secrets can in principle be protected forever. Australian protection runs through common-law breach of confidence and contract (NDAs); the US passed the Defend Trade Secrets Act in 2016 providing federal civil cause of action.
+
+The single most famous trade secret: the **Coca-Cola formula** (1886). Coca-Cola has never patented its formula because patenting would require *disclosure* — and 20 years later the formula would be public. Instead, Coke has kept the formula a trade secret for 140 years. The formula is reputedly known to only two employees at any time, kept in a vault in Atlanta. (The actual story is more complex; many variants of the formula exist, and most ingredients are easily identifiable through reverse engineering. The *brand* is the real moat. But as a *strategy choice* — secrecy vs patent — it is the textbook case.)
+
+**Reasonable measures** is the doctrinal hinge. To claim trade-secret protection, you must show you treated the information as secret: NDAs for employees and partners, access controls, encryption, physical security, exit interviews, classified document handling. If you publicised the information yourself or failed to police access, trade-secret protection is lost.
+
+**Trade secrets vs patents — the choice.** A useful comparison:
+
+```
+                       Trade secret              Patent
+                       ─────────────              ──────
+Duration               Indefinite (if            20 years
+                       secret holds)
+Disclosure             None (kept secret)        Full publication
+Protection scope       Against improper          Against any
+                       acquisition / use         independent use
+Independent invention  Loses protection          Still infringes
+Reverse engineering    Loses protection in       Still infringes
+                       most jurisdictions
+Filing cost            Low                       $5K-$200K
+Maintenance            Internal security cost    Annual fees
+Best for               Process know-how,         Discrete inventions
+                       formulas, customer        with patentable
+                       lists                     subject matter
+```
+
+Reverse-engineering is the key dividing line. If your invention is *visible in the product* (a new mechanism, a new chemical compound), trade secret won't help — buyers can take it apart. If your invention is *behind the product* (a process, a formulation, an algorithm running on your servers), trade secret may be the better choice.
+
+## Design rights
+
+**Design rights** (also called design patents in the US) protect the *visual appearance* of an article — its shape, configuration, pattern, or ornament — not its function. Australian regime: Designs Act 2003; 10-year term. Apple has used design patents aggressively (rounded-rectangle phone, the Pinch-to-Zoom gesture — actually a utility patent — and the iPhone home screen layout). *Apple v Samsung* (2012) is the landmark, with Apple awarded $1 billion in damages partially on design-patent grounds.
+
+## Layout-design rights
+
+A niche statutory regime: the **Circuit Layouts Act 1989** (Australia, with parallels worldwide under the Washington Treaty 1989) protects the topography of integrated circuits — the specific layout of transistors on a chip — for 10 years. The regime was created in response to a specific problem (semiconductor mask theft) and is rarely litigated, but it exists and you should be able to name it.
+
+## IP strategy by industry
+
+The most useful Week 6 takeaway is that **IP strategy is not one-size-fits-all** — different industries use different combinations because the economics are different.
+
+**Pharmaceuticals.** Patent-driven. A new drug costs ~$2.6 billion (DiMasi 2016 estimate) and takes 10–15 years from discovery to market. Without patent protection, a generic manufacturer would copy the compound for cents on the dollar. Pharma firms file *many* patents per drug (composition, method of use, formulation, manufacturing process, polymorph form) to build a *patent fortress* extending effective exclusivity beyond the nominal 20 years. Critique: this is a primary driver of high drug prices and the global access-to-medicines debate.
+
+**Software.** Mixed. Copyright protects code expression automatically. Patents are available in some jurisdictions for technical implementations but heavily restricted in others (Europe is hostile to pure software patents; the US allows them with the *Alice* limits; Australia follows US-ish jurisprudence). Trade secrets protect server-side algorithms (Google's search ranking, Coca-Cola's algorithm metaphorically). Trademarks protect brands. Copyright on code expression is the *baseline*; everything else is industry-specific.
+
+A critical software-IP point: in software, *first-mover advantage* and *network effects* often matter more than IP protection. Facebook is not the most-protected social network; it is the most-locked-in one (network effects, Week 2). Google's algorithm is not heavily patented; the data + scale moat is more durable.
+
+**Consumer electronics.** Patents (utility + design), trademarks, trade secrets, copyrights — everything at once. The smartphone-patent thicket (Apple v Samsung, Apple v HTC, Nokia v Apple, Qualcomm v Apple) is the empirical record.
+
+**Fashion and food.** *Weak* IP protection by design. Fashion has minimal copyright protection (Christopher Sprigman et al. argue this *speeds* innovation — the "piracy paradox"). Food recipes are not copyrightable (only their expression); restaurant menus and cookbooks blend copyright with trade dress. Cuisine and clothing innovate rapidly without strong IP — which is itself a useful counter-example to the "without IP, no innovation" claim.
+
+**Open source.** Uses copyright *as the enforcement mechanism for the licence*. GPL works because GPL'd code is copyrighted — without copyright, the licence terms could not be enforced. This is "copyleft" in the technical sense: the same legal tool (copyright) used in inverse direction (to ensure openness rather than restriction).
+
+## Current IP debates
+
+Three live debates worth knowing for an honours-level answer.
+
+**1. Software patents.** Should pure-software methods be patentable? Pro: software is technical, complex, and expensive to develop; patents incentivise investment. Con: software patents are easily over-broad ("a method for one-click purchasing", Amazon's 1999 patent), they accumulate into thickets that block follow-on innovation, and they enable troll litigation. *Alice Corp v CLS Bank* (US 2014) significantly narrowed software patentability — abstract ideas implemented on a generic computer are not patentable. Many in the software industry favour going further; pharma and large-electronics firms resist.
+
+**2. AI training data.** Is it copyright infringement to train large language models on copyrighted text? *The New York Times v OpenAI* (filed December 2023, ongoing) and Getty Images v Stability AI (filed 2023) are the headline cases. Plaintiffs argue training is unauthorised reproduction; defendants argue training is *transformative* (US fair use) or *learning* (which is not a copyright-restricted act in most jurisdictions). The outcome will reshape both AI economics and the law of fair use. Australia, lacking a flexible fair-use defence, may face an even sharper legal question: there is no defence that obviously applies to training-data copying. Watch this space.
+
+**3. Open licensing and licence enforcement.** When MongoDB moved from AGPL to SSPL (2018) and Elastic moved from Apache 2.0 to SSPL/Elastic Licence (2021), AWS (and OpenSearch, OpenTofu, Valkey) forked the prior open versions. The cluster of debates: what makes a licence "open source"? Who has standing to enforce GPL? (The Software Freedom Conservancy v Vizio case is ongoing.) Should copyleft extend to network-served software? The licence wars are now a real strategic battleground rather than a fringe legal-purist concern.
+
+## What you should be able to do by next week
+
+- Recite the three patent tests (novelty, inventive step, utility) and the 20-year term.
+- Walk through the distinctiveness spectrum and explain why descriptive marks need acquired distinctiveness.
+- Explain the idea/expression dichotomy and the difference between US fair use and Australian fair dealing.
+- Define a trade secret and the reasonable-measures requirement; argue for or against trade-secret vs patent for a given invention.
+- Place at least three CC licences and explain their practical differences.
+- Compare IP strategies in pharma, software, and fashion with one critique per case.
+- State the current shape of the software-patent debate post-Alice and the AI-training-data debate post-NYT v OpenAI.
+
+Week 7 begins the second half of the unit: **commercialisation**. We move from "how do innovations and ideas arise" to "how does a team turn an idea into a profitable business". The starting point is the lean-startup framework.

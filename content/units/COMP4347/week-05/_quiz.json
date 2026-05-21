@@ -1,0 +1,277 @@
+{
+  "unit": "COMP4347",
+  "week": 5,
+  "topic": "Server-side: Node.js + Express",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "What is the role of `next()` in Express middleware?",
+      "choices": [
+        "Sends the response",
+        "Aborts the request",
+        "Passes control to the next middleware in the stack",
+        "Restarts the server"
+      ],
+      "correctIndex": 2,
+      "explanation": "next() hands off to the next middleware. Forgetting to call it (and not ending the response) leaves the request hanging."
+    },
+    {
+      "id": "q2",
+      "stem": "An Express error-handling middleware is identified by:",
+      "choices": [
+        "A name starting with 'error'",
+        "Having four parameters: (err, req, res, next)",
+        "Being mounted before the route",
+        "Returning a Promise"
+      ],
+      "correctIndex": 1,
+      "explanation": "Express inspects function arity. Four args marks it as error middleware, called when next(err) is invoked."
+    },
+    {
+      "id": "q3",
+      "stem": "Which Express middleware parses JSON request bodies?",
+      "choices": ["express.urlencoded()", "express.json()", "express.static()", "express.raw()"],
+      "correctIndex": 1,
+      "explanation": "express.json() reads the body, parses it as JSON, and attaches it to req.body. Mount it before routes that need it."
+    },
+    {
+      "id": "q4",
+      "stem": "Where does Node best fit?",
+      "choices": [
+        "CPU-heavy numerical computation",
+        "IO-heavy concurrent workloads (web servers, proxies, real-time)",
+        "Embedded systems",
+        "GPU compute"
+      ],
+      "correctIndex": 1,
+      "explanation": "Node's non-blocking IO and event loop excel at many concurrent IO operations. Heavy CPU blocks the loop and hurts throughput."
+    },
+    {
+      "id": "q5",
+      "stem": "Given route /users/:id?role=admin, where does Express place the 'admin' value?",
+      "choices": ["req.params.role", "req.query.role", "req.body.role", "req.headers.role"],
+      "correctIndex": 1,
+      "explanation": "Path params (?:id) live on req.params. Query string values live on req.query. Body fields on req.body."
+    },
+    {
+      "id": "q6",
+      "stem": "What is the output order in Node?\n\nsetTimeout(() => console.log('A'), 0);\nsetImmediate(() => console.log('B'));\nprocess.nextTick(() => console.log('C'));\nPromise.resolve().then(() => console.log('D'));\nconsole.log('E');",
+      "choices": [
+        "E A B C D",
+        "E C D A B (A/B order may swap)",
+        "C D E A B",
+        "E D C A B"
+      ],
+      "correctIndex": 1,
+      "explanation": "Sync first (E). Then process.nextTick (C), then microtasks (D). Then timers (A) and immediate (B), whose relative order depends on context."
+    },
+    {
+      "id": "q7",
+      "stem": "Which HTTP status code is appropriate when a POST successfully creates a resource?",
+      "choices": ["200 OK", "201 Created", "202 Accepted", "204 No Content"],
+      "correctIndex": 1,
+      "explanation": "201 with a Location header pointing to the new resource is the REST convention."
+    },
+    {
+      "id": "q8",
+      "stem": "Which middleware order is correct?",
+      "choices": [
+        "Route handlers, then body parser",
+        "Body parser, then routes, then error middleware",
+        "Error middleware first",
+        "Static files last"
+      ],
+      "correctIndex": 1,
+      "explanation": "Express runs middleware in declaration order. Parsers must run before handlers that read the body; error middleware is last so it catches downstream errors."
+    },
+    {
+      "id": "q9",
+      "stem": "What does `app.use(express.static('public'))` do?",
+      "choices": [
+        "Caches all responses",
+        "Serves files in ./public as static assets at the matching URL paths",
+        "Enables HTTPS",
+        "Adds rate limiting"
+      ],
+      "correctIndex": 1,
+      "explanation": "express.static turns a directory into a file server. /style.css resolves to ./public/style.css."
+    },
+    {
+      "id": "q10",
+      "stem": "What is `res.sendStatus(404)` equivalent to?",
+      "choices": [
+        "res.status(404)",
+        "res.send(404)",
+        "res.status(404).send('Not Found')",
+        "res.end(404)"
+      ],
+      "correctIndex": 2,
+      "explanation": "sendStatus sets the status code and sends the default reason phrase as the body."
+    },
+    {
+      "id": "q11",
+      "stem": "Why is process.nextTick described as 'starve the loop' risky?",
+      "choices": [
+        "It throws errors",
+        "Its callbacks run before IO, so an infinite chain prevents IO events from being processed",
+        "It is deprecated",
+        "It blocks the GC"
+      ],
+      "correctIndex": 1,
+      "explanation": "nextTick queue is drained between phases, ahead of IO. Recursively queuing nextTicks can prevent timers/IO from ever running."
+    },
+    {
+      "id": "q12",
+      "stem": "Why use streams instead of reading a 1GB file into memory?",
+      "choices": [
+        "Faster compilation",
+        "Lower memory footprint and immediate downstream progress",
+        "Required for routing",
+        "Streams are faster only for small files"
+      ],
+      "correctIndex": 1,
+      "explanation": "Streams process chunks incrementally so peak memory stays small. They also begin sending bytes to the client immediately."
+    },
+    {
+      "id": "q13",
+      "stem": "An Express handler throws inside an async function but does not catch. In Express 4 default behaviour:",
+      "choices": [
+        "Express logs and recovers",
+        "The request hangs because the error never reaches error middleware",
+        "The server crashes",
+        "Express auto-retries"
+      ],
+      "correctIndex": 1,
+      "explanation": "Express 4 does not catch rejected promises from async handlers. You must wrap with asyncH or call next(err). Express 5 changes this."
+    },
+    {
+      "id": "q14",
+      "stem": "Which is the right module spec to import the built-in HTTP module?",
+      "choices": ["import http from 'http-module'", "import http from 'node:http'", "import 'fs/http'", "require('http-server')"],
+      "correctIndex": 1,
+      "explanation": "Use the node: prefix to explicitly import core modules; safer against future shadowing by npm packages."
+    },
+    {
+      "id": "q15",
+      "stem": "What does `app.use((req, res, next) => { next(); })` accomplish if it does nothing else?",
+      "choices": [
+        "Filters requests",
+        "Acts as a no-op pass-through in the chain",
+        "Sends 404",
+        "Restarts the server"
+      ],
+      "correctIndex": 1,
+      "explanation": "Calling next() with no error simply continues to the next middleware. Useful as a debug logger or to set req values."
+    },
+    {
+      "id": "q16",
+      "stem": "Why mount express.json() before a POST route that reads req.body?",
+      "choices": [
+        "Routes are case-sensitive",
+        "Middleware runs in declaration order — the body must be parsed before the handler accesses it",
+        "Otherwise the server returns 500",
+        "JSON middleware is global"
+      ],
+      "correctIndex": 1,
+      "explanation": "Express middleware is order-sensitive. If the parser hasn't run, req.body is undefined when the handler executes."
+    },
+    {
+      "id": "q17",
+      "stem": "Which is true about non-blocking IO in Node?",
+      "choices": [
+        "Each request runs on a new OS thread",
+        "IO operations are queued to libuv; their callbacks fire on completion via the event loop",
+        "All IO is synchronous",
+        "fs APIs always block"
+      ],
+      "correctIndex": 1,
+      "explanation": "libuv uses a thread pool for filesystem IO and the OS event mechanisms for network IO, calling back into JS when ready."
+    },
+    {
+      "id": "q18",
+      "stem": "What does `res.json(obj)` do?",
+      "choices": [
+        "Sets Content-Type to application/json, JSON.stringifies obj, and sends it",
+        "Validates obj against a schema",
+        "Streams obj in chunks",
+        "Stores obj in a session"
+      ],
+      "correctIndex": 0,
+      "explanation": "Convenience shorthand: it serialises the object and sets the JSON content type."
+    },
+    {
+      "id": "q19",
+      "stem": "Which file should NOT be committed to source control?",
+      "choices": ["package.json", ".env containing API keys", "express config code", "node_modules-free lockfiles"],
+      "correctIndex": 1,
+      "explanation": ".env carries secrets. Add it to .gitignore and commit a .env.example with the names of required variables only."
+    },
+    {
+      "id": "q20",
+      "stem": "Which is the correct way to define a route param?",
+      "choices": ["app.get('/users/{id}', ...)", "app.get('/users/:id', ...)", "app.get('/users/$id', ...)", "app.get('/users/*', ...).id"],
+      "correctIndex": 1,
+      "explanation": "Express uses :name syntax. The captured value is on req.params.name."
+    },
+    {
+      "id": "q21",
+      "stem": "What is the default port pattern?",
+      "choices": [
+        "Hard-coded 80 in code",
+        "Read from process.env.PORT with a development fallback",
+        "Generated randomly at boot",
+        "Specified in package.json"
+      ],
+      "correctIndex": 1,
+      "explanation": "Cloud platforms inject PORT. Hard-coding breaks deployment; reading from env with a fallback handles both."
+    },
+    {
+      "id": "q22",
+      "stem": "Why is a long synchronous loop in a Node handler harmful?",
+      "choices": [
+        "It blocks the single-threaded event loop, freezing every concurrent request",
+        "It crashes V8",
+        "It is rejected by Express",
+        "It can only run during startup"
+      ],
+      "correctIndex": 0,
+      "explanation": "Node serves all requests on one main thread. A long CPU loop monopolises it until completion."
+    },
+    {
+      "id": "q23",
+      "stem": "What does `pipe` do here?\n\nreq.pipe(res);",
+      "choices": [
+        "Logs the request",
+        "Echoes the request body back to the client with backpressure handling",
+        "Encrypts the request",
+        "Buffers the request entirely first"
+      ],
+      "correctIndex": 1,
+      "explanation": "pipe forwards chunks from a readable to a writable stream, pausing the source when the destination is full."
+    },
+    {
+      "id": "q24",
+      "stem": "Which is true about Router?",
+      "choices": [
+        "Routers cannot be nested",
+        "An express.Router() lets you group related routes/middleware and mount them at a path prefix",
+        "Router is only for static files",
+        "Router replaces the entire app"
+      ],
+      "correctIndex": 1,
+      "explanation": "Routers modularise endpoints. app.use('/api/v1', router) mounts the router under that prefix."
+    },
+    {
+      "id": "q25",
+      "stem": "Why does the middleware order with this code skip routes when there is an error?\n\napp.use(express.json());\napp.use((err, req, res, next) => res.status(500).end());\napp.get('/x', handler);",
+      "choices": [
+        "Routes after error middleware are skipped only when next(err) is called earlier",
+        "Error middleware at the top intercepts all requests",
+        "Express ignores middleware order",
+        "The error middleware needs to be a route"
+      ],
+      "correctIndex": 0,
+      "explanation": "Error middleware only runs when an upstream next(err) is invoked. Normal requests skip it and flow to the route. Best practice is still to mount it last."
+    }
+  ]
+}

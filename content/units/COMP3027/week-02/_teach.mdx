@@ -1,0 +1,404 @@
+---
+title: "Week 2 — Greedy Algorithms"
+unit: COMP3027
+week: 2
+type: overview
+status: done
+---
+
+## What greedy means, in one sentence
+
+**A greedy algorithm builds a solution one piece at a time, picking whatever looks best *right now* by some fixed rule, and never revisiting that choice.**
+
+Greedy is appealing because:
+
+- It's fast (usually one pass over the input).
+- It's easy to code.
+- The pseudocode often fits in five lines.
+
+It's also treacherous, because *most* problems don't admit a greedy optimum. The hard part isn't writing the algorithm — it's proving the algorithm is correct.
+
+This week you'll learn the proof technique you'll use most in this course: the **exchange argument**. You'll also meet six classic greedy problems whose solutions are worth memorising. For each one, be ready to:
+
+1. State the problem precisely (inputs, outputs, objective).
+2. Write the greedy in pseudocode.
+3. Sketch the optimality proof.
+4. Cite the runtime with the data structure that achieves it.
+
+## When does greedy work? Two ingredients
+
+Greedy works exactly when two properties hold.
+
+**1. Greedy choice property.** Some locally optimal choice is contained in *some* globally optimal solution. (Note: it doesn't have to be in *every* optimum — just *one*.)
+
+**2. Optimal substructure.** After you make the greedy choice, the leftover subproblem's optimum combines with your choice to give the full optimum.
+
+When both hold, you can prove correctness by induction: take the greedy choice, recurse on the residual, combine.
+
+**Watch out:** optimal substructure alone is not enough. Both shortest paths *and* longest paths in a DAG have optimal substructure, but only shortest paths admits a greedy. The greedy choice property is the harder condition, and it's where exchange arguments earn their keep.
+
+## The exchange argument, with a full worked proof
+
+This is the proof technique. Here it is on interval scheduling.
+
+### Problem: interval scheduling
+
+**Input.** n requests, each an interval [sᵢ, fᵢ).
+**Output.** A maximum-size set S of requests that pairwise don't overlap.
+
+### The greedy: earliest finish time first
+
+```text
+schedule(intervals):
+  sort by finish time
+  S = []
+  lastFinish = -infinity
+  for [s, f] in sorted order:
+    if s >= lastFinish:
+      S.append([s, f])
+      lastFinish = f
+  return S
+```
+
+**The claim.** S is a maximum-size compatible subset.
+
+### The proof, step by step
+
+We're going to compare the greedy's picks against an optimal solution's picks side by side, and show **the greedy is never behind**. Once we have that, the rest follows.
+
+**Setup.** Two lists of intervals to compare:
+
+- **G** = g₁, g₂, ..., gₖ — what the greedy picked, in the order it picked them. The greedy ended up with `k` picks total.
+- **O** = o₁, o₂, ..., oₘ — what some optimal solution picked, sorted by finish time. The optimal ended up with `m` picks total.
+
+Our goal: show that `k = m`. (Then the greedy is just as good as the optimal.)
+
+The variable **r** is just a counter — round 1, round 2, ..., up to round k. At round r we compare the greedy's r-th pick gᵣ against the optimal's r-th pick oᵣ.
+
+> **Stays-ahead claim:** at every round r from 1 to k, `finish(gᵣ) ≤ finish(oᵣ)`.
+>
+> In a picture:
+>
+> ```text
+> optimal:  o₁───   o₂───       o₃───       o₄───
+> greedy:   g₁──    g₂──        g₃──        g₄──
+> ```
+>
+> The greedy's r-th pick always finishes no later than the optimal's r-th pick.
+
+We prove the claim by induction on r.
+
+**Base case — round 1.** The greedy's very first move is "pick the request that finishes earliest in the whole input." Nothing finishes earlier than that, not even o₁. So `finish(g₁) ≤ finish(o₁)`. ✓
+
+**Inductive step — round r + 1.** Assume we've proved it up to round r: `finish(gᵣ) ≤ finish(oᵣ)`. Now we show it still holds at round r + 1.
+
+Walking through the chain in plain English:
+
+1. `o_(r+1)` is the optimal's next pick. Because O is sorted by finish time and the picks don't overlap, `o_(r+1)` must start at or after `finish(oᵣ)`.
+2. By the induction hypothesis, `finish(gᵣ) ≤ finish(oᵣ)`. Chain those: `o_(r+1)` also starts at or after `finish(gᵣ)`.
+3. That means `o_(r+1)` doesn't overlap any of the greedy's first r picks (they all finished by `finish(gᵣ)`). So `o_(r+1)` is one of the requests the greedy *could* pick at round r + 1.
+4. The greedy's rule is "of the compatible options still on the table, pick the one with the smallest finish time." It might pick `o_(r+1)` exactly, or it might find something with an even smaller finish time. Either way: `finish(g_(r+1)) ≤ finish(o_(r+1))`. ✓
+
+So by induction, the stays-ahead claim holds at every round.
+
+**Now the punchline — why k = m.** Suppose for contradiction the optimal got more picks, `m > k`. Then there's an `o_(k+1)` waiting. By stays-ahead, `finish(gₖ) ≤ finish(oₖ) ≤ start(o_(k+1))`. So `o_(k+1)` is compatible with everything the greedy already picked. But then the greedy *would not have stopped* at gₖ — it would have grabbed o_(k+1) (or something even better). Contradiction. So `m ≤ k`. And of course `k ≤ m` (the optimal is by definition the most you can pick). Therefore **k = m**. ∎
+
+**Why is this called an "exchange argument"?** You can read the same proof as a swap procedure. Take any optimal O. Swap o₁ for g₁ — we showed g₁ finishes no later, so the swap can't break anything that came after. Swap o₂ for g₂. After k swaps you've turned O into G with the same size. So G must be optimal too.
+
+**Runtime.** Sorting dominates: Θ(n log n). The scan is Θ(n). Total: **Θ(n log n)**.
+
+## Interval partitioning: how many rooms do you need?
+
+Same setup as before — n intervals on a timeline — but now you have to schedule **all** of them, not pick a subset. Lectures need rooms. The question is: **what's the fewest number of rooms you need so that no two lectures in the same room overlap?**
+
+A picture of 5 lecture intervals:
+
+```text
+time:    9   10  11  12  1   2   3   4
+A:       ─────────
+B:           ──────
+C:                       ───────
+D:                  ───────
+E:               ─────────────
+```
+
+At 11am, lectures A, B, and E are all running at the same time. So at that moment you need at least **3 rooms**. (You can't squeeze 3 simultaneous lectures into 2 rooms.) That number — the maximum simultaneous-overlap count — is the lower bound for your answer.
+
+We give that number a name:
+
+> **Depth d** = the maximum number of intervals that overlap at any single point in time.
+
+In the picture, d = 3 (at 11am).
+
+**Claim.** The minimum number of rooms is exactly d.
+
+> *(Side note — why some textbooks say "colours" instead of "rooms": this problem is also called "interval graph colouring", where each interval is a vertex, edges connect overlapping intervals, and a "colour" is just a label you assign to a vertex so that no two connected vertices share a colour. "Room" = "colour" = "label" = "class". We'll stick with "rooms".)*
+
+**Lower bound (you need at least d rooms).** At the moment when d intervals overlap, every one of them needs a different room — they're all running simultaneously. So you can't get away with fewer than d rooms.
+
+**Upper bound (d rooms suffice).** Here's a greedy algorithm that uses exactly d:
+
+```text
+partition(intervals):
+  sort intervals by start time
+  for each interval I in order:
+    if some room's last lecture ended at or before start(I):
+      put I in that room (reuse it)
+    else:
+      open a brand new room for I
+```
+
+**Why this uses no more than d rooms.** Suppose the greedy opens a new room — call it room number k — for some interval I. Why couldn't it reuse rooms 1, 2, ..., k − 1?
+
+Because at the moment `start(I)`, every one of those k − 1 rooms still has an interval running (none of them have finished by `start(I)`). Add I itself and you have **k intervals all overlapping at the point `start(I)`**. So the depth d is at least k — i.e. d ≥ k.
+
+Combine with the lower bound d ≤ (number of rooms used), and you get: **rooms used = d**.
+
+**Runtime.** Sort once (Θ(n log n)) + a min-heap keyed by "next free time" of each room to do the reuse check in O(log n) per interval. Total: **Θ(n log n)**.
+
+## Scheduling to minimise lateness (full exchange proof)
+
+**Problem.** n jobs, each with processing time tᵢ and deadline dᵢ. Schedule them non-preemptively on one machine starting at t = 0. If job i finishes at time fᵢ, its lateness is Lᵢ = max(0, fᵢ − dᵢ). Minimise Lₘₐₓ = maxᵢ Lᵢ.
+
+**Greedy: Earliest Deadline First (EDF).** Sort by dᵢ ascending, run back-to-back.
+
+### The exchange proof
+
+Define an **inversion**: a pair (i, j) where i is scheduled before j but dᵢ &gt; dⱼ.
+
+**Lemma 1.** If a schedule has any inversion, it has an *adjacent* inversion.
+
+*Proof.* Follow deadlines from i along the schedule to j. The sequence starts at dᵢ, ends at dⱼ, with dᵢ &gt; dⱼ. Somewhere two consecutive deadlines must drop — that's an adjacent inversion. ∎
+
+**Lemma 2.** Swapping an adjacent inverted pair doesn't increase Lₘₐₓ.
+
+*Proof.* Suppose the schedule shows ... i, j ... with dᵢ &gt; dⱼ. Let fⱼ be j's finish time before the swap, and let "prefix time" be the time when this pair starts.
+
+Before: Lᵢ = (prefix + tᵢ) − dᵢ, Lⱼ = (prefix + tᵢ + tⱼ) − dⱼ = fⱼ − dⱼ.
+After (swap to j, i): Lⱼ' = (prefix + tⱼ) − dⱼ, Lᵢ' = (prefix + tⱼ + tᵢ) − dᵢ = fⱼ − dᵢ.
+
+Other jobs aren't affected. The new max of these two is Lᵢ' = fⱼ − dᵢ.
+
+Since dⱼ &lt; dᵢ: Lᵢ' = fⱼ − dᵢ &lt; fⱼ − dⱼ = Lⱼ.
+
+So the swap's max is ≤ the old max. No increase. ∎
+
+**Theorem.** EDF is optimal.
+
+*Proof.* Let S* be any optimum. Repeatedly swap adjacent inversions (no harm per Lemma 2). You eventually reach the unique inversion-free schedule — EDF. So Lₘₐₓ(EDF) ≤ Lₘₐₓ(S*). ∎
+
+**Why no idle time?** Removing idle time only makes things finish earlier, so it can't increase any lateness.
+
+**Runtime.** Sorting ⇒ **Θ(n log n)**.
+
+## Huffman coding
+
+**Problem.** Given symbols a₁, ..., aₙ with frequencies pᵢ &gt; 0, build a prefix-free binary code minimising L = Σ pᵢ ℓᵢ, where ℓᵢ is the codeword length for aᵢ.
+
+**Greedy idea.** Two least-frequent symbols should be deepest in the code tree (they cost the most per bit, so we want their codewords short — wait, actually long, since infrequent symbols can afford long codewords).
+
+```text
+huffman(P):
+  H = min-heap of (frequency, leaf-node) for each symbol
+  while H has more than one entry:
+    (p1, x) = extract_min
+    (p2, y) = extract_min
+    z = new internal node with children x, y
+    insert (p1 + p2, z) into H
+  return the root
+```
+
+**Why it's correct (sketch — two lemmas).**
+
+1. **Greedy choice.** In some optimum, the two least-frequent symbols are siblings at maximum depth. (If not, swap them down — codeword lengths swap, but the cost can only get better because we're trading deeper positions for less-frequent symbols.)
+
+2. **Optimal substructure.** Merge the two least-frequent symbols into a virtual symbol with summed frequency. The optimum of the merged instance combines with the merge into the optimum of the original.
+
+Induction on n closes it.
+
+**Runtime.** **Θ(n log n)** using a binary heap.
+
+## Minimum spanning tree (MST)
+
+**Problem.** A connected weighted graph G = (V, E, w). Find a spanning tree T of minimum total weight.
+
+### The two key lemmas
+
+First, one word of vocabulary that the lemmas need.
+
+> **A cut** of a graph is just a way of splitting the vertices into two non-empty groups: call them S and V \ S (everything not in S). An edge "crosses the cut" if one endpoint is in S and the other isn't.
+>
+> ```text
+>   S = {a, b, c}    V \ S = {d, e}
+>   a────b   ┊   d
+>   │    │   ┊   │
+>   c────┼───┼───e        ← these dashed-line edges cross the cut
+>        b───┊───d
+> ```
+>
+> A cut doesn't have to be "meaningful"; it's just any 2-colouring of the vertices. Different cuts give different sets of crossing edges.
+
+Now the two lemmas:
+
+**Cut property.** Pick any cut (S, V \ S). Among the edges crossing that cut, the **lightest one** belongs to *some* MST.
+
+**Cycle property.** Pick any cycle. The **heaviest edge** in that cycle is in *no* MST.
+
+Both come from exchange arguments. (Cut: take any MST not containing the min-cut-edge e; adding e creates a cycle; that cycle must contain another edge that crosses the cut, and it's at least as heavy as e — remove it. You've produced a spanning tree whose total weight is no greater. So an MST containing e exists.)
+
+### Kruskal's algorithm
+
+Sort edges ascending; for each, include it unless it creates a cycle (use union-find to check).
+
+```text
+kruskal(G):
+  sort E by weight
+  for each v: makeset(v)
+  T = []
+  for (u, v, w) in sorted E:
+    if find(u) != find(v):
+      T.append((u, v)); union(u, v)
+  return T
+```
+
+**Correctness.** Each accepted edge is the lightest edge crossing the cut between its endpoints' components and the rest. Cut property says it's in some MST.
+
+**Runtime.** **Θ(m log n)** — dominated by sorting; union-find is essentially O(α(n)) ≈ O(1) per op.
+
+### Prim's algorithm
+
+Grow T from a start vertex; always add the lightest edge with exactly one endpoint in T.
+
+```text
+prim(G, s):
+  key[s] = 0; key[v] = +inf otherwise
+  Q = min-heap over V keyed by key[v]
+  while Q not empty:
+    u = extract_min(Q)
+    add (parent[u], u) to T (except root)
+    for each (u, v):
+      if v in Q and w(u,v) < key[v]:
+        key[v] = w(u,v); parent[v] = u; decrease_key
+```
+
+**Correctness.** Each iteration adds the min edge across the cut (T, V \ T). Cut property.
+
+**Runtime.** Binary heap: **O((n + m) log n)**. Fibonacci heap: **O(m + n log n)**.
+
+### Bonus: reverse-delete
+
+The dual of Kruskal. Sort edges *descending*; remove each edge if removing it keeps the graph connected.
+
+**Correctness via cycle property.** Each removed edge is the max-weight edge in some cycle.
+
+**Runtime.** O(m log m) sort + O(m·(m+n)) for connectivity checks. Slower than Kruskal, but conceptually clean.
+
+## Dijkstra's shortest paths
+
+**Problem.** Directed graph, non-negative edge weights, source s. Compute δ(s, v) for every v.
+
+```text
+dijkstra(G, s):
+  d[v] = +inf for v != s; d[s] = 0
+  Q = min-heap of (d[v], v)
+  while Q not empty:
+    u = extract_min
+    for each edge (u, v):
+      if d[u] + w(u,v) < d[v]:
+        d[v] = d[u] + w(u,v); decrease_key(Q, v)
+```
+
+### Correctness proof (the "relaxation" idea)
+
+Quick vocabulary check before the proof.
+
+> **Edge relaxation** is the one-line update Dijkstra does every time it processes an edge `(x, y)`:
+>
+> ```text
+> if d[x] + w(x, y) < d[y]:
+>     d[y] = d[x] + w(x, y)
+>     predecessor[y] = x
+> ```
+>
+> In English: *"if going via x is shorter than the best route to y we've found so far, update the best route to go via x"*. Each individual relaxation might be wrong, but the array `d` only ever gets smaller, so it can only get *closer* to the truth.
+>
+> Dijkstra's correctness is the claim that **by the time a vertex is finalised (extracted from the heap), its `d` value is the true shortest distance**.
+
+**Claim.** When u is extracted, d[u] = δ(s, u).
+
+**Proof by contradiction.** Suppose u is the *first* vertex extracted with d[u] &gt; δ(s, u). Take any shortest s-u path π. Walk along π and let y be the first vertex not yet in S (the finalised set), with predecessor x ∈ S (x exists because s ∈ S).
+
+1. When x was added to S, we relaxed the edge (x, y). So d[y] ≤ d[x] + w(x, y).
+2. By assumption, u is the *first* to be extracted with the wrong distance, and x was extracted earlier, so d[x] = δ(s, x).
+3. Subpaths of shortest paths are shortest, so δ(s, x) + w(x, y) = δ(s, y).
+4. Therefore d[y] ≤ δ(s, y) ≤ δ(s, u) &lt; d[u].
+5. But Dijkstra extracted u before y, so d[u] ≤ d[y]. Contradiction. ∎
+
+**Why non-negative edge weights matter.** Step 3 uses that subpath weights only grow as you extend, which fails with negative edges. For negative weights, use Bellman-Ford (Week 5).
+
+**Runtime.** Binary heap **O((n + m) log n)**, Fibonacci heap **O(m + n log n)**, no heap (linear scan) **O(n²)**.
+
+## When greedy fails: a counterexample
+
+The classic failure: **coin change with non-standard denominations.**
+
+Take coins &#123;1, 3, 4&#125; and target value 6.
+
+- **Greedy** (always take the largest coin ≤ remaining): 4 + 1 + 1 = **3 coins**.
+- **Optimum**: 3 + 3 = **2 coins**.
+
+Greedy choice property fails: the largest coin isn't in any optimum here. So we'll solve coin change with dynamic programming in Week 4/5.
+
+**Subtler failure: 0/1 knapsack vs fractional knapsack.** Fractional knapsack admits a greedy by density (value/weight). 0/1 knapsack doesn't — taking the densest item might block a strictly better combination. If you understand *why this difference exists*, you understand the greedy choice property.
+
+## The exchange-argument recipe
+
+When you're asked to prove a greedy is optimal, follow this template.
+
+1. **State the problem.** Input, output, objective, feasibility.
+2. **State the greedy.** What rule selects the next element?
+3. **State the invariant.** Usually: "after k iterations, the greedy's partial solution can be extended to an optimum" or "any optimum can be transformed into the greedy without harming the objective".
+4. **Prove the invariant by induction.** Base case (k = 0 trivial); inductive step (show the greedy's choice doesn't force suboptimality — swap in the greedy element for whatever the optimum did).
+5. **Conclude.** When the invariant collapses, greedy = optimum.
+6. **State runtime** with the data structure.
+
+If you can't complete step 4, your greedy criterion is probably wrong — or the problem isn't actually greedy.
+
+## All the greedies at a glance
+
+| Problem | Greedy rule | Proof | Runtime |
+|---------|-------------|-------|---------|
+| Interval scheduling | Earliest finish time | Exchange / invariant | Θ(n log n) |
+| Interval partitioning | Earliest free room | Lower bound = depth | Θ(n log n) |
+| Min lateness | Earliest deadline | Adjacent-inversion exchange | Θ(n log n) |
+| Huffman | Merge two least-frequent | Two-lemma swap | Θ(n log n) |
+| Kruskal MST | Lightest non-cycle edge | Cut property | Θ(m log n) |
+| Prim MST | Lightest edge into tree | Cut property | Θ(m + n log n) |
+| Dijkstra SSSP | Closest unfinished | Relaxation invariant | Θ(m + n log n) |
+
+## Union-find, for Kruskal
+
+Kruskal's runtime hinges on union-find. Three operations:
+
+- `makeset(x)`: create a singleton &#123;x&#125;.
+- `find(x)`: return x's representative.
+- `union(x, y)`: merge the two sets.
+
+**Implementation: union by rank + path compression.**
+
+- Each element points to a parent. The *root* is the representative.
+- Rank is an upper bound on tree height.
+- `union` attaches the lower-rank tree under the higher-rank root.
+- `find` walks to the root, then re-parents every node it visited *directly* to the root.
+
+**Amortised cost (Tarjan 1975).** m operations on n elements: **O(m · α(n))**, where α is the inverse Ackermann function. For all practical n, α(n) ≤ 4, so this is effectively O(m).
+
+## What to do this week
+
+1. Redo the interval-scheduling exchange proof on a blank sheet, no peeking.
+2. Implement Kruskal with a union-find class (union-by-rank + path compression). Stress-test on 10⁵ edges.
+3. Trace Dijkstra by hand on a 6-vertex graph. Confirm the relaxation invariant after each extraction.
+4. Construct your own coin-change counterexample with at most three denominations.
+5. Disprove: "smallest interval first" is optimal for interval scheduling. Find the counterexample.
+6. Draw a graph where Kruskal starting at different orderings produces *different* (equal-weight) MSTs.
+7. Skim the quiz: any greedy rule you don't recognise instantly is one to memorise.

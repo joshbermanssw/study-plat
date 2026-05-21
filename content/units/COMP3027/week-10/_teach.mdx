@@ -1,0 +1,329 @@
+---
+title: "Week 10 — NP-Hardness II: Explicit Reductions"
+unit: COMP3027
+week: 10
+type: overview
+status: done
+---
+
+## What Week 10 is for
+
+Week 9 set up the framework: P, NP, polynomial-time reductions, Cook-Levin giving SAT as the seed, plus a roster of canonical NP-complete problems whose hardness we *promised* to prove.
+
+**Week 10 does that work.** We construct *explicit reductions* and prove correctness in both directions. This is the technical heart of NP-completeness theory — and the highest-leverage exam topic in the unit. The reductions are mechanical once you know the patterns. The patterns are stable across decades of textbooks.
+
+**By the end of this week you'll be able to:**
+
+1. Decode a new problem into "which reduction template applies".
+2. Construct the gadgets.
+3. Write the YES-iff-YES proof.
+
+**Five canonical reductions to internalise:**
+
+| # | Reduction | What it teaches |
+|---|-----------|-----------------|
+| 1 | 3-SAT ≤ₚ Independent Set | Entry point from logic to graphs |
+| 2 | Independent Set ↔ Vertex Cover | Complementation |
+| 3 | Vertex Cover ≤ₚ Set Cover | Graph → hypergraph |
+| 4 | 3-SAT ≤ₚ 3-Coloring | OR-gadgets |
+| 5 | 3-SAT ≤ₚ Subset Sum | Logic → arithmetic |
+
+## Reduction 1: 3-SAT ≤ₚ Independent Set
+
+**Input.** A 3-CNF formula φ with m clauses, over n variables. Each clause has exactly 3 literals (a literal is either xₖ or ¬xₖ).
+
+**Goal.** Build a graph G and integer k such that φ is satisfiable iff G has an independent set of size ≥ k.
+
+**The gadget — one triangle per clause.**
+
+For each clause Cᵢ = (a ∨ b ∨ c), create three vertices labelled with the three literals, and connect them as a triangle:
+
+```text
+clause (a ∨ b ∨ c):
+
+         a
+        / \
+       /   \
+      b ─── c
+```
+
+An independent set can contain at most one vertex from this triangle. So if we want |IS| ≥ m, we must pick **exactly one vertex per clause**. That picked vertex represents "the literal we're trusting to satisfy this clause".
+
+**The conflict edges.**
+
+We must not pick both xₖ and ¬xₖ across two different clauses — that'd be contradictory. So we add an edge between every pair of literal-vertices that are complementary (one is xₖ, the other is ¬xₖ).
+
+Set k = m.
+
+**Picture for one specific formula:** φ = (x ∨ y ∨ ¬z) ∧ (¬x ∨ ¬y ∨ z) ∧ (x ∨ ¬y ∨ z).
+
+```text
+       x  ────  ¬x          ← conflict edge
+      /  \    /   \
+     /    \  /     \
+    y───── ¬z      ¬y────  z       ← clause 1 triangle + clause 2 triangle
+                    \    /
+                     \  /
+                      ──
+                     /  \
+       (clause 3 triangle: x  ¬y  z, with x ↔ ¬x edges across, etc.)
+```
+
+(Imagine more conflict edges between every x and ¬x pair across all three triangles.)
+
+**Polynomial time.** O(m) vertices (3 per clause), O(m²) edges (3 per triangle + up to one per literal pair).
+
+### Both directions
+
+**(⇒) Satisfying assignment α ⇒ independent set of size m.**
+
+Use α to pick one TRUE literal per clause (each clause has at least one TRUE literal since α satisfies φ). Take the corresponding m vertices.
+
+Check independence:
+
+- **Within a clause:** we picked only one vertex from the triangle. No edge within. ✓
+- **Across clauses:** the picked literals are all TRUE under α. Could two be complementary (xₖ and ¬xₖ)? No — they can't both be TRUE. So no conflict edge is violated. ✓
+
+**(⇐) Independent set S of size ≥ m ⇒ satisfying assignment.**
+
+Step 1: S has at most one vertex per clause-triangle (it's a triangle — any two vertices are adjacent). With m triangles and |S| ≥ m, S has **exactly one vertex per clause**.
+
+Step 2: no two vertices in S are complementary literals (the conflict edges forbid it).
+
+Step 3: define α(xₖ) = TRUE if some vertex in S is labelled xₖ; FALSE if some vertex in S is labelled ¬xₖ; arbitrary otherwise. Step 2 says this is well-defined (we never see both xₖ and ¬xₖ in S).
+
+Step 4: each clause has its chosen vertex in S, with that vertex's literal evaluated TRUE under α. So every clause is satisfied. ∎
+
+**Conclusion.** 3-SAT ≤ₚ Independent Set, so Independent Set is NP-hard. It's also in NP (verifier checks |S| = k and pairwise non-adjacency in O(k²)). So **Independent Set is NP-complete**.
+
+### Worked mini-example
+
+Take φ = (x ∨ y ∨ ¬z) ∧ (¬x ∨ y ∨ z). Two clauses, k = 2.
+
+- Triangle 1: vertices labelled x, y, ¬z.
+- Triangle 2: vertices labelled ¬x, y, z.
+- Conflict edges: (x in T1) — (¬x in T2); (¬z in T1) — (z in T2).
+
+Try assignment α: x = TRUE, y = anything, z = TRUE.
+
+- Clause 1 = (x ∨ y ∨ ¬z) — x is TRUE → pick the x vertex.
+- Clause 2 = (¬x ∨ y ∨ z) — z is TRUE → pick the z vertex.
+
+Is &#123;x, z&#125; independent? x and z aren't complementary, no conflict edge. ✓ Each from its own triangle. ✓ Size 2 = m. ✓ The reduction works.
+
+## Reduction 2: Independent Set ↔ Vertex Cover (complementation)
+
+**Lemma.** C is a vertex cover of G iff V \ C is an independent set.
+
+*Proof.* C covers G iff every edge has ≥ 1 endpoint in C iff no edge has both endpoints in V\C iff V\C is independent. ∎
+
+**Reduction Independent Set ≤ₚ Vertex Cover.** Given (G, k), return (G, n − k).
+
+G has an IS of size ≥ k ⇔ G has a vertex cover of size ≤ n − k.
+
+**Reduction Vertex Cover ≤ₚ Independent Set.** Symmetric.
+
+Both are O(1) reductions. **Vertex Cover is NP-complete.**
+
+**Bonus: Clique.** An independent set of G is exactly a clique of the complement graph G̅. So Independent Set ≤ₚ Clique. **Clique is NP-complete.**
+
+## Reduction 3: Vertex Cover ≤ₚ Set Cover
+
+**Set Cover.** Universe U of size n. Sets S₁, ..., Sₘ ⊆ U. Integer k. Decide: do some k of the sets cover U?
+
+**Reduction.** Given graph G = (V, E) and k:
+
+- U = E. One element per edge.
+- For each vertex v ∈ V: Sᵥ = &#123;e ∈ E : v ∈ e&#125;. (Set of edges incident to v.)
+- Target k unchanged.
+
+**Polynomial.** |U| = m, |sets| = n.
+
+### Both directions
+
+**(⇒)** Vertex cover C ⇒ for every edge e, some v ∈ C has v ∈ e, so e ∈ Sᵥ. So &#123;Sᵥ : v ∈ C&#125; covers U.
+
+**(⇐)** Set cover &#123;S_&#123;v₁&#125;, ..., S_&#123;vₖ&#125;&#125; covers U ⇒ every edge has a chosen v as endpoint ⇒ &#123;v₁, ..., vₖ&#125; is a vertex cover. ∎
+
+**Set Cover is NP-complete.** Week 11 introduces the ln(n)-approximation via greedy.
+
+## Reduction 4: 3-SAT ≤ₚ 3-Coloring
+
+**3-Coloring.** Can vertices be coloured with 3 colours so adjacent vertices differ?
+
+**Construction.**
+
+Three **palette** vertices T, F, B (True, False, Base), connected as a triangle. They get three distinct colours; WLOG colour-named accordingly.
+
+For each variable xₖ: two vertices vₓ and v_¬x, connected to each other and to B. This forces &#123;vₓ, v_¬x&#125; = &#123;True, False&#125; in some order — encoding the truth value.
+
+For each clause Cᵢ = (a ∨ b ∨ c): a **clause gadget** that is 3-colourable iff at least one of vₐ, v_b, v_c is coloured True.
+
+The clause gadget chains two OR-gadgets. An OR-gadget on inputs p, q outputs True iff p ∨ q. Two chained give a 3-input OR.
+
+**Polynomial time.** O(m + n) vertices, O(m + n) edges.
+
+### Both directions (sketch)
+
+**(⇒)** Satisfying α ⇒ colour v_&#123;xₖ&#125; as α(xₖ), colour clause gadgets per their internal validity (works because at least one input is True). Valid 3-coloring.
+
+**(⇐)** Valid 3-coloring ⇒ read v_&#123;xₖ&#125;'s colour as α(xₖ). Each clause-gadget's properness forces ≥ 1 input True. So α satisfies φ. ∎
+
+**3-Coloring is NP-complete.**
+
+**Sharp boundary.** 2-Coloring = bipartite check = O(n + m). The jump from 2 to 3 colors is a discontinuous complexity boundary. **Don't assume "small k" versions of NP-hard problems are hard.**
+
+## Reduction 5: 3-SAT ≤ₚ Subset Sum
+
+**Subset Sum.** Integers a₁, ..., aₙ, target T. ∃ subset summing exactly to T?
+
+**Construction.** For 3-CNF φ with n variables, m clauses, build base-10 numbers with n + m digit positions:
+
+- **First n digits:** variable markers (one per variable).
+- **Next m digits:** clause markers (one per clause).
+
+For each variable xₖ, create two numbers:
+
+- **tₖ** (= "xₖ is TRUE"): 1 in variable position k; 1 in clause position i for each clause containing literal xₖ; 0 elsewhere.
+- **fₖ** (= "xₖ is FALSE"): 1 in variable position k; 1 in clause position i for each clause containing literal ¬xₖ.
+
+For each clause Cᵢ, create **slack** numbers sᵢ¹ = 1 and sᵢ² = 2 in clause position i.
+
+**Target T.** All 1's in variable positions; all 3's in clause positions.
+
+```text
+T = 1 1 1 ... 1   3 3 3 ... 3
+    \_n times_/   \_m times_/
+```
+
+### Why this works
+
+- The variable-position digit forces exactly one of &#123;tₖ, fₖ&#125; per variable — encoding α.
+- In clause position i, the chosen literal numbers contribute the count of literals in Cᵢ satisfied by α (0 to 3). Adding subset of &#123;sᵢ¹ = 1, sᵢ² = 2&#125;, achievable totals: 0, 1, 2, 3.
+- To hit 3 in position i: contribution must be ≥ 1, i.e. α satisfies Cᵢ.
+
+Base 10 keeps digits ≤ 9, so no carry.
+
+**Subset Sum is NP-complete.**
+
+### Note: pseudo-polynomial
+
+Subset Sum has an O(nT) DP (Week 5). This is *pseudo-polynomial* — T encoded in O(log T) bits, so O(nT) is exponential in input bit-length.
+
+The DP and NP-hardness cohabit: the DP is exponential in *bit-length*, polynomial in *value*. NP-hardness is about bit-length.
+
+## Strongly vs weakly NP-hard
+
+A problem is **strongly NP-hard** if it stays NP-hard even when input numbers are polynomially bounded in input size.
+
+A problem is **weakly NP-hard** if it admits a pseudo-polynomial algorithm.
+
+| Problem | Hard-ness |
+|---------|-----------|
+| 3-SAT | Strongly NP-hard |
+| Vertex Cover | Strongly NP-hard |
+| TSP (general) | Strongly NP-hard |
+| Subset Sum | **Weakly** NP-hard (DP in O(nT)) |
+| 0/1 Knapsack | **Weakly** NP-hard (DP in O(nW)) |
+
+This distinction matters in Week 11: **only weakly NP-hard problems admit FPTAS.** Strongly NP-hard ones may admit PTAS but never FPTAS (unless P = NP).
+
+## Decision vs search vs optimisation (self-reducibility)
+
+NP is officially decision. But you usually want a *certificate* (search) or the *best* certificate (optimisation).
+
+**For NP-complete problems, all three are polynomial-time equivalent.**
+
+**Mechanism: self-reducibility.** Use the decision oracle on restricted instances.
+
+- **SAT:** Fix x₁ = TRUE; ask if restricted formula is satisfiable; recurse. n queries → assignment.
+- **Vertex Cover:** Fix v₁ in / not in cover; ask if restricted instance still has a cover of right size; recurse.
+- **Optimisation:** Binary search over k around the decision version.
+
+So polynomial decision ⇒ polynomial search and optimisation with O(n) blow-up.
+
+## The reduction-proof template (repeated for cementing)
+
+1. **Cite the source.** Usually 3-SAT, IS, VC, or Subset Sum.
+2. **Construction.** Given source instance I, build target f(I). Use *gadgets*.
+3. **Polynomial time.** f(I) is poly(|I|) in size and built in poly time.
+4. **Forward (⇒).** YES of source ⇒ YES of target. Show certificate transformation.
+5. **Backward (⇐).** YES of target ⇒ YES of source. Show certificate transformation back.
+6. **Conclude.** Target NP-hard. If in NP (state verifier), NP-complete.
+
+**Step 5 is where students lose marks.** Both directions, every time. *"YES iff YES."*
+
+## Common mistakes (read this twice)
+
+**Mistake 1: Reducing the new problem TO a hard one to prove hardness.**
+
+Wrong direction! Reducing X to 3-SAT shows X ∈ NP (no harder than 3-SAT). To show X is *hard*, reduce *from* 3-SAT *to* X.
+
+**Mistake 2: Skipping the backward direction.**
+
+Students often prove (⇒) and wave hands at (⇐). Don't. Gadget reductions live or die in the backward direction. **Write both. Always.**
+
+**Mistake 3: Assuming "small k" variants must also be hard.**
+
+2-SAT polynomial, 3-SAT NP-complete. 2-Coloring polynomial, 3-Coloring NP-complete. **The boundary is discontinuous.**
+
+## Gadget taxonomy
+
+By the end of this week, recognise these on sight:
+
+| Gadget | Used in |
+|--------|---------|
+| Clause-triangle | 3-SAT → IS |
+| OR-gadget, AND-gadget, choice-gadget | 3-SAT → 3-Coloring; 3-SAT → Ham Cycle |
+| Base-radix digit positions | 3-SAT → Subset Sum, Partition |
+| Path / chain gadget | Hamiltonian Path reductions |
+| Complementation | IS ↔ VC; IS → Clique |
+
+**Pattern recognition over gadgets accelerates problem-solving dramatically.**
+
+- "Decide whether at least one of three things holds" ⇒ reach for an OR-gadget.
+- "Decide whether some subset sums exactly" ⇒ digit-position encoding.
+- "Complementary structure" (cover vs independent set) ⇒ complementation.
+
+## Bonus: chain 3-SAT → IS → VC → Ham Cycle → TSP
+
+This chain demonstrates how NP-hardness propagates.
+
+**Vertex Cover → Hamiltonian Cycle (sketch).** For each edge in G, build a 12-vertex "edge gadget" that can be traversed in two ways, corresponding to which endpoint covers the edge. Add k "selector" vertices. The cycle through the construction encodes a vertex cover of size k. (Garey-Johnson takes a textbook page; the key insight is that Hamiltonian Cycle has enough slack to encode arbitrary VC instances.)
+
+**Hamiltonian Cycle → TSP.** Trivial. Edge weights 1 for original edges, ∞ for non-edges. A TSP tour of weight ≤ n exists iff a Hamiltonian cycle exists.
+
+So **TSP is NP-hard.**
+
+## co-NP, NP-intermediate, PSPACE: a brief tour
+
+**co-NP.** Complements of NP problems. Examples: TAUT (every assignment satisfies φ), NON-3-COLORABILITY. Whether NP = co-NP is open.
+
+**NP ∩ co-NP.** Problems with both YES and NO certificates. Conjecturally includes factoring (still being worked out).
+
+**NP-intermediate (Ladner 1975).** If P ≠ NP, there are NP problems neither in P nor NP-complete. Candidates: factoring, discrete log, Graph Isomorphism (Babai 2015: quasi-polynomial, almost in P).
+
+**Polynomial hierarchy PH = ∪ₖ Σₖᵖ.** Σ₀ = P, Σ₁ = NP, Σ₂ = NPᴺᴾ, ... If P = NP, the whole hierarchy collapses.
+
+**Beyond PH.** PSPACE (poly space), EXPTIME (exp time), undecidable. Natural chain: P ⊆ NP ⊆ PH ⊆ PSPACE ⊆ EXPTIME ⊆ ... ⊆ undecidable. Most inclusions open; EXPTIME ⊋ P is proven (time hierarchy theorem).
+
+For COMP3027 you need P, NP, co-NP, and NP-complete. The rest is context.
+
+## What this week buys you
+
+By Week 11 you can triage any new combinatorial decision problem:
+
+- **"Probably P"** — looks like flow, DP, or matching.
+- **"Probably NP-complete"** — fits a Week 10 template.
+
+That triage is the strongest practical tool the theory gives you. Use it.
+
+## What to do this week
+
+1. Write the full 3-SAT ≤ₚ Independent Set proof on a fresh page, no notes.
+2. Construct a Set Cover instance from a small vertex-cover instance on a 5-vertex graph. Verify equivalence by hand.
+3. For 3-SAT ≤ₚ Subset Sum, take φ = (x ∨ y ∨ ¬z) ∧ (¬x ∨ y ∨ z). Write the numbers and target T explicitly.
+4. Design a 4-vertex OR-gadget that is 3-colourable iff the input pair satisfies OR.
+5. Verify Independent Set ↔ Vertex Cover on a 6-vertex graph: find a max IS, take its complement, confirm it's a min VC.
+6. For each canonical reduction this week, time how long it takes to write down forward and backward directions. Aim for under 5 minutes each by exam time.
+7. Skim the quiz: any reduction direction confusion is a study target.

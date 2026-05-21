@@ -1,0 +1,182 @@
+{
+  "unit": "COMP4349",
+  "week": 3,
+  "topic": "Cloud Compute Service (EC2)",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "An AMI is best described as:",
+      "choices": ["A pricing tier", "A bootable disk image used to launch EC2 instances", "An auto-scaling policy", "An IAM role"],
+      "correctIndex": 1,
+      "explanation": "An Amazon Machine Image is the template (OS + pre-installed software) from which EC2 launches new instances."
+    },
+    {
+      "id": "q2",
+      "stem": "Which EC2 instance family is best for an in-memory Redis cache?",
+      "choices": ["T (burstable)", "C (compute-optimised)", "R (memory-optimised)", "G (GPU)"],
+      "correctIndex": 2,
+      "explanation": "R-family instances have the highest RAM-to-vCPU ratio — ideal for in-memory caches and databases."
+    },
+    {
+      "id": "q3",
+      "stem": "Which instance family suffix indicates a Graviton (Arm) CPU?",
+      "choices": ["a", "i", "g", "d"],
+      "correctIndex": 2,
+      "explanation": "A trailing `g` (e.g. m7g, c7g) denotes AWS Graviton Arm processors, typically ~20% cheaper than equivalent x86."
+    },
+    {
+      "id": "q4",
+      "stem": "Spot Instances can be reclaimed with how much notice?",
+      "choices": ["No notice", "2 minutes", "1 hour", "24 hours"],
+      "correctIndex": 1,
+      "explanation": "AWS issues a 2-minute interruption notice via instance metadata or CloudWatch Events before reclaiming Spot capacity."
+    },
+    {
+      "id": "q5",
+      "stem": "Which workload is the WORST fit for Spot Instances?",
+      "choices": ["Genomics batch", "CI build farm", "Stateless web tier behind ASG with diversified instance pools", "Primary production database with stateful data"],
+      "correctIndex": 3,
+      "explanation": "A stateful primary DB cannot tolerate sudden eviction. Spot is for fault-tolerant, stateless, or checkpointable workloads."
+    },
+    {
+      "id": "q6",
+      "stem": "An Auto Scaling Group should use which health check type to replace instances whose application has crashed but the OS is still up?",
+      "choices": ["EC2", "ELB", "Route 53", "VPC"],
+      "correctIndex": 1,
+      "explanation": "EC2 health checks only see VM-level failures. ELB health checks probe the application port/path, catching app-level crashes."
+    },
+    {
+      "id": "q7",
+      "stem": "An ALB operates at which OSI layer?",
+      "choices": ["Layer 3", "Layer 4", "Layer 7", "Layer 2"],
+      "correctIndex": 2,
+      "explanation": "Application Load Balancer is Layer 7 (HTTP/HTTPS) — supports content-based routing, host/path rules, WebSocket, HTTP/2."
+    },
+    {
+      "id": "q8",
+      "stem": "Which load balancer is appropriate for sub-millisecond TCP load balancing at millions of requests per second with static IPs?",
+      "choices": ["ALB", "NLB", "GWLB", "CLB"],
+      "correctIndex": 1,
+      "explanation": "NLB is Layer 4, offers static IPs per AZ, and is built for extreme-scale TCP/UDP/TLS workloads."
+    },
+    {
+      "id": "q9",
+      "stem": "What does a Compute Savings Plan apply to that an EC2 Instance Savings Plan does not?",
+      "choices": ["Across families, Regions, and even Fargate/Lambda", "Only the same instance family in one Region", "Only Linux instances", "Only Spot instances"],
+      "correctIndex": 0,
+      "explanation": "Compute Savings Plans are broader (any family/Region, plus Fargate and Lambda) at a slightly smaller discount than the more restrictive EC2 Instance plan."
+    },
+    {
+      "id": "q10",
+      "stem": "An ASG uses 'target tracking on CPU at 60%'. What happens at sustained 80% CPU?",
+      "choices": ["Nothing", "ASG launches more instances until average CPU returns near 60%", "Existing instances reboot", "Spot bidding starts"],
+      "correctIndex": 1,
+      "explanation": "Target tracking adds capacity to drive the metric back toward its target."
+    },
+    {
+      "id": "q11",
+      "stem": "Where should session state be stored to make a web tier truly stateless?",
+      "choices": ["EC2 instance local disk", "EBS volume attached to one instance", "DynamoDB or ElastiCache", "User-data script"],
+      "correctIndex": 2,
+      "explanation": "External, shared state stores (DynamoDB, ElastiCache, Redis) let any instance serve any request and let the ASG replace instances freely."
+    },
+    {
+      "id": "q12",
+      "stem": "User-data on EC2 is executed by default:",
+      "choices": ["Every boot forever", "Only on the first boot of the instance", "Never; it must be enabled per launch", "Daily via cron"],
+      "correctIndex": 1,
+      "explanation": "By default, user-data runs on first boot only. You can opt in to per-boot execution but the default is one-shot."
+    },
+    {
+      "id": "q13",
+      "stem": "An IAM role attached to an EC2 instance via an instance profile gives the application:",
+      "choices": ["Static IAM access keys hardcoded into the AMI", "Temporary credentials via the instance metadata service", "Console login access", "Cross-account billing visibility"],
+      "correctIndex": 1,
+      "explanation": "The SDK reads temporary, auto-rotated credentials from IMDS; avoids hardcoding static access keys."
+    },
+    {
+      "id": "q14",
+      "stem": "An ALB target group can target which of the following?",
+      "choices": ["Only EC2 instances", "EC2 instances, IP addresses, or Lambda functions", "Only Lambda", "Only on-prem servers via Direct Connect"],
+      "correctIndex": 1,
+      "explanation": "ALB target groups support instances, raw IPs (including on-prem), and Lambda — enabling Lambda as a backend for HTTP."
+    },
+    {
+      "id": "q15",
+      "stem": "Which scaling policy uses ML forecasting from historical metrics?",
+      "choices": ["Step scaling", "Target tracking", "Scheduled scaling", "Predictive scaling"],
+      "correctIndex": 3,
+      "explanation": "Predictive scaling analyses historical load and pre-provisions capacity ahead of expected spikes."
+    },
+    {
+      "id": "q16",
+      "stem": "A 'golden AMI' workflow is preferred because:",
+      "choices": ["AWS gives a discount on custom AMIs", "Pre-baked AMIs boot fast and produce deterministic instances", "Custom AMIs auto-update", "Custom AMIs are required for ASGs"],
+      "correctIndex": 1,
+      "explanation": "Baking dependencies into the AMI cuts boot time and removes variability from user-data scripts."
+    },
+    {
+      "id": "q17",
+      "stem": "An EC2 instance can be in which state during which billing pauses (for most instance types)?",
+      "choices": ["Stopped", "Running", "Pending", "Shutting-down"],
+      "correctIndex": 0,
+      "explanation": "Stopped instances don't incur compute charges (EBS storage still bills). Running and even pending charge for compute."
+    },
+    {
+      "id": "q18",
+      "stem": "Which AWS feature lets you SSH-equivalent into an instance without opening port 22 or managing key pairs?",
+      "choices": ["EC2 Instance Connect", "AWS Systems Manager Session Manager", "Bastion AMI", "VPN Client"],
+      "correctIndex": 1,
+      "explanation": "SSM Session Manager uses the SSM agent and IAM auth, eliminating the need for inbound SSH ports or key pair distribution."
+    },
+    {
+      "id": "q19",
+      "stem": "Placement groups can be configured as:",
+      "choices": ["Cluster, Spread, Partition", "Standard, Reserved, Spot", "Default, Dedicated, Hosted", "Private, Public, Isolated"],
+      "correctIndex": 0,
+      "explanation": "Cluster (low-latency, same AZ), Spread (each instance on distinct hardware), Partition (HDFS-style fault domains) are the three placement-group strategies."
+    },
+    {
+      "id": "q20",
+      "stem": "An NLB provides:",
+      "choices": ["Listener rules by URL path", "Static IPs per AZ via Elastic IPs", "Built-in WAF", "Native HTTP/2"],
+      "correctIndex": 1,
+      "explanation": "NLB exposes a static IP per AZ, useful when clients can't follow DNS or need IP allow-lists. ALB does not."
+    },
+    {
+      "id": "q21",
+      "stem": "What's the typical price relationship for the same workload?",
+      "choices": ["Spot > On-Demand > Reserved", "On-Demand > Reserved > Spot", "Reserved > Spot > On-Demand", "All identical"],
+      "correctIndex": 1,
+      "explanation": "On-Demand is most expensive, then Reserved/Savings Plans, then Spot — Spot trades flexibility for the deepest discount."
+    },
+    {
+      "id": "q22",
+      "stem": "What does the EC2 instance metadata service (IMDS) v2 require that v1 did not?",
+      "choices": ["A session token via PUT before GET (defends against SSRF)", "An IAM role", "Encryption at rest", "VPC endpoints"],
+      "correctIndex": 0,
+      "explanation": "IMDSv2 mandates a short PUT-then-GET token exchange, mitigating SSRF attacks that proxied requests to 169.254.169.254."
+    },
+    {
+      "id": "q23",
+      "stem": "An ASG spans 3 AZs with min=3, max=12, desired=6. One AZ goes dark. What happens?",
+      "choices": ["The ASG terminates everything", "The ASG rebalances by launching replacement instances in the remaining healthy AZs", "Scaling pauses until the AZ returns", "Instances migrate live to the other AZs"],
+      "correctIndex": 1,
+      "explanation": "ASGs maintain desired capacity across remaining healthy AZs, launching replacements as needed."
+    },
+    {
+      "id": "q24",
+      "stem": "Which compute service should you choose for tightly coupled MPI HPC workloads requiring lowest inter-node latency?",
+      "choices": ["Lambda", "EC2 with Cluster placement group + EFA", "ECS Fargate", "App Runner"],
+      "correctIndex": 1,
+      "explanation": "Cluster placement plus Elastic Fabric Adapter delivers the low-latency, high-bandwidth networking MPI HPC requires."
+    },
+    {
+      "id": "q25",
+      "stem": "Which is TRUE about Elastic IP addresses?",
+      "choices": ["They are always free", "They are free while associated with a running instance and charged when idle", "They cost $1/hour while in use", "They cannot be reassigned"],
+      "correctIndex": 1,
+      "explanation": "AWS charges for idle/unattached Elastic IPs to discourage hoarding; the first one is free while in active use."
+    }
+  ]
+}

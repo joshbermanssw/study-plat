@@ -1,0 +1,307 @@
+{
+  "unit": "INFO4444",
+  "week": 4,
+  "topic": "Open & closed innovation, distributed innovation I",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "Who developed the open innovation framework?",
+      "choices": [
+        "Clayton Christensen",
+        "Henry Chesbrough",
+        "Eric von Hippel",
+        "James Utterback"
+      ],
+      "correctIndex": 1,
+      "explanation": "Henry Chesbrough introduced the open innovation framework in his 2003 book of the same name."
+    },
+    {
+      "id": "q2",
+      "stem": "An 'outside-in' (inbound) open-innovation flow involves:",
+      "choices": [
+        "Licensing internally developed IP to a competitor.",
+        "Bringing external knowledge, IP, or technology into the firm.",
+        "Donating patents to a standards body.",
+        "Spinning out an internal project as an independent company."
+      ],
+      "correctIndex": 1,
+      "explanation": "Outside-in (inbound) flows bring external knowledge in: licensing in, university partnerships, acquisitions, crowdsourcing."
+    },
+    {
+      "id": "q3",
+      "stem": "An 'inside-out' (outbound) open-innovation flow involves:",
+      "choices": [
+        "Acquiring a startup.",
+        "Taking internally developed knowledge to market through external channels — licensing out, spin-outs, open-sourcing.",
+        "Hiring senior researchers from a competitor.",
+        "Reviewing customer feedback."
+      ],
+      "correctIndex": 1,
+      "explanation": "Inside-out flows monetise or release internal IP to external channels: licensing out, spin-outs, open-source contributions, donations to standards bodies."
+    },
+    {
+      "id": "q4",
+      "stem": "Procter & Gamble's 'Connect + Develop' programme is the canonical example of:",
+      "choices": [
+        "Inside-out flow",
+        "Outside-in flow",
+        "Closed innovation",
+        "Christensen disruption"
+      ],
+      "correctIndex": 1,
+      "explanation": "P&G C+D targets ~50% of innovation from external sources via crowdsourcing, university links, and supplier partnerships — textbook outside-in."
+    },
+    {
+      "id": "q5",
+      "stem": "Which is NOT one of Chesbrough's reasons closed innovation eroded?",
+      "choices": [
+        "Increased labour mobility of skilled engineers",
+        "Growth of venture capital enabling employee defections",
+        "Widely distributed useful knowledge",
+        "Decline in higher-education research output"
+      ],
+      "correctIndex": 3,
+      "explanation": "University research has grown, not declined. The classical erosion forces include labour mobility, VC, external suppliers, shorter cycles, and distributed knowledge."
+    },
+    {
+      "id": "q6",
+      "stem": "Xerox PARC is a frequently cited example of:",
+      "choices": [
+        "Successful open innovation.",
+        "Closed innovation that generated breakthrough inventions but failed to commercialise many of them.",
+        "Disruptive innovation in office equipment.",
+        "Lean startup methodology."
+      ],
+      "correctIndex": 1,
+      "explanation": "PARC invented the GUI, ethernet, mouse, and laser printing. Xerox commercialised laser printing well but let the others escape via spin-outs (Adobe, 3Com)."
+    },
+    {
+      "id": "q7",
+      "stem": "Google open-sourcing Kubernetes is best understood as:",
+      "choices": [
+        "A failed closed-innovation attempt.",
+        "An inside-out flow with the strategic logic of commoditising a complement to capture value elsewhere (cloud).",
+        "A coupled mode operation.",
+        "A defensive IP strategy."
+      ],
+      "correctIndex": 1,
+      "explanation": "Open-sourcing Kubernetes commoditised container orchestration, driving cloud adoption where Google captured value via GCP. Classic 'commoditise your complement'."
+    },
+    {
+      "id": "q8",
+      "stem": "Which is the best example of the COUPLED mode of open innovation?",
+      "choices": [
+        "Licensing a patent in from a university",
+        "Spinning out a research project as a startup",
+        "Pre-competitive R&D consortia like SEMATECH",
+        "Patent litigation"
+      ],
+      "correctIndex": 2,
+      "explanation": "Coupled mode = joint creation with partners. SEMATECH (US semiconductor consortium), JVs, and standards bodies are canonical examples."
+    },
+    {
+      "id": "q9",
+      "stem": "A defensive patent portfolio is held primarily to:",
+      "choices": [
+        "Generate licensing revenue",
+        "Deter litigation by other patent holders (mutual assured destruction / cross-licensing)",
+        "Block all competitor product launches",
+        "Comply with regulatory requirements"
+      ],
+      "correctIndex": 1,
+      "explanation": "Defensive portfolios deter rather than monetise: a competitor who sues will be countersued. Microsoft, Google, and Apple all hold large defensive portfolios."
+    },
+    {
+      "id": "q10",
+      "stem": "Which assumption belongs to the CLOSED innovation paradigm?",
+      "choices": [
+        "Useful ideas are widely distributed; we should tap external sources.",
+        "If we get to market first, we win — therefore IP must be tightly controlled.",
+        "Spinning out unused IP can create new revenue.",
+        "Crowdsourcing can outperform internal R&D for some problems."
+      ],
+      "correctIndex": 1,
+      "explanation": "First-mover plus tight IP control is a classical closed-innovation tenet. The others are open-innovation positions."
+    },
+    {
+      "id": "q11",
+      "stem": "Lego Ideas, where customers submit designs and earn royalties, is best classified as:",
+      "choices": [
+        "Inside-out flow",
+        "Outside-in flow via customer co-creation",
+        "Closed innovation",
+        "Sustaining innovation"
+      ],
+      "correctIndex": 1,
+      "explanation": "Customer co-creation is an outside-in mechanism. Lego Ideas pulls external (user) innovation into the firm."
+    },
+    {
+      "id": "q12",
+      "stem": "Which company is the canonical example of monetising an inside-out licensing strategy?",
+      "choices": [
+        "Apple",
+        "IBM",
+        "Tesla",
+        "Spotify"
+      ],
+      "correctIndex": 1,
+      "explanation": "IBM earns substantial revenue per year licensing out its patent portfolio — the textbook inside-out monetisation case."
+    },
+    {
+      "id": "q13",
+      "stem": "Which is NOT a typical risk of open innovation?",
+      "choices": [
+        "Giving away core IP that weakens competitive position",
+        "Loss of strategic focus across too many partners",
+        "Reduced ability to file patents",
+        "Governance complexity in joint ventures"
+      ],
+      "correctIndex": 2,
+      "explanation": "Open innovation does not reduce patent-filing ability. It increases strategic, IP-leak, and governance risks."
+    },
+    {
+      "id": "q14",
+      "stem": "Chesbrough argues that the boundary of the firm should be:",
+      "choices": [
+        "Fully closed to protect IP.",
+        "Fully open with all IP shared.",
+        "Porous and actively managed, with flows in both directions selected per technology and stage.",
+        "Determined by regulators."
+      ],
+      "correctIndex": 2,
+      "explanation": "Open innovation is a portfolio decision: porous, actively managed, asymmetric per technology and per business unit."
+    },
+    {
+      "id": "q15",
+      "stem": "A 'patent thicket' refers to:",
+      "choices": [
+        "A patent attorney's case backlog.",
+        "An area with many overlapping patents that complicate product development without cross-licensing or pools.",
+        "Patents that have expired.",
+        "Patents donated to standards bodies."
+      ],
+      "correctIndex": 1,
+      "explanation": "Patent thickets (e.g. mobile phone radios, MPEG video) are navigated via cross-licensing or patent pools like MPEG-LA."
+    },
+    {
+      "id": "q16",
+      "stem": "Pharma firms commonly license molecules in from biotechs and universities. This is best classified as:",
+      "choices": [
+        "Closed innovation",
+        "Outside-in (inbound) open innovation",
+        "Sustaining innovation",
+        "Coupled mode only"
+      ],
+      "correctIndex": 1,
+      "explanation": "Licensing in external IP is the textbook outside-in flow. Pharma is one of the most open-innovative industries by this measure."
+    },
+    {
+      "id": "q17",
+      "stem": "Which is the best example of an inside-out STANDARDS contribution?",
+      "choices": [
+        "Filing a patent in secret.",
+        "Donating IP to a standards body (e.g. W3C, IETF) to grow an open standard and the market around it.",
+        "Acquiring a startup.",
+        "Hiring engineers from a competitor."
+      ],
+      "correctIndex": 1,
+      "explanation": "Donating IP to standards bodies is an inside-out move with strategic value: an open standard expands the market, in which the donor competes from a strong position."
+    },
+    {
+      "id": "q18",
+      "stem": "Which is the strongest argument FOR open innovation in fast-moving industries?",
+      "choices": [
+        "Internal R&D is always cheaper.",
+        "Closed pipelines are too slow; external knowledge accelerates time-to-market and shares risk.",
+        "Patents are no longer enforceable.",
+        "Customers want open-source products."
+      ],
+      "correctIndex": 1,
+      "explanation": "Speed and risk-sharing are core open-innovation benefits in industries with short product lifecycles."
+    },
+    {
+      "id": "q19",
+      "stem": "Which research lab is the canonical 20th-century closed-innovation exemplar that produced the transistor and information theory?",
+      "choices": [
+        "Bell Labs",
+        "Xerox PARC",
+        "Google X",
+        "OpenAI"
+      ],
+      "correctIndex": 0,
+      "explanation": "Bell Labs (under AT&T) is the textbook closed-innovation case: transistor, laser, information theory, UNIX, C — all internally developed."
+    },
+    {
+      "id": "q20",
+      "stem": "A spin-out is an inside-out mechanism in which:",
+      "choices": [
+        "The firm sells a subsidiary to a competitor.",
+        "An internal project is launched as an independent company, often with the parent retaining equity.",
+        "The firm acquires a startup.",
+        "Two firms merge."
+      ],
+      "correctIndex": 1,
+      "explanation": "Spin-outs let unused or non-core IP commercialise without distorting the parent's core focus. Xerox produced many famous (and lucrative) spin-outs."
+    },
+    {
+      "id": "q21",
+      "stem": "Open innovation does NOT mean:",
+      "choices": [
+        "Actively managing the firm boundary for flows in both directions.",
+        "Giving away all proprietary IP for free.",
+        "Combining internal R&D with external knowledge.",
+        "Licensing in and licensing out as strategic choices."
+      ],
+      "correctIndex": 1,
+      "explanation": "A common misconception. Open innovation is about managed openness, not blanket disclosure. Core IP often stays closed."
+    },
+    {
+      "id": "q22",
+      "stem": "Which is the cleanest one-line difference between closed and open innovation?",
+      "choices": [
+        "Closed uses patents; open does not.",
+        "Closed assumes the smart people work for us; open assumes useful knowledge is widely distributed and the boundary should be porous.",
+        "Closed is older than open.",
+        "Closed is American; open is European."
+      ],
+      "correctIndex": 1,
+      "explanation": "Chesbrough's most-quoted contrast is the assumption about where smart people are. Everything else follows from that."
+    },
+    {
+      "id": "q23",
+      "stem": "Why might a firm OPEN-SOURCE a non-core technology?",
+      "choices": [
+        "To eliminate competitors.",
+        "To commoditise a complement so that demand for the firm's core product grows.",
+        "To avoid filing patents.",
+        "Because regulators require it."
+      ],
+      "correctIndex": 1,
+      "explanation": "Commoditising a complement is a classical strategic move. Google's Android open-sourcing grew mobile internet, in which Google captured ad revenue."
+    },
+    {
+      "id": "q24",
+      "stem": "A pharma firm licenses an early-stage molecule from a university and runs Phase II via a contract research organisation. The flow structure is best described as:",
+      "choices": [
+        "Two inside-out flows.",
+        "Outside-in from the university; CRO partnership is typically outside-in (service procurement) rather than coupled.",
+        "Closed innovation throughout.",
+        "Pure coupled mode."
+      ],
+      "correctIndex": 1,
+      "explanation": "The molecule license is clearly outside-in. CRO is a paid service relationship, more outside-in than coupled (no joint IP creation). Coupled mode requires shared IP creation."
+    },
+    {
+      "id": "q25",
+      "stem": "Which statement about open innovation is MOST accurate?",
+      "choices": [
+        "Open innovation always outperforms closed innovation empirically.",
+        "Open innovation is a portfolio decision per technology, per business unit, per stage — not a binary stance.",
+        "Open innovation is incompatible with patenting.",
+        "Open innovation is only relevant for software firms."
+      ],
+      "correctIndex": 1,
+      "explanation": "The exam-correct view: open vs closed is a per-decision portfolio choice. Some IP stays closed, some opens, some flows in, some flows out — the CEO manages the mix."
+    }
+  ]
+}

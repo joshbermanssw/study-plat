@@ -1,0 +1,328 @@
+---
+title: "Week 12 — Dealing with Uncertainty: Online Algorithms"
+unit: COMP3027
+week: 12
+type: overview
+status: done
+---
+
+## A different kind of "hard"
+
+Weeks 9-11 dealt with **computational** hardness — problems for which no efficient exact algorithm exists.
+
+Week 12 deals with a different obstacle: **informational** hardness. Sometimes the algorithm doesn't see the input in advance. Decisions are committed *irrevocably* without knowing the future.
+
+**Even if the offline version is polynomial, the online version may be impossible to solve optimally** — every decision now could turn out badly later.
+
+This is the world of **online algorithms**. The performance measure is the **competitive ratio**: like an approximation ratio, but quantifying performance against an *omniscient adversary* who knows the whole input upfront.
+
+**Flagship examples:**
+
+- **Ski rental.** Deterministic 2-competitive; randomised e/(e−1)-competitive.
+- **Paging (LRU).** k-competitive.
+- **Secretary problem.** Probability 1/e of picking the best.
+
+## The online model
+
+An online algorithm A receives input incrementally: σ₁, σ₂, ..., σₙ. After seeing σₜ, A commits to action aₜ *before* σₜ₊₁ arrives.
+
+The **offline optimum** OPT(σ) is the best possible cost if the entire σ were known in advance.
+
+A is **c-competitive** if for every input σ:
+
+```text
+A(σ) <= c · OPT(σ) + α
+```
+
+for some constant α (independent of σ). The **competitive ratio** is the smallest such c.
+
+The framework is **adversarial**. Think: an opponent picks σ to make A(σ) / OPT(σ) as large as possible.
+
+## Ski rental: the canonical online problem
+
+**Problem.** You're on a ski trip of unknown length. Each day, either rent for $1, or buy for $B (one-time, no more rentals after). Trip length d is revealed only at the end. Minimise total cost.
+
+**Offline optimum.** OPT = min(d, B). (Rent the whole time if d &lt; B; otherwise buy on day 1.)
+
+### The deterministic 2-competitive strategy
+
+**Strategy: break-even.** Rent for B − 1 days. On day B, if we're still skiing, buy.
+
+**Why this strategy makes sense intuitively.** If we knew d in advance:
+
+- Short trip (d &lt; B) — rent the whole time, cost d.
+- Long trip (d ≥ B) — buy on day 1, cost B.
+
+We don't know d. So we hedge: rent until we've spent "almost as much as buying would have cost", then buy. Worst case, we spent the rental fees *and* the buy cost — at most twice the offline optimum.
+
+**Deriving the 2-competitive ratio — both cases.**
+
+The offline optimum is OPT = min(d, B).
+
+**Case 1: short trip, d ≤ B − 1.** We never buy (we always reach the end before day B). Total cost = d. OPT = d. **Ratio = 1.** No regret.
+
+**Case 2: long trip, d ≥ B.** We rent for B − 1 days, then buy on day B. After buying we ski for free.
+
+```text
+total cost = (B − 1 days of renting) + (buy cost)
+           = (B − 1) · 1 + B
+           = 2B − 1
+```
+
+OPT = B (buy on day 1).
+
+```text
+ratio = (2B − 1) / B = 2 − 1/B  <  2
+```
+
+So in case 2, the ratio is just under 2. We "bought too late" — paid the rental fees *and* the buy cost. But we never pay more than 2× OPT.
+
+Across both cases, ratio ≤ 2. **Break-even is 2-competitive.**
+
+**Why the strategy is balanced — the two failure modes.**
+
+- *We buy too early.* If we bought on day k &lt; B, and the trip ends at day k+1, we've spent k − 1 + B but OPT would have rented for k days = k. Ratio ≈ (k − 1 + B)/k ≥ B/k. Bad if k is small.
+- *We buy too late.* If we buy on day k &gt; B, the worst case is renting B days when we should have bought on day 1. Ratio ≤ (k − 1 + B)/B.
+
+Break-even (k = B) balances the two: both ratios = (2B−1)/B &lt; 2.
+
+**Lower bound.** No deterministic online algorithm beats 2 − 1/B.
+
+*Proof sketch.* Let A be deterministic. Adversary plays:
+
+- If A buys on day t, set d = t. A pays t − 1 + B; OPT = min(t, B).
+- If A never buys, set d very large. A pays d; OPT = B.
+
+Case analysis: ratio ≥ 2 − 1/B for every choice of buy-day t. ∎
+
+### Worked: ski rental on real numbers
+
+Buy = $300. Rent = $20/day. Break-even: rent 14 days; buy on day 15.
+
+- Trip = 14 days: cost $280 = OPT. ✓
+- Trip = 15 days: cost $580; OPT = $300 (buy day 1). Ratio 580/300 ≈ 1.93.
+- Trip = 100 days: cost still $580; OPT $300. Ratio still 1.93.
+
+The break-even strategy is uniformly close to 2 across long trips.
+
+### Randomised ski rental beats 2
+
+**Strategy.** Pick a random day k ∈ &#123;1, ..., B&#125; from a tailored distribution (proportional to ((B−1)/B)^(B−k)). Rent until day k; buy on day k.
+
+**Theorem.** This is **e/(e−1) ≈ 1.582-competitive**.
+
+This is striking: randomisation *strictly* beats deterministic. Without randomness, the adversary knows your future action. With randomness, the adversary must contend with a distribution.
+
+**Lower bound (Yao's principle).** No randomised online algorithm for ski rental beats e/(e−1).
+
+## Yao's principle: lower bounds for randomised
+
+**Yao's principle.** For any distribution D over inputs:
+
+```text
+best randomised algorithm's expected ratio
+    >= best deterministic algorithm's ratio on D
+```
+
+So pick D wisely to lower-bound randomised competitive ratios. For ski rental, a geometric distribution over trip lengths gives the matching e/(e−1) bound.
+
+## Paging: LRU is k-competitive
+
+**Problem.** Cache holds k pages. Requests arrive. If page in cache → hit (free). Else → miss (cost 1); evict some page. Minimise misses.
+
+**LRU.** On a miss, evict the page accessed furthest in the past.
+
+**Theorem.** LRU is **k-competitive**: LRU(σ) ≤ k · OPT(σ) + k.
+
+### Proof: phase decomposition
+
+Partition σ into **phases**: each phase contains exactly k distinct pages.
+
+- Within a phase, LRU has at most k misses (one per distinct page).
+- OPT, seeing the same phase, must miss at least once. (Any (k+1)-th distinct page differs from OPT's k cached pages.)
+
+So LRU(σ) ≤ k · OPT(σ) + k. ∎
+
+**Lower bound.** Every deterministic paging algorithm has ratio ≥ k.
+
+*Proof.* Adversary maintains a virtual cache of k+1 pages. Each step, request the page *not* in the algorithm's cache (forced miss). Meanwhile OPT could use that extra slot to anticipate. After n steps: algorithm misses n times; OPT misses ~n/k times. Ratio = k. ∎
+
+### Randomised paging
+
+The randomised "marking algorithm" achieves competitive ratio **2 Hₖ ≈ 2 ln k** (Fiat-Karp-Luby et al. 1991).
+
+For k = 100: deterministic 100-competitive; randomised about 9-competitive. Big win.
+
+### Worked LRU trace
+
+Cache size k = 3. Request sequence: 1, 2, 3, 4, 1, 2, 5, 1, 2, 3, 4, 5.
+
+| Step | Req | Cache after | Hit/Miss |
+|------|-----|-------------|----------|
+| 1 | 1 | &#123;1&#125; | miss |
+| 2 | 2 | &#123;1, 2&#125; | miss |
+| 3 | 3 | &#123;1, 2, 3&#125; | miss |
+| 4 | 4 | &#123;2, 3, 4&#125; (evict 1) | miss |
+| 5 | 1 | &#123;3, 4, 1&#125; (evict 2) | miss |
+| 6 | 2 | &#123;4, 1, 2&#125; (evict 3) | miss |
+| 7 | 5 | &#123;1, 2, 5&#125; (evict 4) | miss |
+| 8 | 1 | &#123;2, 5, 1&#125; | hit |
+| 9 | 2 | &#123;5, 1, 2&#125; | hit |
+| 10 | 3 | &#123;1, 2, 3&#125; (evict 5) | miss |
+| 11 | 4 | &#123;2, 3, 4&#125; (evict 1) | miss |
+| 12 | 5 | &#123;3, 4, 5&#125; (evict 2) | miss |
+
+**LRU misses = 10.**
+
+Offline OPT via Belady's rule (evict the page whose next request is furthest): typically 6-7. Ratio ≈ 1.5, well within the k = 3 bound.
+
+## List update
+
+**Problem.** Unsorted list of n items. Each access scans from the front. Cost = position of the item. After access, you may reorder freely. Minimise total cost.
+
+**Move-To-Front (MTF).** On each access, move the requested item to the front.
+
+**Theorem (Sleator-Tarjan).** MTF is **2-competitive** against any offline static ordering.
+
+**Proof technique: potential function.** Define Φ = number of inversions between MTF's list and OPT's list. Each access decreases Φ by enough to pay for MTF's extra cost over OPT.
+
+This template — **potential functions** turning amortised analysis into competitive bounds — is reusable.
+
+## The secretary problem
+
+**Problem.** n candidates with distinct qualities arrive in random order. After each interview, immediately hire or reject (irrevocable). Maximise the *probability* of hiring the best candidate.
+
+**Optimal strategy.** Reject the first n/e candidates. Then hire the next candidate who's better than all seen so far.
+
+**Theorem.** This strategy hires the best with **probability ≈ 1/e ≈ 0.368**, asymptotically optimal.
+
+**Proof sketch.** Condition on the best candidate appearing at position j. The strategy succeeds iff (a) j &gt; n/e and (b) the best among the first j−1 is among the first n/e. The probabilities (uniform random order) integrate to 1/e.
+
+This is the first formal *stopping-rule* result. Part of a broader research program on online algorithms with stochastic input.
+
+## The competitive ratio recap
+
+| Problem | Deterministic | Randomised | Notes |
+|---------|---------------|------------|-------|
+| Ski rental | 2 (tight) | e/(e−1) ≈ 1.582 | Canonical |
+| Paging (cache k) | k (tight) | 2 Hₖ ≈ 2 ln k | LRU is right |
+| List update | 2 (MTF) | 7/4 | Sleator-Tarjan |
+| Secretary | impossible (1/n) | 1/e | Probability of best |
+| Online scheduling (m machines) | 2 − 1/m | 1.92 (best known) | Graham's rule |
+| Online matching | 1/2 (tight) | 1 − 1/e ≈ 0.632 | KVV ranking |
+
+You should know the upper-bound algorithm and the lower-bound proof for at least ski rental and paging.
+
+## Why randomisation helps online
+
+Three reasons online problems benefit from randomisation:
+
+1. **Defeats adversarial input.** Against deterministic A, adversary sees the future; against randomised A, only the distribution.
+2. **Smooths the worst case.** Averaging over the distribution often gives strictly better expected ratio.
+3. **Enables continuous decisions.** A randomised algorithm can probabilistically "split" a decision in ways no deterministic algorithm can.
+
+**General principle.** Every online problem admits a randomised algorithm whose competitive ratio is *no worse than* (and often strictly better than) the best deterministic ratio.
+
+## Online matching (an aside)
+
+**Problem.** Bipartite graph. Left side L of n known upfront. Right side R arrives one at a time. On arrival of r, edges (ℓ, r) are revealed; match r immediately to an unmatched neighbour (or leave r unmatched). Irrevocable.
+
+**Greedy:** Match r to any unmatched neighbour. **1/2-competitive** (any maximal matching is at least half optimum).
+
+**Deterministic lower bound:** 1/2 is tight.
+
+**KVV (Karp-Vazirani-Vazirani 1990) "ranking":** Random permutation of L upfront; on arrival of r, match to the unmatched neighbour with smallest rank. **Expected (1 − 1/e) ≈ 0.632-competitive.**
+
+**Randomised lower bound:** 1 − 1/e is tight.
+
+Big impact in online ad auctions (matching ads to search impressions).
+
+## Bin packing online vs offline
+
+**Problem.** Items of size in (0, 1] arrive. Pack into bins of capacity 1. Minimise bins.
+
+- **First-Fit (online).** Pack in first bin with room. 1.7-competitive.
+- **First-Fit Decreasing (offline).** Sort items descending; then First-Fit. 11/9 ≈ 1.22-approximation.
+- **Any Fit.** Open a new bin only when no existing bin fits. ≤ 2-competitive.
+
+Online lower bound: no online algorithm beats ~1.54-competitive (Balogh et al.).
+
+Offline bin packing is NP-hard but admits an APTAS (asymptotic PTAS).
+
+## k-server: the big open problem
+
+**k-server problem** generalises paging to metric spaces. k servers on a metric space; requests arrive at points; the closest server moves to the request, incurring distance cost. Minimise total cost.
+
+Paging = k-server on the uniform metric.
+
+**k-server conjecture (1988).** There's a k-competitive deterministic online algorithm on *every* metric space.
+
+**Status:**
+
+- Proven for trees and for k = 2.
+- Recently O(k^(O(1)))-competitive on general metric (Bubeck et al. 2020).
+- Tight k-competitive on general metric: **open**.
+
+## Designing an online algorithm: checklist
+
+1. **What's the input sequence?** What's revealed at each step?
+2. **What's the irrevocable decision?**
+3. **What's the offline optimum?** Articulate clearly.
+4. **What's the worst-case adversarial sequence?** Lower bound.
+5. **A natural algorithm?** Often greedy or threshold.
+6. **Compute the competitive ratio.** Direct case analysis (ski rental, paging) or potential function (list update).
+7. **Can randomisation help?** If deterministic lower bound is large, almost certainly yes.
+
+Same toolkit as approximation algorithms (Week 11), with "OPT under adversarial future" replacing "OPT under full knowledge".
+
+## Why competitive analysis is brittle
+
+Limitations:
+
+- **Pathological adversaries.** "Oblivious", "adaptive online", "adaptive offline" adversaries are distinct. Some are unrealistically powerful.
+- **Constants matter.** A 1.5-competitive algorithm may not be much better than 2-competitive in practice.
+- **Beyond worst case.** Stochastic / Bayesian / advice-augmented models relax the framing.
+
+**Recent direction: learning-augmented algorithms.** Use ML predictions; gracefully degrade to worst-case when predictions wrong; improve when predictions accurate. Mature enough to appear in advanced courses.
+
+## When the gap matters more than the algorithm
+
+Sometimes the competitive-ratio bound *itself* is the actionable insight. If the ratio is 2 no matter how clever your algorithm, the information matters more than the algorithm. Then the engineering response is to **invest in more advance information** — predict the future, batch decisions, delay — rather than optimise the online algorithm.
+
+**Real example.** Cloud "reserved" vs "on-demand" instances is exactly ski rental. The 2-competitive break-even tells you: commit to a reserved instance once your on-demand spend equals the reserve price.
+
+## Worked: randomised ski rental analysis
+
+Distribution: P(k = j) ∝ ((B−1)/B)^(B−j) for j = 1, ..., B.
+
+Normalise: P(k = j) = c · ((B−1)/B)^(B−j), with c = 1 / Σⱼ ((B−1)/B)^(B−j).
+
+**Case d ≤ B − 1.** No buy happens after day d-1. Expected cost = E[min(k − 1, d)] + (B if k ≤ d else 0). The expected cost works out to ≤ d · e/(e−1).
+
+**Case d ≥ B.** Expected cost = E[k − 1 + B] = E[k − 1] + B. With the geometric weights, this is ≤ B · e/(e−1).
+
+Both cases: expected cost ≤ (e/(e−1)) · OPT. ∎
+
+## What this week buys you
+
+A complete framework for **informational** uncertainty — input revealed one piece at a time.
+
+The framework:
+
+1. Define competitive ratio against an offline omniscient adversary.
+2. Design simple threshold-based or randomised algorithms.
+3. Prove tight lower bounds via adversarial constructions.
+
+Reusable across paging, scheduling, caching, ad allocation, k-server, and a vast modern literature.
+
+Together with Weeks 9-11, you now have a full taxonomy of "hardness" — computational vs informational — and a toolbox of principled responses.
+
+## What to do this week
+
+1. Trace the 2-competitive ski-rental algorithm with B = 10. Compare costs for d = 12 vs d = 7.
+2. Prove LRU's k-competitive bound by writing the phase decomposition explicitly. Use a sequence with k = 3.
+3. Prove a 1/2-competitive bound for greedy online matching.
+4. Simulate the secretary problem for n = 10. How often does the n/e threshold pick the best?
+5. Practise Yao's principle: pick a binary-decision online problem, define an input distribution, compute the best deterministic ratio against it.
+6. Trace the LRU example above. Confirm the offline OPT (Belady's rule) saves ≥ 3 misses.
+7. Skim the quiz: any online-vs-offline confusion is a study target.

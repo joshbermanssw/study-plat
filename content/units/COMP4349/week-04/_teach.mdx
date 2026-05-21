@@ -1,0 +1,324 @@
+---
+title: "Week 4 — Cloud Database"
+unit: COMP4349
+week: 4
+type: overview
+status: done
+---
+
+Week 4 covers AWS databases: RDS (managed relational engines), Aurora (cloud-native distributed SQL), DynamoDB (NoSQL key-value/document), ElastiCache (in-memory), and Redshift (analytics warehouse). The exam reliably hits two patterns: (1) given a workload, choose the right database and justify; (2) compare Multi-AZ vs Read Replicas vs Aurora storage replication. The Aurora "log is the database" model and LSN/VCL/VDL are slightly esoteric but examiners love them.
+
+## Choosing a database — the four questions
+
+Before picking any AWS database, answer four questions:
+
+1. **Scalability** — peak throughput in reads/writes per second; will it grow 10× in 18 months?
+2. **Storage** — how many GB/TB/PB? Bounded or unbounded?
+3. **Data characteristics** — relational? Document? Key-value? Graph? Time-series? Strong joins or just key lookups?
+4. **Durability and recovery** — what RPO/RTO is acceptable? Regulatory data residency?
+
+The answers map to families: structured + ACID + joins → relational; flexible schema + massive scale + simple access patterns → NoSQL; sub-millisecond reads on hot keys → in-memory; multi-petabyte ad-hoc analytics → columnar warehouse.
+
+## Relational vs non-relational — the classic comparison
+
+| Aspect | Relational (SQL) | Non-relational (NoSQL) |
+|---|---|---|
+| Structure | Tables of rows/columns | Key-value, document, column-family, graph |
+| Schema | Strict, enforced at write | Flexible, often "schema on read" |
+| Transactions | ACID by default | Often BASE; selective ACID |
+| Joins | First-class | Avoided; pre-join via denormalisation |
+| Scaling | Vertical primarily; horizontal via replication/sharding | Horizontal by design |
+| Use case | OLTP, reporting, anything with joins | High-scale key lookups, JSON documents, caching |
+
+Pitfall: NoSQL is not "faster than SQL". It is "faster for a specific access pattern". If you constantly need to combine data across entities, a relational database with proper indexes will outperform a NoSQL store that has to assemble the result client-side.
+
+## ACID vs BASE and the CAP theorem
+
+**ACID** (relational, single-node default):
+
+- **Atomicity** — a transaction is all-or-nothing.
+- **Consistency** — every transaction leaves the database in a valid state.
+- **Isolation** — concurrent transactions appear serialised.
+- **Durability** — committed transactions survive failures.
+
+**BASE** (typical NoSQL):
+
+- **Basically Available** — the system answers, even if with stale data.
+- **Soft state** — state may drift without input.
+- **Eventually consistent** — given no new writes, all replicas converge.
+
+The **CAP theorem** (Eric Brewer): in a distributed system you can guarantee at most two of Consistency, Availability, and Partition tolerance. Network partitions are inevitable in practice, so you really choose CP (consistency, refuse stale reads) or AP (availability, serve stale reads). DynamoDB is AP by default (eventually consistent) but lets you opt into a CP-style strongly-consistent read. RDS Multi-AZ is CP — on partition the standby refuses to serve until reconnected.
+
+## Amazon RDS — managed relational engines
+
+RDS is a managed wrapper around six relational engines: **MySQL, PostgreSQL, MariaDB, Oracle, Microsoft SQL Server, and Amazon Aurora** (MySQL- or PostgreSQL-compatible). AWS handles provisioning, OS patching, engine patching, backups, snapshots, failover, monitoring. You handle schema, queries, and IAM around the database.
+
+RDS instances run on EC2 underneath and store data on EBS volumes. You pick an instance class (`db.m6g.large`, `db.r6g.xlarge`, etc.) and storage size (gp3 or io1). The DB engine listens on its standard port (3306 for MySQL, 5432 for PostgreSQL); your application connects through that port via the VPC security group.
+
+```bash
+aws rds create-db-instance \
+  --db-instance-identifier prod-orders \
+  --db-instance-class db.m6g.large \
+  --engine postgres \
+  --engine-version 16.2 \
+  --allocated-storage 100 \
+  --storage-type gp3 \
+  --multi-az \
+  --vpc-security-group-ids sg-0abc \
+  --db-subnet-group-name prod-private \
+  --master-username dbadmin \
+  --manage-master-user-password \
+  --backup-retention-period 14
+```
+
+### Multi-AZ — synchronous HA failover
+
+A Multi-AZ deployment provisions a **synchronously-replicated standby** in a second AZ. Reads and writes go only to the primary; the standby is invisible to applications. On primary failure, RDS detects the failure (~30 seconds), updates the DNS endpoint to point at the standby, and the standby takes over. Total failover time is typically 60-120 seconds.
+
+Critical properties:
+
+- Replication is **synchronous** — RPO is zero, no data loss.
+- The standby is **not** a read replica — you cannot read from it.
+- Multi-AZ is a CP system in CAP terms; during the partition the database is briefly unavailable.
+
+### Read Replicas — asynchronous read scaling
+
+A **read replica** is an asynchronously-replicated copy used to offload read traffic from the primary. You can have up to 5 read replicas per RDS source (15 for Aurora). They can live in the same AZ, a different AZ, or even a different Region (cross-Region read replicas, useful for DR).
+
+Properties:
+
+- **Asynchronous** — there is replication lag (typically sub-second, can be more under heavy write load). Eventually consistent reads.
+- Can be **promoted** to a stand-alone DB if you want to fork or fail over to a different Region.
+- Used for read-heavy workloads (reporting dashboards, search), not for HA.
+
+Multi-AZ vs Read Replica is the classic exam question. Multi-AZ is for HA (synchronous, no reads from standby, single endpoint); Read Replica is for scaling reads (asynchronous, separate endpoint, eventually consistent).
+
+### Backups, snapshots and PITR
+
+RDS supports two backup mechanisms:
+
+- **Automated backups** — daily snapshot + transaction logs every 5 minutes, enabling **point-in-time recovery (PITR)** to any second in the retention window (default 7 days, max 35).
+- **Manual snapshots** — explicit, indefinite retention. Used for major-version upgrades, before risky migrations, or for archive.
+
+Snapshots are encrypted if the source is; copies can be cross-Region for DR.
+
+### Parameter groups and option groups
+
+RDS exposes engine-specific configuration through **parameter groups** (settings like `max_connections`, `shared_buffers`) and **option groups** (engine plug-ins, e.g. Oracle TDE, SQL Server native backup). Changes can be `immediate` or `pending-reboot`.
+
+## Amazon Aurora — cloud-native distributed SQL
+
+Aurora is AWS's purpose-built relational database. It speaks the MySQL and PostgreSQL wire protocol so applications connect without code changes, but the storage layer underneath is a fundamentally different distributed architecture.
+
+### The disaggregated architecture
+
+Aurora separates compute and storage:
+
+- The **compute layer** consists of 1 writer plus up to 15 reader instances, all running a modified MySQL/PostgreSQL. They share an in-memory page cache view.
+- The **storage layer** is a separate purpose-built distributed system: a pool of EC2 storage nodes with local SSDs, organised into 10 GB **segments** replicated 6 ways across 3 AZs. Each set of 6 segments is a **Protection Group (PG)**.
+
+Compute nodes do not talk to local EBS; they talk to this storage fleet via the network.
+
+### "The log is the database"
+
+The single most important Aurora innovation: instead of shipping data pages between primary and standbys, Aurora only ships **redo log records**.
+
+- On a write, the primary's MySQL engine appends a redo log record (with a monotonically-increasing **Log Sequence Number, LSN**).
+- The log record is sent to all 6 storage nodes for its PG.
+- As soon as **4 of 6** acknowledge (write quorum), the write is durable.
+- Storage nodes asynchronously materialise pages from the log records on their local disks.
+- Read replicas receive the same redo log records and update their in-memory page cache directly.
+
+The result: writes are much faster (no double-write, no page flushing across the network) and storage durability is extraordinary (6 copies across 3 AZs, tolerates losing an entire AZ plus one more node without losing writes).
+
+### Quorum and durability math
+
+Write quorum = 4/6, read quorum = 3/6 (you can repair from 3 healthy copies). This gives:
+
+- **Tolerate losing one AZ without write impact**: lose 2 nodes (one AZ), 4 remain, writes proceed.
+- **Tolerate losing one AZ + one node without read impact**: lose 3 nodes, 3 remain, reads still succeed.
+
+Storage segments are **self-healing**: when a node dies, peers gossip and rebuild the missing segment on a fresh node within seconds.
+
+### LSN, VCL, VDL — durability boundaries
+
+The exam asks about these:
+
+- **LSN (Log Sequence Number)** — monotonically increasing ID for each log record.
+- **VCL (Volume Complete LSN)** — the highest LSN for which all prior log records are durable on the storage layer. View from storage.
+- **CPL (Consistency Point LSN)** — an LSN the DB has marked as the last operation of a transaction (a valid recovery point).
+- **VDL (Volume Durable LSN)** — the highest CPL that is ≤ VCL. View from the DB.
+
+On crash recovery, Aurora truncates the log to VDL — anything beyond is mid-transaction and gets discarded. Example: the DB declared CPLs at 900, 1000, and 1100; VCL is 1007; then VDL is 1000 and the 1001-1007 records (mid-transaction) are discarded.
+
+### Aurora deployment options
+
+- **Aurora Provisioned** — you pick instance sizes for writer and readers.
+- **Aurora Serverless v2** — autoscaling Aurora Capacity Units (ACUs) from 0.5 to 128. Sub-second scale-up; ideal for spiky workloads.
+- **Aurora Global Database** — primary Region writer plus up to 5 secondary Regions with sub-second replication for low-latency reads and &lt;1 minute RPO for cross-Region failover.
+- **Aurora Multi-Master** (deprecated in v3) — multiple writers; replaced by Global Database failover.
+
+## Amazon DynamoDB — managed NoSQL
+
+DynamoDB is AWS's serverless NoSQL key-value/document store. Single-digit millisecond latency at any scale; you never manage servers.
+
+### The data model
+
+A table has a **primary key**, which is either:
+
+- **Partition key only** — items are uniquely identified by a single attribute, e.g. `userId`.
+- **Partition key + sort key (composite)** — items in the same partition are sorted by the sort key, enabling range queries within a partition. E.g. partition `userId`, sort `timestamp`.
+
+DynamoDB internally hashes the partition key to assign the item to a physical partition. Hot partitions are the most common performance problem — design the partition key to spread load.
+
+### Indexes — GSI vs LSI
+
+- **Local Secondary Index (LSI)** — same partition key, different sort key. Must be created at table creation. Limited to 5 per table. Strongly consistent reads available.
+- **Global Secondary Index (GSI)** — different partition key (and optional different sort key). Created any time. Eventually consistent reads only. Provisioned independently.
+
+GSIs are more flexible; LSIs are usually only used for legacy designs.
+
+### Capacity modes
+
+- **On-demand** — pay per request. Auto-scales instantly. Use for unknown or spiky workloads.
+- **Provisioned** — pre-allocated Read Capacity Units (RCUs) and Write Capacity Units (WCUs); cheaper at steady state. Can attach Auto Scaling to adjust automatically.
+
+One RCU = one strongly-consistent 4 KB read per second (or two eventually-consistent reads). One WCU = one 1 KB write per second.
+
+### DAX, Streams, TTL
+
+- **DAX** (DynamoDB Accelerator) — in-memory cache fronting DynamoDB; microsecond reads. Drop-in API compatible.
+- **DynamoDB Streams** — change data capture; a 24-hour ordered log of item changes. Triggers Lambda for event-driven architectures.
+- **TTL (Time-to-Live)** — auto-deletes items after a timestamp attribute expires. Use for session stores, ephemeral data. Best-effort, not real-time.
+
+### Consistency
+
+By default DynamoDB returns **eventually consistent** reads (cheaper, lower latency). You can opt into a **strongly consistent read** on a per-request basis (costs 2× RCUs, slightly higher latency, not available on GSIs).
+
+## Amazon ElastiCache — in-memory caching
+
+ElastiCache is a managed in-memory data store with two engines:
+
+- **Redis** — feature-rich (lists, sets, sorted sets, pub/sub, Lua scripting), persistence (RDB/AOF), replication, cluster mode for sharding. Used for session stores, leaderboards, rate limiting, message queues.
+- **Memcached** — simpler, multi-threaded, only strings. Used purely as a cache.
+
+Common pattern: **cache-aside** — application reads cache, on miss it reads DB and populates cache. **Write-through** caches synchronously on every write. **TTL eviction** to prevent stale data.
+
+## Amazon Redshift — petabyte data warehouse
+
+Redshift is AWS's columnar MPP (massively parallel processing) data warehouse. Optimised for analytical queries scanning billions of rows, not for transactional OLTP.
+
+Key concepts:
+
+- **Columnar storage** — each column stored separately. Aggregations scan only the columns they touch.
+- **Distribution style** — `EVEN` (round-robin), `KEY` (hash on a column, useful for joins), `ALL` (broadcast to every node).
+- **Sort keys** — physical ordering of rows; speeds up range filters.
+- **Redshift Spectrum** — query S3 data without loading. Pay per scanned TB.
+- **Redshift Serverless** — autoscaling capacity.
+
+## Sharding and partitioning
+
+When a single relational instance can't scale further, you shard — split data across multiple instances by a key (often user ID).
+
+- **Vertical sharding** — split tables across instances (orders here, users there).
+- **Horizontal sharding** — same schema, different rows. Rows are routed to a shard by a hash of the shard key.
+
+Sharding is hard: joins across shards become expensive, schema changes need to be applied to every shard, the application has to know which shard to query. NoSQL stores like DynamoDB do this transparently; relational sharding is usually a sign you should evaluate Aurora or DynamoDB instead.
+
+## VPC, subnets and security groups for databases
+
+RDS and Aurora live in your VPC. Best practice:
+
+- Run databases in **private subnets** with no route to the internet. Outbound access goes via NAT only if needed.
+- Use a **DB subnet group** spanning at least two AZs (required for Multi-AZ).
+- Security group on the DB allows port 3306/5432 only from the application tier's security group — not from a CIDR.
+- Encrypt at rest with KMS. Use SSL/TLS for in-transit (`rds.force_ssl = 1` parameter for PostgreSQL).
+- Manage credentials with **AWS Secrets Manager** and automatic rotation.
+
+## RDS security best practices
+
+- Run in a VPC.
+- IAM database authentication (optional) for short-lived tokens.
+- KMS encryption at rest; SSL/TLS in transit.
+- Force `force_ssl`/`require_secure_transport`.
+- Use Secrets Manager rotation (built-in for RDS engines).
+- Enable Performance Insights + Enhanced Monitoring.
+
+## Putting it together — picking a database
+
+Internalise these shortcuts:
+
+- "OLTP, joins, strong consistency, &lt;100 TB" → **RDS** or **Aurora**.
+- "OLTP, cloud-native, want 15 reads + 1 writer, big" → **Aurora**.
+- "Massive scale key/document lookups, simple access patterns" → **DynamoDB**.
+- "Sub-millisecond reads on hot keys" → **ElastiCache** (Redis if you need data structures, Memcached for pure cache).
+- "Multi-petabyte analytics" → **Redshift** or **Athena over S3**.
+- "Graph relationships (social, fraud)" → **Amazon Neptune**.
+- "Time-series metrics" → **Amazon Timestream**.
+- "Ledger with cryptographic verification" → **QLDB**.
+
+## Common exam traps
+
+- "Multi-AZ standby for read scaling" — wrong; standby is invisible to apps. Use Read Replica.
+- "Read Replica for HA" — wrong; async replication, lag means data loss; use Multi-AZ.
+- "Aurora replicas vs RDS read replicas" — Aurora replicas share the storage volume, so lag is sub-10 ms; RDS replicas have separate storage and async replication.
+- "DynamoDB strong consistency on GSI" — not available. Use LSI or the base table.
+- "DynamoDB hot partition" — caused by poor partition-key design (e.g. low-cardinality, monotonic timestamp).
+- "ACID vs BASE" — ACID is single-node SQL by default; BASE describes most distributed NoSQL.
+- "CAP theorem" — pick CP or AP under partition. Network partitions are not optional.
+- "Aurora write quorum" — 4/6. Read quorum 3/6.
+- "VDL truncation on crash recovery" — discards any log records beyond the last completed transaction (CPL).
+
+## DynamoDB transactions and global tables
+
+Beyond single-item operations, DynamoDB offers:
+
+- **TransactWriteItems / TransactGetItems** — ACID transactions across up to 100 items (or 4 MB) in one or more tables. Used for transferring funds between accounts atomically. Costs 2× the WCU/RCU per item.
+- **Global Tables** — multi-region, multi-master replication. Writes in one Region are replicated to others within seconds. Conflict resolution is "last writer wins" by timestamp.
+
+## DynamoDB pricing modes and capacity planning
+
+- **On-demand mode** — pay per request. Scales instantly. ~7× the price of provisioned at steady state.
+- **Provisioned mode** — pre-allocated RCUs/WCUs. Cheaper if you can predict load. Pair with Auto Scaling (target utilisation 70%).
+
+One RCU = 1 strongly-consistent 4 KB read/s (or 2 eventually-consistent). One WCU = 1 KB write/s. A "hot partition" gets at most 3000 RCUs and 1000 WCUs — design partition keys to spread load.
+
+## Amazon Redshift architecture
+
+A Redshift cluster has:
+
+- **Leader node** — parses SQL, develops query plans, distributes to compute.
+- **Compute nodes** — each owns a slice of the data; run query plans in parallel.
+- **Node slices** — each compute node is divided into slices (e.g. 4 per node); each slice processes one partition of the data.
+
+Distribution styles:
+
+- `EVEN` — round-robin. Default. Use for tables with no join key.
+- `KEY` — hash on a column. Co-locates rows joining on that key — eliminates cross-node data movement.
+- `ALL` — full copy on every node. For small dimension tables (lookup tables).
+
+Sort keys order rows on disk; compound sort keys help range filters; interleaved sort keys handle multiple filter columns equally.
+
+## RDS Proxy
+
+A managed connection pooler that sits in front of RDS/Aurora. Solves the Lambda-database problem (thousands of short-lived Lambda invocations exhausting MySQL/Postgres connections). Multiplexes many client connections onto a small pool of DB connections. Use it whenever serverless compute talks to a connection-limited DB engine.
+
+## Aurora Serverless v2
+
+A modern version of Aurora that auto-scales the writer/reader between 0.5 and 256 Aurora Capacity Units (ACUs). One ACU ≈ 2 GiB memory + matching CPU. Scaling is sub-second. Used for:
+
+- Dev/staging environments that sit idle most of the day.
+- Apps with unpredictable load.
+- Spiky multi-tenant SaaS where each tenant's workload varies.
+
+Costlier per ACU-hour than provisioned Aurora at saturation, but cheaper at low utilisation.
+
+## Graph and time-series — Neptune and Timestream
+
+- **Amazon Neptune** — managed graph database supporting Gremlin and SPARQL. For social networks, fraud detection, knowledge graphs, recommendation engines.
+- **Amazon Timestream** — purpose-built time-series database (IoT, monitoring). Automatic tiered storage (recent in memory, older on disk). Cheaper than DynamoDB for ingest-heavy time-series.
+
+## Database migration — DMS and SCT
+
+- **AWS Database Migration Service (DMS)** — replicates data from a source DB (on-prem, EC2, or another cloud) to a target DB (RDS, Aurora, DynamoDB, Redshift, S3). Supports ongoing replication for zero-downtime migration.
+- **AWS Schema Conversion Tool (SCT)** — converts schema and code (stored procs) between engines (Oracle → PostgreSQL, SQL Server → Aurora).

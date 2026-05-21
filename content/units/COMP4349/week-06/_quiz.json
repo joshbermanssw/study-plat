@@ -1,0 +1,182 @@
+{
+  "unit": "COMP4349",
+  "week": 6,
+  "topic": "Cloud Security",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "In an IAM policy evaluation, what happens if one statement Allows and another Denies the same action?",
+      "choices": ["Allow wins", "Deny wins (explicit Deny always overrides Allow)", "The latest statement wins", "An error is raised"],
+      "correctIndex": 1,
+      "explanation": "Explicit Deny always overrides any Allow in AWS IAM evaluation — the foundation of guard-rail policies and SCPs."
+    },
+    {
+      "id": "q2",
+      "stem": "Under the AWS shared responsibility model, who patches the underlying hypervisor on EC2?",
+      "choices": ["The customer", "AWS", "Both jointly", "Whichever party has the IAM admin role"],
+      "correctIndex": 1,
+      "explanation": "AWS owns security of the cloud — facilities, hardware, hypervisor. Customers own security in the cloud (e.g. guest OS for EC2)."
+    },
+    {
+      "id": "q3",
+      "stem": "What is the recommended way for an EC2 application to authenticate to S3?",
+      "choices": ["Hardcode access keys in the AMI", "Use an IAM role attached via instance profile", "Use the root account", "Embed credentials in user-data"],
+      "correctIndex": 1,
+      "explanation": "Instance roles deliver temporary, auto-rotated credentials via IMDS — eliminating static secrets."
+    },
+    {
+      "id": "q4",
+      "stem": "An IAM role differs from a user because it:",
+      "choices": ["Has a permanent password", "Is assumed via STS for temporary credentials and has no long-term credentials", "Only works for human identities", "Cannot have policies attached"],
+      "correctIndex": 1,
+      "explanation": "Roles are assumable identities that mint short-lived credentials via sts:AssumeRole — used for services, federation, and cross-account."
+    },
+    {
+      "id": "q5",
+      "stem": "Which is a resource-based policy?",
+      "choices": ["Group attached to a user", "S3 bucket policy", "Permission boundary on a role", "Tag policy"],
+      "correctIndex": 1,
+      "explanation": "Bucket policies, KMS key policies, and SQS queue policies are attached to the resource itself — that's resource-based."
+    },
+    {
+      "id": "q6",
+      "stem": "KMS envelope encryption means:",
+      "choices": ["Two CMKs are used in parallel", "A data key encrypts the data; KMS encrypts the data key", "Encryption only at rest", "Replicating keys across Regions"],
+      "correctIndex": 1,
+      "explanation": "KMS encrypts a per-object data key (the 'envelope') which then encrypts the actual data — avoiding round-tripping every byte through KMS."
+    },
+    {
+      "id": "q7",
+      "stem": "AWS Shield Standard is:",
+      "choices": ["A paid DDoS service", "Free, automatic L3/L4 DDoS protection for all customers", "An IDS/IPS appliance", "A WAF rule set"],
+      "correctIndex": 1,
+      "explanation": "Shield Standard is included for every AWS customer at no extra cost; Shield Advanced is the paid tier with DRP support."
+    },
+    {
+      "id": "q8",
+      "stem": "Which service records every AWS API call for audit?",
+      "choices": ["CloudWatch", "CloudTrail", "Config", "GuardDuty"],
+      "correctIndex": 1,
+      "explanation": "CloudTrail logs management and (optionally) data events for every API action — the auditable record of who did what."
+    },
+    {
+      "id": "q9",
+      "stem": "Which service continuously evaluates resource configurations against compliance rules?",
+      "choices": ["CloudTrail", "AWS Config", "Inspector", "Macie"],
+      "correctIndex": 1,
+      "explanation": "AWS Config records configuration history and evaluates resources against managed/custom rules (e.g. 'EBS volumes must be encrypted')."
+    },
+    {
+      "id": "q10",
+      "stem": "GuardDuty detects threats using:",
+      "choices": ["Manual rules only", "ML over CloudTrail, VPC flow logs, and DNS logs", "Static signature lists from CrowdStrike", "EC2 endpoint agents"],
+      "correctIndex": 1,
+      "explanation": "GuardDuty is a managed threat-detection service applying ML to CloudTrail, VPC flow logs, and DNS query logs."
+    },
+    {
+      "id": "q11",
+      "stem": "Which service scans S3 for sensitive data like PII and credentials?",
+      "choices": ["Macie", "Inspector", "Detective", "Security Hub"],
+      "correctIndex": 0,
+      "explanation": "Amazon Macie uses ML to find sensitive data in S3, including PHI/PII, credentials, and other regulated data."
+    },
+    {
+      "id": "q12",
+      "stem": "AWS Secrets Manager and SSM Parameter Store differ because:",
+      "choices": ["Only Parameter Store supports KMS encryption", "Secrets Manager supports automatic rotation Lambdas and costs per secret", "They are identical", "Parameter Store cannot store strings"],
+      "correctIndex": 1,
+      "explanation": "Secrets Manager adds automatic rotation, cross-account sharing, and replication, in exchange for a per-secret monthly fee."
+    },
+    {
+      "id": "q13",
+      "stem": "An organisation wants to deny S3 traffic that isn't TLS. Which mechanism?",
+      "choices": ["IAM permission boundary", "Bucket policy with aws:SecureTransport=false denied", "NACL", "Security group rule"],
+      "correctIndex": 1,
+      "explanation": "Add a bucket policy statement denying any request where aws:SecureTransport is false — this enforces TLS for S3 access."
+    },
+    {
+      "id": "q14",
+      "stem": "Cross-account access typically requires:",
+      "choices": ["A user duplicated in both accounts", "A role in the target account with a trust policy + sts:AssumeRole from the source", "Manual access keys exchanged", "A peering connection"],
+      "correctIndex": 1,
+      "explanation": "Cross-account access is implemented as a role in the target account that trusts principals in the source account to assume it via STS."
+    },
+    {
+      "id": "q15",
+      "stem": "Which AWS service centralises workforce SSO across multiple AWS accounts and external apps?",
+      "choices": ["Cognito", "IAM Identity Center (formerly AWS SSO)", "STS", "Directory Service"],
+      "correctIndex": 1,
+      "explanation": "IAM Identity Center is the workforce SSO solution; Cognito is for customer-facing apps."
+    },
+    {
+      "id": "q16",
+      "stem": "A customer-managed KMS CMK provides over an AWS-managed CMK:",
+      "choices": ["Lower cost", "Control over key policy, manual key rotation, and deletion scheduling", "Faster encryption", "Public visibility"],
+      "correctIndex": 1,
+      "explanation": "Customer-managed CMKs let you define key policy, enable annual rotation, schedule deletion, and audit usage in detail."
+    },
+    {
+      "id": "q17",
+      "stem": "AWS WAF is most commonly attached to:",
+      "choices": ["EC2 instances directly", "ALB, CloudFront, API Gateway, AppSync, App Runner", "NAT Gateways", "S3 buckets"],
+      "correctIndex": 1,
+      "explanation": "WAF Web ACLs attach to ALB, CloudFront, API Gateway, AppSync, and App Runner — not raw EC2."
+    },
+    {
+      "id": "q18",
+      "stem": "The principle of least privilege means:",
+      "choices": ["Grant admin and audit later", "Grant only the permissions needed to perform the task, no more", "Use the root user for everyday work", "Disable MFA to reduce friction"],
+      "correctIndex": 1,
+      "explanation": "Least privilege minimises blast radius: identities get the narrowest possible set of permissions, refined over time using Access Analyzer."
+    },
+    {
+      "id": "q19",
+      "stem": "AWS account root user best practice is to:",
+      "choices": ["Use it for daily admin work", "Lock it down with hardware MFA and use only for account-level tasks", "Share its credentials with the team", "Delete it"],
+      "correctIndex": 1,
+      "explanation": "Root has unrestricted power; secure it with hardware MFA, no access keys, and only use it for the handful of tasks that require root."
+    },
+    {
+      "id": "q20",
+      "stem": "Which Cognito construct issues JWTs after user sign-in for a mobile app?",
+      "choices": ["User Pool", "Identity Pool", "STS", "WAF rule"],
+      "correctIndex": 0,
+      "explanation": "Cognito User Pools handle sign-up/sign-in and issue ID/Access tokens. Identity Pools exchange those tokens for temporary AWS credentials."
+    },
+    {
+      "id": "q21",
+      "stem": "Which condition key lets you require MFA for sensitive IAM actions?",
+      "choices": ["aws:MultiFactorAuthPresent", "aws:SourceIp", "aws:SecureTransport", "aws:CalledVia"],
+      "correctIndex": 0,
+      "explanation": "Adding Condition { Bool: { aws:MultiFactorAuthPresent: true } } in a policy enforces MFA on the protected actions."
+    },
+    {
+      "id": "q22",
+      "stem": "Which service is the aggregated security-posture dashboard combining GuardDuty, Inspector, Macie, and partner findings?",
+      "choices": ["CloudWatch", "Security Hub", "Trusted Advisor", "Audit Manager"],
+      "correctIndex": 1,
+      "explanation": "Security Hub aggregates findings from multiple AWS security services and partners into a single normalised dashboard."
+    },
+    {
+      "id": "q23",
+      "stem": "Service Control Policies (SCPs) in AWS Organizations:",
+      "choices": ["Grant permissions to users", "Define the maximum permissions available to accounts/OUs (guard rails)", "Replace IAM policies", "Apply only to the root user"],
+      "correctIndex": 1,
+      "explanation": "SCPs are guard rails: they don't grant permissions but cap what accounts within the OU can do, even for admins."
+    },
+    {
+      "id": "q24",
+      "stem": "S3 Block Public Access overrides:",
+      "choices": ["IAM identity policies", "Bucket policies and ACLs that would otherwise grant public access", "KMS key policies", "VPC endpoint policies"],
+      "correctIndex": 1,
+      "explanation": "BPA is a guard rail that wins over bucket policies/ACLs that would expose a bucket publicly — defends against accidental exposure."
+    },
+    {
+      "id": "q25",
+      "stem": "RDS encryption at rest cannot be enabled in place on an existing unencrypted instance. The recommended path is:",
+      "choices": ["Use bucket policy on RDS", "Snapshot, copy snapshot with encryption, restore", "Migrate to DynamoDB", "Enable Multi-AZ"],
+      "correctIndex": 1,
+      "explanation": "Take a snapshot, copy it with encryption enabled, then restore. Encryption setting is fixed at instance creation."
+    }
+  ]
+}

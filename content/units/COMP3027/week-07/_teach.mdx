@@ -1,0 +1,354 @@
+---
+title: "Week 7 — Flow Networks II: Reductions and Applications"
+unit: COMP3027
+week: 7
+type: overview
+status: done
+---
+
+## What Week 7 is for
+
+Week 6 built max-flow. Week 7 *uses* it. You'll see a parade of problems that look unrelated and watch them all collapse into s-t flow once you spot the right **gadget** — a small piece of graph (a few vertices and edges with specific capacities) that encodes one rule of the original problem as a piece of a flow network.
+
+**This is the single most exam-favoured pattern in COMP3027.** You will be asked to *design* a reduction on a problem you haven't seen before.
+
+The mental move is always the same:
+
+1. Read the problem.
+2. Identify the **decision variables** — what gets chosen?
+3. Model each as flow on an edge.
+4. Encode each constraint as a capacity.
+5. The objective becomes max-flow or min-cut.
+
+Two named theorems sit at the heart of this week — **König's theorem** (matching = vertex cover on bipartite graphs) and **Hall's marriage theorem** (perfect matching iff every left-set has a big enough neighbourhood). Both are corollaries of max-flow min-cut.
+
+## Bipartite matching as flow
+
+**Problem.** A **bipartite graph** has its vertices split into two sides L (left) and R (right), with edges only crossing between sides. A **matching** is a set of edges where no two edges share a vertex. Goal: find the largest matching.
+
+**Reduction — building the flow network.**
+
+1. Add a brand new source s and sink t.
+2. From s to every ℓ ∈ L: edge of capacity 1.
+3. From every r ∈ R to t: edge of capacity 1.
+4. For every original edge ℓ — r in G: orient it L → R with capacity 1.
+
+In a picture:
+
+```text
+              ┌──── ℓ₁ ─────── r₁ ─────┐
+              │                         │
+        ┌─── ℓ₂ ─────── r₂ ─────┐       │
+   s ───┤                       ├─── t
+        └─── ℓ₃ ─────── r₃ ─────┘       │
+              │                         │
+              └──── ℓ₄ ─────── r₄ ─────┘
+
+   capacities all 1 everywhere
+```
+
+**Claim.** The max integer flow equals the size of the max bipartite matching.
+
+**Why — both directions.**
+
+*Matching → flow.* Take a matching M. For each matched edge (ℓ, r) ∈ M, route one unit of flow: s → ℓ → r → t. The three edges on this route all have capacity 1, none shared with another matched pair. Total flow value = |M|.
+
+*Flow → matching.* Take an integer max-flow (it exists by Week 6 integrality, since all capacities are integers). Every edge carries flow 0 or 1.
+
+- Each ℓ has at most one incoming unit (capacity-1 from s), so at most one outgoing unit, so at most one matched edge per ℓ.
+- Each r symmetrically has at most one matched edge.
+
+So the L→R edges carrying flow form a valid matching, of size |f|.
+
+**Complexity.** Edmonds-Karp: **O(V · E²)**. (Dinic's or Hopcroft-Karp can do O(E √V), but that's beyond scope.)
+
+## König's theorem
+
+A **vertex cover** is a set of vertices C such that every edge has at least one endpoint in C.
+
+**Theorem (König 1931).** In any bipartite graph, max matching size = min vertex cover size.
+
+**Proof via max-flow min-cut.**
+
+Build the matching flow network. Max matching = max flow. We'll extract a vertex cover of size = max flow from any min cut.
+
+Let (S, V_N \ S) be a min s-t cut. Define:
+
+```text
+C = (L \ S) ∪ (R ∩ S)
+```
+
+**Claim 1: C covers every edge.** Take any (ℓ, r) ∈ E. Its capacity is 1, finite. The cut is min, so cap is finite ⇒ (ℓ, r) can't cross from S to V\S (that would contribute 1 to cap — fine — but wait, actually we need to argue differently). The cut capacity counts:
+
+- s → ℓ edges with ℓ ∉ S.
+- r → t edges with r ∈ S.
+- ℓ → r edges with ℓ ∈ S, r ∉ S.
+
+If (ℓ, r) ∈ E with ℓ ∈ S and r ∉ S, then ℓ → r would cross the cut, contributing 1. But that means the min cut already accounts for it, and we can keep this assumption non-vacuous: the *original* network construction. In standard König proofs, we replace L→R edges with **infinite** capacity to force them not to cross any finite cut. Then (ℓ, r) can't cross. So either ℓ ∉ S (then ℓ ∈ L\S ⊆ C) or r ∈ S (then r ∈ R∩S ⊆ C). Edge covered. ✓
+
+**Claim 2: |C| = cut capacity.** Cut contributors: (s, ℓ) for ℓ ∉ S → count |L\S|; (r, t) for r ∈ S → count |R∩S|. Total = |L\S| + |R∩S| = |C|. ✓
+
+So min vertex cover ≤ |C| = min cut = max flow = max matching.
+
+Reverse direction trivial: each matched edge needs its own cover vertex. ∎
+
+**Why this is beautiful.** A purely combinatorial statement (matchings = covers) is exposed as a special case of LP duality.
+
+## Hall's marriage theorem
+
+**Setup.** Bipartite graph with left side L. For any subset A ⊆ L, let N(A) = the set of vertices in R that are adjacent to at least one vertex in A (A's "neighbourhood").
+
+**Theorem (Hall 1935).** L has a matching that saturates *every* vertex in L (i.e. every ℓ ∈ L gets matched) **if and only if** for every subset A ⊆ L: **|N(A)| ≥ |A|**.
+
+In plain English: every group of left-vertices must collectively have at least as many right-neighbours as they have members.
+
+**Proof — both directions.**
+
+*Necessity (⇒): saturating matching implies Hall's condition.*
+
+Suppose L has a saturating matching M. Pick any A ⊆ L. Each ℓ ∈ A is matched to some distinct partner in R. All those partners live in N(A) (since they're adjacent to ℓ ∈ A). So N(A) contains at least |A| distinct vertices. |N(A)| ≥ |A|. ✓
+
+*Sufficiency (⇐): Hall's condition implies a saturating matching.*
+
+Build the matching flow network, but give the L→R edges capacity ∞ (or any value ≥ |L|). We'll show max-flow ≥ |L| using **min-cut**.
+
+Take any s-t cut (S, T) with s ∈ S, t ∈ T.
+
+- Define A = L ∩ S (left-vertices on s's side of the cut).
+- Define B = R ∩ T (right-vertices on t's side of the cut).
+
+Picture:
+
+```text
+              S side                   T side
+              ┌───────────────────────┐
+   s ────────│                        │──── t
+              │  L ∩ S = A   L ∩ T    │
+              │                       │
+              │  R ∩ S       R ∩ T = B│
+              └───────────────────────┘
+```
+
+Edges crossing from S to T:
+
+1. **s → ℓ** for ℓ ∈ L ∩ T (i.e. ℓ ∉ A). Count: |L| − |A|. Each contributes 1.
+2. **r → t** for r ∈ R ∩ S (i.e. r ∉ B). Count: |R| − |B|. Each contributes 1.
+3. **ℓ → r** for ℓ ∈ A, r ∈ B. Each contributes ∞.
+
+Case 1: some L→R edge crosses. Then cut capacity = ∞ ≥ |L|. Done.
+
+Case 2: no L→R edge crosses. That means every neighbour of every ℓ ∈ A lies in R ∩ S (not in B). So **N(A) ⊆ R \ B**, i.e. |R \ B| ≥ |N(A)|. By Hall's condition, |N(A)| ≥ |A|.
+
+Cut capacity in case 2:
+
+```text
+cap = (|L| − |A|) + (|R| − |B|)
+    = (|L| − |A|) + |R \ B|
+    ≥ (|L| − |A|) + |N(A)|
+    ≥ (|L| − |A|) + |A|         [Hall's condition]
+    = |L|
+```
+
+Either way, **every** cut has capacity ≥ |L|. By max-flow min-cut, max-flow ≥ |L|. But max-flow can't exceed s's total outgoing capacity, which is |L|. So max-flow = |L|, i.e. every ℓ ∈ L is matched. ∎
+
+**Why this matters.** Hall's condition gives a **certificate of infeasibility**. To prove a perfect matching is *impossible*, exhibit one set A with |N(A)| &lt; |A|. The reader can verify in O(|A| · max degree) without running any flow algorithm.
+
+### Hall in practice
+
+Suppose A, B, C all qualified only for jobs &#123;1, 2&#125;. Take the set &#123;A, B, C&#125;. |N| = 2 &lt; 3. Violates Hall. So no perfect matching. Max matching ≤ 2.
+
+## Edge-disjoint paths and Menger's theorem
+
+**Problem.** Maximum number of pairwise edge-disjoint s-t paths in a directed graph.
+
+**Reduction.** Set every edge's capacity to 1. Max integer s-t flow = answer.
+
+**Why.** By flow decomposition (Week 6), each unit of flow corresponds to a path. Capacity 1 forces edges to be used by at most one path.
+
+**Menger's theorem (edge version).** Max edge-disjoint s-t paths = min number of edges to remove to disconnect s from t.
+
+Both equal max-flow / min-cut on unit-capacity G.
+
+### Worked: edge-disjoint paths
+
+**Construction details.**
+
+*Forward direction (⇒).* k edge-disjoint paths P₁, ..., Pₖ. Define f(e) = number of Pᵢ containing e (0 or 1). Capacity ✓. Conservation: each internal vertex of a path contributes 1 in, 1 out. Value: k units leave s.
+
+*Reverse (⇐).* Max flow has value k. Integrality ⇒ f(e) ∈ &#123;0, 1&#125;. Decomposition ⇒ k unit-flow paths. Capacity 1 ⇒ paths are edge-disjoint. ∎
+
+**Complexity.** O(V · E²).
+
+## Vertex-disjoint paths via vertex splitting
+
+**Problem.** Maximum number of *internally* vertex-disjoint s-t paths.
+
+**The vertex-split gadget.** For each v ∉ &#123;s, t&#125;: replace v by two nodes vᵢₙ and vₒᵤₜ, connected by an edge (vᵢₙ, vₒᵤₜ) with capacity 1. Every original (u, v) becomes (uₒᵤₜ, vᵢₙ); every (v, w) becomes (vₒᵤₜ, wᵢₙ). The capacity-1 internal edge forces at most one path through v.
+
+**Correctness sketch.** k vertex-disjoint paths ⇒ k unit-flow paths each using its own vᵢₙ→vₒᵤₜ edge ⇒ max flow ≥ k. Conversely, max flow k decomposes into k unit paths; capacity 1 on vᵢₙ→vₒᵤₜ forces no two share v.
+
+**Complexity.** Doubled graph: O(V) vertices, O(V + E) edges. Edmonds-Karp: O(V · (V+E)²).
+
+**Menger's vertex version** follows: max vertex-disjoint s-t paths = min number of internal vertices to remove.
+
+**This vertex-split gadget appears throughout flow reductions.** Whenever you need to limit how many paths use a vertex, this is your tool.
+
+## Image segmentation as min-cut
+
+**Problem.** A grid of pixels. Each pixel v has a foreground likelihood aᵥ and background likelihood bᵥ. Adjacent pixels (u, v) have a separation penalty pᵤᵥ when labelled differently.
+
+**Objective.** Maximise:
+
+```text
+sum of a_v for foreground pixels
++ sum of b_v for background pixels
+- sum of p_uv for cut adjacencies
+```
+
+**Reduction.**
+
+- Source s = "foreground". Sink t = "background".
+- For each pixel v: edge (s, v) capacity aᵥ; edge (v, t) capacity bᵥ.
+- For each adjacent pair (u, v): two edges (u, v) and (v, u), each capacity pᵤᵥ.
+
+**Claim.** Any s-t cut (S, T) labels pixels (S = foreground, T = background). The cut capacity is:
+
+```text
+sum of a_v for v in T    (cut by removing v's edge from s)
++ sum of b_v for v in S  (cut by removing v's edge to t)
++ sum of p_uv for cut adjacencies
+```
+
+The total "ideal" score = Σ aᵥ + Σ bᵥ is constant. **Minimising the cut = maximising the segmentation score.**
+
+So min-cut = optimal labelling.
+
+## Project selection
+
+**Problem.** Projects with values wᵢ ∈ ℝ. Some projects have prerequisites (if you pick i and i needs j, you must also pick j). Choose a feasible subset of max total value.
+
+**Reduction.**
+
+- Source s, sink t.
+- For each project i with wᵢ &gt; 0: edge (s, i) of capacity wᵢ.
+- For each project i with wᵢ &lt; 0: edge (i, t) of capacity |wᵢ|.
+- For each prerequisite "i needs j": edge (i, j) of capacity ∞.
+
+**Reading the cut.** Let (S, T) be a min cut. S = projects selected, T = rejected. The ∞-edges force closure: if i ∈ S and i needs j, the cut (i, j) would be ∞ unless j ∈ S.
+
+Cut capacity = (positive wᵢ with i rejected) + (|wᵢ| with i selected and wᵢ &lt; 0) = (sum of positive wᵢ) − (optimal value).
+
+So **optimal value = (sum of positive wᵢ) − min-cut**.
+
+## Assignment problem
+
+**Problem.** n workers, n jobs. Cost cᵢⱼ to assign worker i to job j. Find a perfect matching minimising total cost.
+
+This is *weighted* bipartite matching — beyond plain max-flow. It's solvable by:
+
+- **Min-cost max-flow** (polynomial).
+- **Hungarian algorithm** in O(n³).
+
+The takeaway for COMP3027: *all* classical bipartite-graph problems reduce to flow variants.
+
+## Integrality, the workhorse lemma
+
+**Theorem.** If c is integer-valued, there exists an integer-valued max flow, and Ford-Fulkerson finds one (with any path selection).
+
+**Proof.** By induction on augmentations. Initial f ≡ 0 is integer. Each augmentation adds an integer bottleneck. So f stays integer. ∎
+
+**Why we care.** Setting capacities to 0/1 forces the optimum to be a 0/1 vector. That 0/1 vector represents a matching, a path, a label, a cover. Without integrality, all these reductions break.
+
+## Strong LP duality (preview)
+
+Max-flow min-cut is one instance of **LP strong duality**.
+
+Max-flow LP:
+
+```text
+maximise   sum of f(e) over e out of s
+subject to f(e) <= c(e)        (capacity)
+           net flow in = out   (conservation)
+           f(e) >= 0
+```
+
+The LP dual, after some manipulation, *is* the min-cut LP.
+
+LP strong duality ⇒ max = min. For COMP3027 remember: **max-flow min-cut = LP duality + integrality theorem.** Many "min-cost flow" generalisations follow the same template.
+
+## The reduction recipe
+
+For any new problem you suspect reduces to flow:
+
+1. **What's being chosen?** Decision variables become flow on edges.
+2. **What are the 0/1 structures?** (Match, label, path inclusion.) Capacity 1.
+3. **What are the constraints?** Conservation enforces balance; capacity enforces upper bounds; ∞ forces implications.
+4. **What's the objective?** Maximise flow or minimise cut.
+5. **Specify the construction.** Vertices, edges, capacities — explicitly.
+6. **Prove correctness in both directions.**
+   - Every feasible original solution ⇒ a flow of equal value.
+   - Every integer flow ⇒ a feasible original solution of equal value.
+7. **State complexity.** Count V, E; plug into Edmonds-Karp.
+
+Without both directions of step 6, your reduction is incomplete.
+
+## When flow is the wrong tool
+
+Not everything reduces to s-t flow.
+
+- **Non-bipartite max matching.** Needs Edmonds' blossom algorithm (polynomial but not by simple flow reduction).
+- **Vertex cover on general graphs.** NP-hard.
+- **Multi-pair disjoint paths in undirected graphs.** NP-hard except for fixed terminal counts.
+- **Optimal edge colouring.** NP-hard.
+
+**The flow-friendly signature:** bipartite-ish structure + 0/1 decisions + max/min objective on flow.
+
+## Worked bipartite-matching trace
+
+Applicants &#123;A, B, C&#125;, jobs &#123;1, 2, 3&#125;. Qualifications:
+
+- A → &#123;1, 2&#125;
+- B → &#123;2&#125;
+- C → &#123;2, 3&#125;
+
+Build network. Run Ford-Fulkerson:
+
+1. s → A → 1 → t. Push 1.
+2. s → B → 2 → t. Push 1.
+3. s → C → 3 → t. Push 1.
+
+**Max-flow = 3.** Matching: &#123;(A,1), (B,2), (C,3)&#125;. ✓
+
+### A tricky case requiring backward edges
+
+Change B to qualified only for &#123;1&#125;. Run Ford-Fulkerson:
+
+1. s → A → 1 → t. Push 1.
+2. Need to match B. s → B → 1 is blocked (1→t saturated). BFS finds *backward* edge: s → B → 1 → A (backward) → 2 → t. Push 1. This **cancels A's commitment to job 1**, frees A to take job 2.
+3. s → C → 3 → t. Push 1.
+
+**Max-flow = 3.** Without backward edges, B and A would deadlock at step 2.
+
+## Worked König extraction
+
+Take the matching network from the first example. Max flow = 3, fully saturating L→t pipes.
+
+Compute S = vertices reachable from s in G_f. Cover = (L \ S) ∪ (R ∩ S).
+
+For a graph with a perfect matching, typically S = L ∪ &#123;s&#125; (everyone reachable), giving C = R. |C| = |R|. (Sanity-check: |R| ≥ matching size.)
+
+For the second example (B → 1 only) with non-trivial reachability, you'd compute S carefully and get cover size 3.
+
+## Looking ahead to Week 8
+
+Week 8 generalises to **circulations with demands** — no special s, t; per-edge lower bounds; per-vertex demands. Same recipe; new construction details. Applications: survey design, airline scheduling, baseball elimination.
+
+## What to do this week
+
+1. Re-derive König's theorem on a small bipartite graph. Draw S and T explicitly.
+2. Code bipartite matching via max-flow on a 10×10 instance.
+3. Verify the König extraction gives a cover of size equal to max matching.
+4. For the image-segmentation reduction, write out the cut-capacity identity for a 2×2 grid.
+5. Apply Hall's condition to detect infeasibility on the graph where A, B, C all qualify only for &#123;1, 2&#125;.
+6. For each Week 7 application, identify which "decision variable", "constraint", "objective" each part of the construction encodes.
+7. Skim the quiz: any reduction direction (forward or reverse) you can't recite is a study target.

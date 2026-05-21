@@ -1,0 +1,182 @@
+{
+  "unit": "COMP4349",
+  "week": 10,
+  "topic": "Containers & Microservices",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "A Docker container differs from a virtual machine because it:",
+      "choices": ["Runs its own full guest OS kernel", "Shares the host kernel and uses namespaces/cgroups for isolation", "Requires nested virtualisation", "Cannot run on Linux"],
+      "correctIndex": 1,
+      "explanation": "Containers are isolated processes sharing the host kernel via Linux namespaces and cgroups; VMs run a full guest OS atop a hypervisor."
+    },
+    {
+      "id": "q2",
+      "stem": "Which AWS service is a managed Docker image registry?",
+      "choices": ["ECS", "ECR", "EKS", "ELB"],
+      "correctIndex": 1,
+      "explanation": "ECR (Elastic Container Registry) is AWS's managed OCI registry with IAM auth, scanning, and lifecycle policies."
+    },
+    {
+      "id": "q3",
+      "stem": "ECS Fargate differs from the EC2 launch type because:",
+      "choices": ["Fargate requires manual cluster scaling", "AWS manages the underlying compute; you only specify CPU/memory per task", "Fargate uses Kubernetes", "Fargate is cheaper at all scales"],
+      "correctIndex": 1,
+      "explanation": "Fargate is serverless containers — no EC2 nodes to patch; you pay per task CPU/memory-second."
+    },
+    {
+      "id": "q4",
+      "stem": "An ECS task definition contains:",
+      "choices": ["Only network ACL rules", "Container image, CPU/memory, env vars, networking mode, IAM roles", "IAM users", "Kubernetes manifests"],
+      "correctIndex": 1,
+      "explanation": "The task definition is the JSON spec for one or more containers, including image, resources, env vars, networking, and IAM roles."
+    },
+    {
+      "id": "q5",
+      "stem": "An ECS service ensures:",
+      "choices": ["A specific desired number of tasks runs and integrates with an ALB", "Only one task ever runs", "Tasks are immutable forever", "Network ACLs are applied"],
+      "correctIndex": 0,
+      "explanation": "A service maintains a desired count, replaces failed tasks, and registers/deregisters them with a target group."
+    },
+    {
+      "id": "q6",
+      "stem": "Which is true about EKS?",
+      "choices": ["AWS manages worker nodes but not the control plane", "AWS manages the Kubernetes control plane; you provide worker nodes (EC2 or Fargate)", "EKS is the same as ECS", "EKS only supports Windows nodes"],
+      "correctIndex": 1,
+      "explanation": "EKS hosts the managed kube-apiserver/etcd; you choose EC2 self-managed nodes, managed node groups, or Fargate."
+    },
+    {
+      "id": "q7",
+      "stem": "Which 12-factor principle says configuration belongs in:",
+      "choices": ["The Dockerfile", "Environment variables / external config (not code)", "The application source", "The image registry"],
+      "correctIndex": 1,
+      "explanation": "12-factor 'Config' keeps environment-specific values in env vars or external stores like SSM Parameter Store, never in code."
+    },
+    {
+      "id": "q8",
+      "stem": "Which Dockerfile pattern keeps the final runtime image small?",
+      "choices": ["Single FROM with all tooling", "Multi-stage build copying only build artefacts into a slim final stage", "ADD . /everywhere", "Running as root"],
+      "correctIndex": 1,
+      "explanation": "Multi-stage builds discard compilers and dev dependencies, producing a small attack-surface runtime image."
+    },
+    {
+      "id": "q9",
+      "stem": "ECS networking mode 'awsvpc' gives each task:",
+      "choices": ["A single shared ENI for the host", "Its own ENI with a private IP and security group", "Only a public IP", "No network at all"],
+      "correctIndex": 1,
+      "explanation": "awsvpc assigns each task its own ENI, making security groups, VPC features, and IAM work naturally per task."
+    },
+    {
+      "id": "q10",
+      "stem": "Which is BEST for a small team that wants to push a container and get an HTTPS endpoint without managing clusters?",
+      "choices": ["EKS", "ECS on EC2", "App Runner", "EC2 on Spot"],
+      "correctIndex": 2,
+      "explanation": "App Runner is a Heroku-style fully managed service: push code or image, get a scalable HTTPS endpoint."
+    },
+    {
+      "id": "q11",
+      "stem": "Which is the BEST registry tagging practice for production deployments?",
+      "choices": ["Always use 'latest'", "Use immutable semantic tags or content digests (@sha256:...)", "Never tag images", "Use random tags"],
+      "correctIndex": 1,
+      "explanation": "Immutable tags or digests guarantee a deployment refers to the exact image you tested; 'latest' is a moving target."
+    },
+    {
+      "id": "q12",
+      "stem": "Which service mesh-like feature is built into ECS to give service-to-service discovery and mTLS without an external mesh?",
+      "choices": ["ECS Service Connect", "X-Ray", "App Mesh only", "API Gateway"],
+      "correctIndex": 0,
+      "explanation": "ECS Service Connect provides service discovery, traffic management, and observability between ECS services."
+    },
+    {
+      "id": "q13",
+      "stem": "Which is a key cost trade-off of microservices?",
+      "choices": ["Less network traffic", "Higher operational complexity (observability, networking, deployment) compared to a monolith", "Faster local development always", "No need for IaC"],
+      "correctIndex": 1,
+      "explanation": "Microservices add distributed-system overhead — tracing, retries, schemas, more pipelines — that's real cost vs a monolith."
+    },
+    {
+      "id": "q14",
+      "stem": "Which pattern handles cross-service long-running business transactions in microservices?",
+      "choices": ["Two-phase commit across services", "Saga (local transactions + compensating actions)", "XA transactions on RDS", "Distributed locks"],
+      "correctIndex": 1,
+      "explanation": "Sagas decompose distributed transactions into a series of local transactions, each with a compensating action on failure."
+    },
+    {
+      "id": "q15",
+      "stem": "An ECS task should obtain AWS credentials via:",
+      "choices": ["Static keys in env vars", "An IAM task role (and a task execution role for ECR/Logs)", "Root account credentials", "EC2 instance role"],
+      "correctIndex": 1,
+      "explanation": "Task roles give short-lived credentials to the app; the task execution role lets ECS pull images and write logs."
+    },
+    {
+      "id": "q16",
+      "stem": "Layered container images are useful because:",
+      "choices": ["Each layer encrypts itself", "Layers are content-addressed and cached, so unchanged layers don't need to be rebuilt or re-pushed", "Layers add randomness", "They are required by Kubernetes"],
+      "correctIndex": 1,
+      "explanation": "Layer caching makes builds and pushes fast and registries efficient; only changed layers move over the network."
+    },
+    {
+      "id": "q17",
+      "stem": "Which is true about Kubernetes Pods?",
+      "choices": ["A Pod always contains exactly one container", "A Pod is one or more co-located containers sharing network/storage namespaces", "Pods replace nodes", "Pods are immutable forever"],
+      "correctIndex": 1,
+      "explanation": "A Pod is the smallest deployable unit; usually one container, sometimes a sidecar pattern with multiple containers sharing locality."
+    },
+    {
+      "id": "q18",
+      "stem": "Which AWS service is purpose-built for batch jobs (queueing, array jobs, mixed CPU/GPU)?",
+      "choices": ["ECS Service", "AWS Batch", "App Runner", "Lambda"],
+      "correctIndex": 1,
+      "explanation": "AWS Batch schedules containerised batch jobs on ECS/Fargate with queues, priorities, and array jobs."
+    },
+    {
+      "id": "q19",
+      "stem": "Which container security best practice should you follow?",
+      "choices": ["Run as root inside the container", "Use minimal base images, scan for vulnerabilities, and run as non-root", "Embed long-lived AWS keys", "Disable image scanning"],
+      "correctIndex": 1,
+      "explanation": "Use slim images (e.g. distroless or alpine), scan in ECR, set USER to non-root, and pin tags/digests."
+    },
+    {
+      "id": "q20",
+      "stem": "Which is the canonical reason to choose EKS over ECS?",
+      "choices": ["EKS is cheaper", "EKS uses the Kubernetes API for portability and a rich open-source ecosystem", "EKS is AWS-only", "ECS does not support containers"],
+      "correctIndex": 1,
+      "explanation": "EKS gives you Kubernetes API compatibility and access to the open-source ecosystem (Helm, Argo, Istio); useful when portability matters."
+    },
+    {
+      "id": "q21",
+      "stem": "An ECS rolling deployment with minHealthy=100% and maxPercent=200% means:",
+      "choices": ["The new tasks fully replace the old ones immediately", "AWS keeps all current tasks healthy while doubling the count, then drains old tasks (blue/green-like behaviour)", "It will downtime", "It triggers Spot"],
+      "correctIndex": 1,
+      "explanation": "Min 100% / max 200% ensures no capacity dip: new tasks launch alongside the old ones, then the old tasks drain."
+    },
+    {
+      "id": "q22",
+      "stem": "Logs from an ECS container with the awslogs log driver go to:",
+      "choices": ["S3 only", "CloudWatch Logs", "EC2 syslog", "/var/log inside the container"],
+      "correctIndex": 1,
+      "explanation": "The awslogs driver ships stdout/stderr to a specified CloudWatch Log Group."
+    },
+    {
+      "id": "q23",
+      "stem": "Which is a 12-factor 'concurrency' implication?",
+      "choices": ["Scale vertically only", "Scale by adding more processes/containers, since each is stateless", "Use threads for everything", "Avoid load balancers"],
+      "correctIndex": 1,
+      "explanation": "Stateless processes scale horizontally — add more containers behind an LB; state lives in backing services."
+    },
+    {
+      "id": "q24",
+      "stem": "ECR image vulnerability scanning offers:",
+      "choices": ["Basic scan-on-push and continuous enhanced scanning via Inspector", "Live runtime IDS", "Antivirus only", "WAF rules"],
+      "correctIndex": 0,
+      "explanation": "ECR provides basic scan-on-push, and Enhanced Scanning powered by Amazon Inspector for continuous CVE detection."
+    },
+    {
+      "id": "q25",
+      "stem": "Which scenario most clearly justifies microservices over a monolith?",
+      "choices": ["A small startup with 5 engineers building an MVP", "A large org where many teams need to release independently and own different bounded contexts", "A pure CRUD admin tool", "A one-off ETL script"],
+      "correctIndex": 1,
+      "explanation": "Microservices pay off when independent team velocity and bounded contexts outweigh the operational cost of distributed systems."
+    }
+  ]
+}

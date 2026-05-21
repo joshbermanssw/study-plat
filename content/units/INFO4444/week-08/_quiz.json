@@ -1,0 +1,307 @@
+{
+  "unit": "INFO4444",
+  "week": 8,
+  "topic": "Commercialisation II: Innovation management & strategies",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "James March's classical distinction in organisational learning is between:",
+      "choices": [
+        "Sustaining vs disruptive innovation",
+        "Exploration vs exploitation",
+        "Closed vs open innovation",
+        "Product vs process innovation"
+      ],
+      "correctIndex": 1,
+      "explanation": "March (1991) framed organisational learning as a tension between exploitation (refining what you already do) and exploration (searching for new possibilities)."
+    },
+    {
+      "id": "q2",
+      "stem": "Tushman & O'Reilly's 'ambidextrous organisation' resolves the exploration-exploitation tension by:",
+      "choices": [
+        "Choosing one mode and ignoring the other.",
+        "Structurally separating exploitation and exploration units, with senior leadership integrating them.",
+        "Outsourcing exploration to consultants.",
+        "Rotating staff between modes annually."
+      ],
+      "correctIndex": 1,
+      "explanation": "Ambidextrous orgs run both modes in parallel with distinct structures, metrics, and culture. Senior leadership protects exploration from being killed by the exploitation immune system."
+    },
+    {
+      "id": "q3",
+      "stem": "The McKinsey Three Horizons framework typically allocates investment approximately:",
+      "choices": [
+        "100% to Horizon 1 (defend the core).",
+        "70% Horizon 1, 20% Horizon 2, 10% Horizon 3.",
+        "Equal thirds across horizons.",
+        "10% Horizon 1, 20% Horizon 2, 70% Horizon 3."
+      ],
+      "correctIndex": 1,
+      "explanation": "The classical 70/20/10 split: 70% to defending the core, 20% to building emerging businesses, 10% to long-term options."
+    },
+    {
+      "id": "q4",
+      "stem": "The Stage-Gate process is most associated with:",
+      "choices": [
+        "Eric Ries",
+        "Robert Cooper",
+        "Geoffrey Moore",
+        "Henry Chesbrough"
+      ],
+      "correctIndex": 1,
+      "explanation": "Robert Cooper developed the Stage-Gate methodology for new product development from the 1980s onward."
+    },
+    {
+      "id": "q5",
+      "stem": "At each gate in Cooper's Stage-Gate process, the decision is typically:",
+      "choices": [
+        "Continue at current pace",
+        "Go / Kill / Hold / Recycle",
+        "Add more resources",
+        "Patent the result"
+      ],
+      "correctIndex": 1,
+      "explanation": "Each gate is a structured Go / Kill / Hold / Recycle decision against explicit criteria by a cross-functional committee — early kills reduce waste."
+    },
+    {
+      "id": "q6",
+      "stem": "The innovation portfolio matrix typically uses which two axes?",
+      "choices": [
+        "Cost vs price",
+        "Market (existing/new) vs technology (existing/new)",
+        "Patent vs trade secret",
+        "Time vs money"
+      ],
+      "correctIndex": 1,
+      "explanation": "The standard innovation portfolio matrix maps existing/new market against existing/new technology, producing four quadrants from incremental to breakthrough."
+    },
+    {
+      "id": "q7",
+      "stem": "Which quadrant of the innovation portfolio matrix represents the HIGHEST risk and HIGHEST potential?",
+      "choices": [
+        "Existing market, existing technology",
+        "Existing market, new technology",
+        "New market, existing technology",
+        "New market, new technology"
+      ],
+      "correctIndex": 3,
+      "explanation": "New-market + new-technology is breakthrough territory: highest uncertainty, highest reward. Most firms keep limited exposure here as part of a balanced portfolio."
+    },
+    {
+      "id": "q8",
+      "stem": "Which Miles & Snow strategic archetype matches a firm that LEADS with new products and markets (e.g. Tesla, early Apple)?",
+      "choices": [
+        "Defender",
+        "Prospector",
+        "Analyzer",
+        "Reactor"
+      ],
+      "correctIndex": 1,
+      "explanation": "Prospectors lead with innovation and explore aggressively. High risk, high upside. Tesla and early Apple are textbook examples."
+    },
+    {
+      "id": "q9",
+      "stem": "A common CRITICISM of the classical Stage-Gate process is that:",
+      "choices": [
+        "It allows too much spending on weak projects.",
+        "It is too rigid for radical innovation; the linear stages and detailed business cases stifle iteration.",
+        "It eliminates the need for product managers.",
+        "It is incompatible with patents."
+      ],
+      "correctIndex": 1,
+      "explanation": "Stage-Gate works well for incremental/sustaining innovation but is too slow and structured for radical or disruptive innovation. Hence agile stage-gate hybrids."
+    },
+    {
+      "id": "q10",
+      "stem": "March argued that organisations naturally OVER-INVEST in exploitation because:",
+      "choices": [
+        "Exploration is more expensive in absolute terms.",
+        "Exploitation has clearer metrics and faster, more predictable payoffs that internal reward systems favour.",
+        "Exploration is illegal in some jurisdictions.",
+        "Exploration violates corporate governance principles."
+      ],
+      "correctIndex": 1,
+      "explanation": "Performance-management systems reward measurable near-term outcomes. Exploration's diffuse and delayed payoffs lose every budget cycle without senior protection."
+    },
+    {
+      "id": "q11",
+      "stem": "Cisco's historical 'spin-in' model and IBM's Emerging Business Opportunities programme are examples of:",
+      "choices": [
+        "Stage-Gate processes",
+        "Ambidextrous organisation mechanisms",
+        "Closed innovation",
+        "Defender strategies"
+      ],
+      "correctIndex": 1,
+      "explanation": "Both create structurally separated vehicles for exploration with senior oversight bridging back to the core business. Textbook ambidexterity."
+    },
+    {
+      "id": "q12",
+      "stem": "An 'agile stage-gate' hybrid:",
+      "choices": [
+        "Eliminates gates entirely.",
+        "Integrates iterative agile / lean-startup loops within each stage, while keeping gates for major capital decisions.",
+        "Doubles the number of gates.",
+        "Outsources all stages to consultants."
+      ],
+      "correctIndex": 1,
+      "explanation": "Agile stage-gate keeps the discipline of major capital gates while allowing each stage to run iterative loops — best of both worlds for many corporates."
+    },
+    {
+      "id": "q13",
+      "stem": "Google's historical '20% time' is best understood as:",
+      "choices": [
+        "Stage-Gate.",
+        "A structural mechanism for bottom-up exploration alongside the exploitation-heavy core (i.e. ambidexterity at the individual level).",
+        "Closed innovation.",
+        "A defender strategy."
+      ],
+      "correctIndex": 1,
+      "explanation": "20% time gave engineers structural permission to explore. Gmail and AdSense both originated this way. A bottom-up ambidexterity mechanism."
+    },
+    {
+      "id": "q14",
+      "stem": "Which is the BIGGEST risk Tushman highlights when running exploration inside an exploitation-heavy firm WITHOUT structural separation?",
+      "choices": [
+        "Exploration runs out of capital.",
+        "The exploitation 'immune system' (processes, metrics, salesforce, culture) kills the exploration unit before it matures.",
+        "Regulators object.",
+        "Talent unionises."
+      ],
+      "correctIndex": 1,
+      "explanation": "Without protected structure, exploration is judged by exploitation metrics (margin, predictability) it cannot satisfy. Senior leadership must shield it."
+    },
+    {
+      "id": "q15",
+      "stem": "Which is a typical Horizon 3 investment for a tech firm?",
+      "choices": [
+        "Cost reduction on the flagship product.",
+        "A speculative far-out bet such as quantum computing, drug discovery, or fusion energy.",
+        "A 5% pricing tweak.",
+        "A line extension into a neighbouring market."
+      ],
+      "correctIndex": 1,
+      "explanation": "Horizon 3 = create viable options for the long term. Speculative deep tech is the canonical placement. Cost reduction and line extension are Horizon 1."
+    },
+    {
+      "id": "q16",
+      "stem": "Approximately how many raw ideas become a single commercial success in classical innovation funnel statistics?",
+      "choices": [
+        "10",
+        "100",
+        "1000",
+        "3000"
+      ],
+      "correctIndex": 3,
+      "explanation": "The often-cited ratio: ~3000 ideas → ~4 launches → ~1 success. Whether your numbers vary, the order of magnitude is the lesson."
+    },
+    {
+      "id": "q17",
+      "stem": "An incumbent company with 90% of revenue in a slow-growing product is best diagnosed as:",
+      "choices": [
+        "Balanced ambidextrous",
+        "Exploitation-heavy, requiring renewed investment in exploration",
+        "Prospector",
+        "Pure explorer"
+      ],
+      "correctIndex": 1,
+      "explanation": "Concentration in a slow-growing core indicates exploitation dominance. March's recommendation: rebalance toward exploration before disruption arrives."
+    },
+    {
+      "id": "q18",
+      "stem": "A firm pursuing a 'fast follower' strategy that copies proven innovations from leaders while defending its core is best classified as a Miles & Snow:",
+      "choices": [
+        "Prospector",
+        "Defender",
+        "Analyzer",
+        "Reactor"
+      ],
+      "correctIndex": 2,
+      "explanation": "Analyzers hybridise: defend the core while copying proven innovations. Microsoft for much of the 2000s, Samsung in many product categories."
+    },
+    {
+      "id": "q19",
+      "stem": "Which Miles & Snow archetype typically performs WORST?",
+      "choices": [
+        "Prospector",
+        "Defender",
+        "Analyzer",
+        "Reactor"
+      ],
+      "correctIndex": 3,
+      "explanation": "Reactors have no clear strategy and only respond to events. Empirically the worst-performing archetype across Miles & Snow's studies."
+    },
+    {
+      "id": "q20",
+      "stem": "The 3M innovation pipeline famously sets which target?",
+      "choices": [
+        "100% of products less than 1 year old.",
+        "30% of revenue from products less than four years old.",
+        "10% R&D as a fraction of revenue.",
+        "50% of profit from acquisitions."
+      ],
+      "correctIndex": 1,
+      "explanation": "3M's '30% from products under 4 years old' target forces continual exploration into the operating rhythm of the firm."
+    },
+    {
+      "id": "q21",
+      "stem": "Crossing the chasm (Moore) is relevant to commercialisation strategy because:",
+      "choices": [
+        "Innovations naturally transition from early adopters to mainstream without intervention.",
+        "Many promising innovations die in the gap between visionary early adopters and pragmatist early majority unless the firm shifts to a complete whole-product offering.",
+        "Chasms apply only to consumer markets.",
+        "Chasms are required by regulation."
+      ],
+      "correctIndex": 1,
+      "explanation": "The chasm requires a transition from features-pitch to a complete solution (services, training, support, ecosystem). Many startups fail to make this transition."
+    },
+    {
+      "id": "q22",
+      "stem": "Google's Loon balloon project (since shut down) was best classified as which horizon?",
+      "choices": [
+        "Horizon 1",
+        "Horizon 2",
+        "Horizon 3",
+        "Horizon 0 (research-only)"
+      ],
+      "correctIndex": 2,
+      "explanation": "Loon was a speculative long-term bet on connectivity — Horizon 3. Many Horizon 3 bets fail; that is the point of having a portfolio."
+    },
+    {
+      "id": "q23",
+      "stem": "Which is the BEST reason to keep an exploration unit's METRICS distinct from the core business?",
+      "choices": [
+        "Tax efficiency.",
+        "Core metrics (margin, EBITDA, predictability) penalise the long, uncertain payoff of exploration; exploration needs validated-learning metrics (cohort retention, learning velocity).",
+        "Regulators require distinct metrics.",
+        "Distinct metrics simplify auditing."
+      ],
+      "correctIndex": 1,
+      "explanation": "Wrong metrics will kill exploration on every reporting cycle. Distinct metrics align measurement with the work — Ries-style innovation accounting in the exploration unit."
+    },
+    {
+      "id": "q24",
+      "stem": "A firm asks: 'Should we invest in this new technology even though it has lower margins than our core?' The strongest framework to apply is:",
+      "choices": [
+        "Trademark law",
+        "Christensen's disruption + Tushman's ambidexterity — the lower-margin entrant may be a disruptor, and the response is a structurally separate explorer unit.",
+        "Stage-Gate alone",
+        "Copyright law"
+      ],
+      "correctIndex": 1,
+      "explanation": "The combination is exam-favoured: Christensen explains the threat (low margins = disruption signature); Tushman explains the organisational response (autonomous explorer unit)."
+    },
+    {
+      "id": "q25",
+      "stem": "An innovation portfolio that is HEAVILY skewed to incremental (existing market + existing tech) is:",
+      "choices": [
+        "Optimal in all contexts.",
+        "Short-term efficient but long-term vulnerable to disruption; needs rebalancing toward Horizon 2/3.",
+        "Required by stage-gate.",
+        "Required by IP law."
+      ],
+      "correctIndex": 1,
+      "explanation": "Pure incremental innovation is the classical innovator's-dilemma posture: maximises near-term margin, leaves no defence against disruption. Portfolio rebalancing is the response."
+    }
+  ]
+}

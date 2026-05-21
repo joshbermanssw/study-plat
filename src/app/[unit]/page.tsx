@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { MDXRemote } from "next-mdx-remote-client/rsc";
+import { mdxOptions } from "@/lib/mdx-options";
 import { getUnitData } from "@/lib/content";
 import { CountdownChip } from "@/components/countdown-chip";
 import { UnitUploader } from "@/components/unit-uploader";
@@ -41,7 +42,7 @@ export default async function UnitPage({ params }: { params: Promise<{ unit: str
 
       {data.overview ? (
         <div className="prose-note">
-          <MDXRemote source={data.overview.body} />
+          <MDXRemote source={data.overview.body} options={mdxOptions} />
         </div>
       ) : (
         <div className="rounded-lg border border-dashed border-[var(--color-border)] bg-[var(--color-surface)] p-6 text-sm text-[var(--color-muted)]">
@@ -65,15 +66,20 @@ export default async function UnitPage({ params }: { params: Promise<{ unit: str
             )}
             {wk.visibleNotes.length > 0 ? (
               <ul className="mt-2 flex flex-col gap-1 border-t border-[var(--color-border)] pt-3 text-sm">
-                {wk.visibleNotes.map((n) => (
-                  <li key={n.slug} className="truncate">
-                    <Link href={n.href} className="text-[#d4d4d8] hover:text-[var(--color-accent)]">
-                      <span className="text-[10px] uppercase tracking-wider text-[var(--color-muted-2)]">{n.type}</span>
-                      <span className="mx-2 text-[var(--color-border-strong)]">·</span>
-                      {n.title}
-                    </Link>
-                  </li>
-                ))}
+                {wk.visibleNotes.map((n) => {
+                  const isAi = n.type === "ai-overview";
+                  const label = isAi ? "AI Overview" : n.type;
+                  const title = isAi ? `Teach Me - Week ${wk.week} Overview` : n.title;
+                  return (
+                    <li key={n.slug} className="truncate">
+                      <Link href={n.href} className="text-[#d4d4d8] hover:text-[var(--color-accent)]">
+                        <span className="text-[10px] uppercase tracking-wider text-[var(--color-muted-2)]">{label}</span>
+                        <span className="mx-2 text-[var(--color-border-strong)]">·</span>
+                        {title}
+                      </Link>
+                    </li>
+                  );
+                })}
               </ul>
             ) : (
               <div className="mt-2 border-t border-[var(--color-border)] pt-3 text-xs text-[var(--color-muted-2)]">

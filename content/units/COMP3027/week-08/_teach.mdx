@@ -1,0 +1,333 @@
+---
+title: "Week 8 — Circulations and Reductions"
+unit: COMP3027
+week: 8
+type: overview
+status: done
+---
+
+## Beyond plain s-t flow
+
+Week 6 gave us max-flow with a single source, single sink, and only upper bounds on edges. Week 7 used it as a reduction toolbox. Week 8 generalises the *machinery itself*.
+
+**What's new this week:**
+
+- **No special source or sink.** Every vertex has a *demand* (how much it needs to receive or send).
+- **Lower bounds on edges.** Edges can have both minimum and maximum flow.
+- **A new question.** Often we ask not "max flow" but "does a feasible flow exist at all?".
+
+Most real scheduling, logistics, and assignment problems naturally fit this framework. **The punchline:** every such problem still reduces to plain s-t max-flow via mechanical transformations.
+
+We finish with three celebrated reductions — **survey design, airline scheduling, baseball elimination** — that would be incomprehensible without the flow lens.
+
+**The skill of the week: reduction design.** Given a problem in plain English, build a flow network. This is the single most exam-favoured pattern in the unit.
+
+## Circulations with demands
+
+A **circulation network** is:
+
+- A directed graph G = (V, E).
+- Edge capacities c : E → ℝ_&#123;≥0&#125;.
+- Vertex demands d : V → ℝ with Σ_v d(v) = 0.
+
+**Demand semantics:**
+
+- d(v) &gt; 0: v is a **demand vertex**. Net inflow must equal d(v).
+- d(v) &lt; 0: v is a **supply vertex**. Net outflow must equal |d(v)|.
+- d(v) = 0: v is a **transit** vertex. Conservation.
+
+A **circulation** is f : E → ℝ_&#123;≥0&#125; satisfying:
+
+```text
+Capacity:    0 <= f(e) <= c(e)
+Demand:      net inflow at v = d(v)
+```
+
+The problem: **does a feasible circulation exist?**
+
+## Reducing circulations to max-flow
+
+Build an auxiliary s-t network G':
+
+1. Add a super-source s* and super-sink t*.
+2. For each v with d(v) &lt; 0 (supply): edge (s*, v) capacity |d(v)|.
+3. For each v with d(v) &gt; 0 (demand): edge (v, t*) capacity d(v).
+4. Keep original edges with original capacities.
+
+**Claim.** A feasible circulation exists ⇔ max-flow in G' **saturates every edge out of s\***.
+
+**Proof.** A saturating flow distributes supply through G to demand. Net inflow at each demand vertex = d(v). Original edges form a circulation. Conversely, given a circulation, set f(s*, v) = |d(v)| and f(v, t*) = d(v); valid saturating flow. ∎
+
+**Complexity.** Edmonds-Karp on G': O(V · E²).
+
+## Lower bounds on edges
+
+Generalise edges to (ℓ(e), c(e)) pairs: ℓ(e) ≤ f(e) ≤ c(e).
+
+**The reduction.** Replace each (u, v) with bounds (ℓ, c):
+
+1. New edge (u, v) with capacity c − ℓ (the slack only).
+2. **Adjust demands:** d(u) ← d(u) + ℓ (u must "pre-pay" the lower bound).
+3. d(v) ← d(v) − ℓ (v already receives ℓ from the pre-payment).
+
+After all lower-bound edges are processed, the network has only upper bounds. Solve via the previous reduction.
+
+### Worked: lower-bound transformation
+
+Edge (u, v) with bounds (2, 5):
+
+- New capacity = 3.
+- d(u) → d(u) + 2.
+- d(v) → d(v) − 2.
+
+A circulation in the new network corresponds to a flow in the original by adding 2 back to f(u, v).
+
+## Feasibility-of-circulation worked example
+
+3-vertex network. Edges: a→b (cap 5), b→c (cap 3), a→c (cap 2), c→a (cap ∞).
+Demands: d(a) = −4, d(b) = 0, d(c) = 4.
+
+Build G': super-source s*, super-sink t*. Edge s*→a (cap 4); edge c→t* (cap 4).
+
+Run Ford-Fulkerson:
+
+1. s* → a → b → c → t*. Bottleneck min(4, 5, 3, 4) = 3. Push 3.
+2. s* → a → c → t*. Bottleneck min(1, 2, 1) = 1. Push 1.
+3. No more paths.
+
+**Total flow = 4 = capacity out of s*.** Saturating ⇒ feasible.
+
+Decoded circulation: f(a,b) = 3, f(b,c) = 3, f(a,c) = 1, f(c,a) = 0.
+
+Conservation at a: net outflow = 3 + 1 − 0 = 4 = −d(a). ✓
+
+## Survey design
+
+**Problem.** A market-research firm wants to design a survey.
+
+- n customers, indexed 1..n.
+- m product categories, indexed 1..m.
+- Each customer has purchased some categories — these are the only categories they can be asked about.
+- Each customer i must be asked between cᵢ and Cᵢ questions (bounds on questions per customer).
+- Each category j must appear in between pⱼ and Pⱼ questions across the survey (bounds on questions per category).
+- A "question" is an (i, j) pair where customer i purchased category j. Each such pair can appear at most once.
+
+Decide: is there a valid assignment? If yes, produce one.
+
+**Reduction — building the network step by step.**
+
+Step 1: vertices. One vertex per customer, one per category. Plus a source s and sink t.
+
+Step 2: edges, with bounds (lower, upper) on each.
+
+- **(s, customerᵢ)** with bounds **(cᵢ, Cᵢ)**. This edge carries "the number of questions customer i answers".
+- **(customerᵢ, categoryⱼ)** with bounds **(0, 1)** for every (i, j) where i purchased j. Flow of 1 = "ask customer i about category j". Flow of 0 = don't.
+- **(categoryⱼ, t)** with bounds **(pⱼ, Pⱼ)**. This edge carries "the number of questions about category j".
+- **(t, s)** with bounds **(0, ∞)**. Closes the loop, turning this into a circulation.
+
+In a picture:
+
+```text
+                    (c₁, C₁)            (0/1 per edge)        (p₁, P₁)
+            ┌───── customer₁ ──────── category₁ ─────┐
+            │                                          │
+   s ──────┤      customer₂ ──────── category₂        ├────── t
+            │                                          │
+            │      customer₃ ──────── category₃        │
+            └──────────────────────────────────────────┘
+
+   ←────────── (0, ∞) closes the loop ──────────────
+```
+
+Step 3: convert lower bounds into demands using the standard transformation (subtract ℓ from edge capacity, adjust the endpoints' demands). Then run the circulation feasibility test on the resulting network.
+
+Step 4: read off the answer. By integrality, each (customerᵢ, categoryⱼ) edge carries 0 or 1. The 1-edges are the survey questions.
+
+**Why both directions hold.**
+
+*Valid survey → feasible circulation.* Set flow = 1 on each question-edge in the survey, 0 elsewhere. Customer i sends out (number of questions for i) ∈ [cᵢ, Cᵢ] → satisfies edge bound. Category j receives the right count similarly. Conservation holds.
+
+*Feasible circulation → valid survey.* Integrality forces each question-edge to be 0 or 1; the 1's form the question set. Edge bounds on customers and categories enforce the survey constraints.
+
+## Airline scheduling
+
+**Problem.** A fleet must execute n flight segments. Each has fixed departure (airport, time) and arrival (airport, time). A single plane can fly segment X then segment Y iff:
+
+- X's arrival time + turnaround ≤ Y's departure time.
+- X's arrival airport = Y's departure airport (or a positioning flight exists).
+
+Decide: can we fly everything using at most k planes?
+
+**Reduction sketch.**
+
+- Split each segment into segment-start and segment-end vertices.
+- Edge (startᵢ, endᵢ) with bounds (1, 1) — segment must be flown exactly once.
+- Edge (endᵢ, startⱼ) capacity 1 for every time/airport-feasible (i, j) pair.
+- Edge from source s (with k "plane tokens") routing into segment-starts.
+- Edge from segment-ends back to sink t.
+
+A feasible circulation = a flight plan using exactly k planes. For the minimum-k version: binary-search over k.
+
+**Complexity.** O(log k) feasibility tests, each polynomial.
+
+## Baseball elimination
+
+**Problem.** A baseball league has n teams. Team i has won wᵢ games. Team i has rᵢⱼ remaining games against team j (so total remaining for i is rᵢ = Σⱼ rᵢⱼ). Decide whether team k is **eliminated** — no completion of the schedule lets k tie or take first place.
+
+### The flow construction
+
+Team k's maximum possible wins = M = wₖ + rₖ.
+
+If any team i ≠ k already has wᵢ &gt; M, k is obviously eliminated (no flow needed).
+
+Otherwise, build:
+
+- Source s, sink t.
+- For each remaining game between i and j (both ≠ k), a vertex gᵢⱼ. Edge (s, gᵢⱼ) capacity rᵢⱼ.
+- Edges (gᵢⱼ, i) and (gᵢⱼ, j) capacity ∞.
+- For each team i ≠ k: edge (i, t) capacity M − wᵢ.
+
+**Total capacity out of s** = Σ remaining games not involving k.
+
+**Claim.** Team k is **not** eliminated ⇔ max-flow saturates all (s, gᵢⱼ) edges.
+
+**Why this works.** A saturating flow distributes each remaining game's win to either i or j. The i→t cap = "max wins i is allowed without surpassing k". If max-flow can't saturate, some game has nowhere to go — at least one team must exceed M, and the schedule completion that helps k the most still leaves them behind.
+
+This is a *beautiful* reduction. A problem about combinatorial schedule completions becomes one max-flow computation.
+
+### Baseball elimination worked
+
+4 teams: A (90 wins), B (88), C (87), D (79). Remaining: A vs B: 2, A vs C: 4, B vs C: 4. Other remaining = 0.
+
+**Is C eliminated?** C's max = 87 + 8 = 95.
+
+We test feasibility: remaining games not involving C are just A vs B (2 games).
+
+- (A, t) capacity = 95 − 90 = 5.
+- (B, t) capacity = 95 − 88 = 7.
+- (D, t) capacity = ∞ (or 95 − 79 = 16, doesn't matter).
+- (s, g_AB) capacity 2.
+
+Max-flow: route 2 units s → g_AB → A → t (A has plenty of cap). Saturated. Max-flow = 2 = total games-not-involving-C. ⇒ **C is not eliminated.**
+
+(If we set up properly: C could win all 8 of its remaining games to reach 95, while A wins ≤ 5 of its 6 remaining and B wins ≤ 7 of its 6 — both consistent. So C ties for first.)
+
+## Project selection (closed-set max profit)
+
+**Problem.** Projects with profits pᵢ ∈ ℝ (positive or negative). Each project i has a list of prerequisites — projects that must also be picked. Maximise total profit over feasible subsets.
+
+**Reduction.**
+
+- Source s, sink t.
+- pᵢ &gt; 0: edge (s, i) capacity pᵢ.
+- pᵢ &lt; 0: edge (i, t) capacity |pᵢ|.
+- pᵢ = 0: no edge.
+- For each prerequisite "i needs j": edge (i, j) capacity ∞.
+
+**Claim.** Max profit = (sum of positive pᵢ) − min-cut(s, t).
+
+**Why.** Let (S, T) be a min cut. S = picked, T = not picked. ∞-edges can't cross ⇒ closure under prerequisites. Cut capacity = (positive pᵢ not picked) + (|pᵢ| for negative pᵢ picked) = (sum positives) − (total profit picked). Minimising cut maximises profit. ∎
+
+## Supply-demand template
+
+Most logistics problems fit this template:
+
+- Sources produce sᵢ units total.
+- Sinks consume dⱼ units.
+- Transhipment vertices are balanced.
+- Edges have capacities (and possibly costs for min-cost variant).
+- **Question.** Does a feasible plan exist? (Decision.) Minimise cost? (Optimisation.)
+
+Decision ⇒ circulation feasibility. Optimisation ⇒ min-cost flow.
+
+**Every problem in Week 8 is one of these in disguise.**
+
+## The "design a reduction" recipe
+
+Five steps, every single time:
+
+1. **Decision variables.** What's chosen? Each becomes flow on an edge.
+2. **Capacity constraints.** Upper bound = edge capacity. Lower bound = lower-bound flow → apply lower-bound reduction.
+3. **Balance constraints.** "Produces s units" → negative demand. "Consumes d units" → positive demand.
+4. **The question.** Feasibility → circulation. Max → max-flow. Min → min-cost flow or min-cut.
+5. **Verify both directions.**
+   - Original feasible solution ⇒ flow of equal value.
+   - Integer flow ⇒ feasible original solution of equal value.
+
+**Common trap.** Edge direction matters. (u, v) with capacity c means "at most c flows from u to v", NOT "from v to u". Draw arrows carefully.
+
+## Worked: school class scheduling
+
+**Problem.** n classes need h_c hours each. m teachers can each work ≤ Hₜ hours. Teacher t can teach class c iff qualified.
+
+**Reduction.**
+
+- Source s. Sink t.
+- (s, teacherₜ) capacity Hₜ.
+- (class_c, t) capacity h_c.
+- (teacherₜ, class_c) capacity ∞ for each qualified pair.
+
+Feasible iff max-flow = Σ h_c.
+
+Decoded: f(teacherₜ, class_c) = hours t teaches c.
+
+This is survey design stripped of lower bounds. Add minimum-hours-per-class → reintroduce lower bounds → apply the lower-bound reduction.
+
+## When integrality saves the day
+
+The integrality theorem (Week 6) says: integer capacities ⇒ integer max-flow. This is *the* reason 0/1 flow networks model 0/1 combinatorial structures (matchings, paths, labellings).
+
+Without integrality (fractional capacities), max-flow may have non-integer optima that don't correspond to combinatorial objects. You'd need:
+
+- Rounding (risks losing optimality).
+- Total unimodularity of the constraint matrix.
+- Or accept the LP relaxation result rather than exact.
+
+## Min-cost flow (a generalisation)
+
+If each edge has a *cost per unit of flow* in addition to a capacity, **min-cost flow** asks for a flow of specified value with minimum total cost.
+
+**Consequences.**
+
+- **Assignment problem.** Min-cost flow on bipartite graphs.
+- **Multi-commodity flows.** NP-hard in general; polynomial when 2 commodities or under planarity.
+
+Algorithms: cycle-cancelling (find negative-cost cycles in residual graph and cancel); successive shortest paths; network simplex. All polynomial.
+
+## The flow vs NP-hard frontier
+
+Two morals from Weeks 6-8:
+
+1. A *vast* class of problems is **polynomial via flow**: anything matching this week's templates.
+2. A vast complementary class is **NP-hard**: multi-commodity integer flow, vertex cover on general graphs, scheduling with precedence.
+
+**The line is sharp and learnable.** Flow-friendly signatures:
+
+- Bipartite-like structure.
+- 0/1 decisions.
+- Total unimodularity of the LP.
+- Two commodities or planar.
+
+If a problem has "choose a Hamiltonian path", "satisfy 3-SAT", or "partition into independent sets" embedded, expect NP-hardness.
+
+## How Weeks 6-8 fit together
+
+| Week | What | Headline |
+|------|------|----------|
+| 6 | Max-flow theory + algorithms | Ford-Fulkerson, Edmonds-Karp, max-flow min-cut |
+| 7 | Reductions to s-t flow | Matching, König, Hall, Menger, segmentation, project selection |
+| 8 | Circulations with demands, lower bounds, real-world reductions | Survey design, airline scheduling, baseball elimination |
+
+Together they form the most computationally powerful *polynomial-time* toolkit in the unit. From Week 9 onward, every "polynomial" claim should make you ask: *is this another flow reduction, or something fundamentally different?*
+
+The answer is "flow" surprisingly often.
+
+## What to do this week
+
+1. Convert a small two-edge circulation with lower bounds to standard max-flow by hand. Verify feasibility.
+2. Code the baseball-elimination check on a 4-team example. Verify the saturation condition.
+3. Write the airline-scheduling reduction in formal detail (vertices, edges, capacities). This is exam-style.
+4. Prove both-direction correspondence between integer feasible flows and valid surveys.
+5. Identify three problems from earlier tutorials that you initially solved with ad-hoc DP or greedy. Re-cast each as a flow / circulation problem and confirm the same answer.
+6. For project selection on a 5-project example with mixed-sign profits and a prerequisite chain, compute the max profit by min-cut.
+7. Skim the quiz: any reduction template you can't sketch in 2 minutes is a study target.

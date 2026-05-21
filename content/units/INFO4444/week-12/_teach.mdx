@@ -1,0 +1,258 @@
+---
+title: "Week 12 — Project Reflection and Communicating Technical Work"
+unit: INFO4444
+week: 12
+type: overview
+status: done
+---
+
+## What this week is really about
+
+Week 12 is the unit's *reflective* week — primarily focused on the major project assignment, but with content that maps directly onto a broader professional skill set you will use for the rest of your career. The three intellectual pieces: **how to retrospect on a project** (Start-Stop-Continue, 4 Ls, Five Whys, Pre-mortem, After-Action Review), **how to present technical work to a business audience** (translation, framing, narrative arc, executive summary), and **how to write a compelling project memo** (Amazon-style narrative memos, McKinsey-style pyramids, structured argument). These are not "soft skills" — they are the *primary commercial outputs* of technical work in industry. The most-cited research on professional success in technical careers (Cal Newport's *So Good They Can't Ignore You* 2012, Adam Grant's organisational research, the Google Project Oxygen findings) repeatedly identifies *communication* as the differentiator between technically competent engineers and those who become senior contributors and leaders. By the end of this overview you should be able to (a) run a project retrospective using at least two distinct techniques, (b) translate a technical accomplishment into a one-page business memo, (c) structure a 5-slide executive presentation of a complex project, and (d) identify the typical failure modes in technical-to-business communication.
+
+## Why retrospection matters
+
+The most-quoted line in software engineering: *"Those who cannot remember the past are condemned to repeat it"* (Santayana 1905, repurposed by every software project ever). Empirically, post-project retrospectives — done well — produce measurable improvements in subsequent project performance. The mechanism is not mysterious: most project failures are caused by a small set of recurring patterns (scope creep, communication breakdowns, late integration, unclear ownership), and naming those patterns out loud reduces the chance of repeating them.
+
+Yet retrospectives are systematically under-done. Reasons include:
+
+1. *Schedule pressure.* The next project has already started; there is no slack for reflection.
+2. *Status-quo bias.* People remember the project as a success or a failure and skip nuance.
+3. *Conflict avoidance.* Honest retrospectives surface uncomfortable truths about specific decisions and people; avoiding them is socially easier.
+4. *Lack of structure.* Without a framework, "let's discuss the project" produces unfocused complaining.
+
+A well-run retrospective takes 60-90 minutes for a small team, uses a structured technique, and produces *concrete actions* with owners and dates. The output is what matters; the discussion is the input.
+
+## Technique 1: Start-Stop-Continue
+
+The simplest retrospective format. The team divides a whiteboard (or shared doc) into three columns:
+
+```
+  ┌────────────────┬────────────────┬────────────────┐
+  │     START      │      STOP      │   CONTINUE     │
+  │                │                │                │
+  │ What we should │ What we should │ What we should │
+  │ begin doing    │ stop doing     │ keep doing     │
+  │ that we are    │ that is not    │ because it     │
+  │ not yet doing  │ working        │ works well     │
+  └────────────────┴────────────────┴────────────────┘
+```
+
+Each team member contributes items to each column (often via sticky notes or anonymous submission to reduce social pressure). The team then clusters, votes on top items, and converts the top 2-3 into actions for the next project cycle.
+
+**Strength.** Very simple to run, low setup cost, immediately actionable. Works well for routine retrospectives (every 2 weeks in a Scrum sprint, for instance).
+
+**Weakness.** Tends toward shallow observations. Without facilitation, the "stop" column fills with complaints about other teams or external factors that the team cannot change.
+
+## Technique 2: The 4 Ls
+
+A more nuanced format that *separates* feelings from analysis. The team discusses four categories:
+
+- **Liked** — what went well, what people enjoyed.
+- **Learned** — what new knowledge or skills the team picked up.
+- **Lacked** — what was missing (capability, information, resources).
+- **Longed for** — what people wished they had (different tooling, different process, different scope).
+
+The 4 Ls separates *positive affect* (Liked) from *learning* (Learned) — these are not the same thing. You can learn enormously from a project you hated; you can enjoy a project that produced no learning. Naming them separately gives more useful data.
+
+**Strength.** Captures emotional and learning dimensions of the project, not just process. Useful for *team-health* retrospectives, not just delivery retrospectives.
+
+**Weakness.** Less directly actionable than Start-Stop-Continue. Often used in conjunction with another technique to convert learnings into actions.
+
+## Technique 3: Five Whys
+
+A *root-cause analysis* technique developed by Sakichi Toyoda and central to the Toyota Production System (Taiichi Ohno, *Toyota Production System*, 1988). The method: when a problem occurs, ask "why?" five times in succession, drilling from the surface symptom to the underlying cause.
+
+Worked example. A production deployment failed.
+
+- *Why did the deployment fail?* — The database migration timed out.
+- *Why did it time out?* — The migration locked a large table for too long.
+- *Why did it lock the table?* — We used an ALTER TABLE statement without an online-migration tool.
+- *Why didn't we use an online tool?* — The team didn't know one existed for our database.
+- *Why didn't they know?* — There is no internal documentation of recommended migration practices, and onboarding didn't cover database operations.
+
+The *root cause* is the documentation/onboarding gap, not the specific migration. Fixing the documentation prevents the entire *class* of failures. The Five Whys is most useful for *specific incidents*; less useful as a general retrospective.
+
+**Strength.** Directly produces root causes that, fixed, prevent recurrence.
+
+**Weakness.** The "why" chain is not deterministic — different people will follow different threads. Skilled facilitation prevents the analysis from blaming individuals ("why did Alice make the mistake?" — wrong direction).
+
+## Technique 4: Pre-mortem
+
+The *pre-mortem* (Gary Klein, *HBR* 2007) inverts the post-mortem. *Before* a project starts, the team imagines that the project has failed catastrophically and asks: "What happened?" Team members write the most plausible failure narratives. The exercise surfaces risks that would otherwise be raised only after they materialised.
+
+Klein's empirical claim: pre-mortems uncover *more* and *different* risks than conventional risk-assessment exercises, because people are better at *generating reasons something went wrong* than at *predicting probabilities of bad outcomes*.
+
+For INFO4444 assignments: running a 30-minute pre-mortem before submitting a project memo or pitch often surfaces weaknesses in the argument that the team would otherwise discover at the worst possible time (the day before submission).
+
+## Technique 5: After-Action Review (AAR)
+
+The US Army's standardised retrospective format. Four questions:
+
+1. What was supposed to happen?
+2. What actually happened?
+3. Why was there a difference?
+4. What can we learn?
+
+The AAR's structural insight is forcing an explicit comparison between the *plan* (1) and the *outcome* (2). Many retrospectives skip this and go straight to "what should we do next time", missing the diagnostic step. Without a clear comparison, you cannot distinguish a failed plan from a failed execution from an unexpected environment.
+
+**Strength.** Used by the US military since the 1970s; one of the most-tested retrospective formats in any domain.
+
+**Weakness.** Requires that the original plan was actually written down. Many projects retrospect without a documented plan and therefore have only post-hoc narratives to compare.
+
+## Communicating technical work to a business audience
+
+The single largest category of failed technical communication: the engineer presents *the technology* when the audience wants to hear *the implication*. Three common failure modes.
+
+**1. Bottom-up exposition.** The engineer starts at the foundations (the architecture, the database schema, the API design) and works upward to the user experience. Business audiences become lost in slide 3 and disengage. The correct order is *top-down*: start with the *outcome* or *implication*, then sketch how the technology produces it.
+
+**2. Insider vocabulary.** "We refactored the orchestrator to use event-driven async coordination across the distributed runners." The business audience hears: "we did engineering things". The translation: "we made the system process 10× more requests per second at the same cost". The translation is *not* dumbing down — it is preserving information the audience can act on.
+
+**3. Missing the so-what.** Many technical presentations conclude with "we built this" and leave the audience to figure out *why it matters*. The correct ending is *what changes as a result* — what the audience should do, decide, fund, or believe differently. This is the *call to action* in commercial communication.
+
+The single most useful frame for technical-to-business translation: **outcome → mechanism → evidence**, in that order.
+
+```
+   OUTCOME       ─── What is different / what changed / what
+                     audience should care about (the headline)
+       ↓
+   MECHANISM     ─── How the technology produced that outcome
+                     (one paragraph — sketch, not deep)
+       ↓
+   EVIDENCE      ─── Numbers, demo, customer quotes, screenshots
+                     (specific, defensible, not exhaustive)
+```
+
+A worked example. A team built a new caching layer. *Bad version:* "We implemented an LRU cache with a 1GB memory budget per node and tuned eviction policy via a sliding-window heuristic." *Good version:* "We reduced average response time from 800ms to 120ms (outcome). We did this by caching the most-frequently-requested data in memory close to the application (mechanism). Last week 78% of requests were served from cache, peaking at 92% during business hours (evidence)."
+
+The good version takes the same engineering work and translates it into something a business audience can use: faster responses → happier customers → measurable retention impact.
+
+## The executive summary and the pyramid principle
+
+Barbara Minto's *Pyramid Principle* (1987, refined as the McKinsey standard for executive writing) is the dominant business-writing framework. The structural claim: *every paragraph, every section, every document* should be structured as a pyramid with the *main message at the top* and supporting evidence underneath.
+
+```
+                    Main message
+                    (Single thesis)
+                          │
+              ┌───────────┼───────────┐
+              │           │           │
+            Reason 1    Reason 2    Reason 3
+              │           │           │
+           ┌──┴──┐     ┌──┴──┐     ┌──┴──┐
+          Fact  Fact  Fact  Fact  Fact  Fact
+```
+
+The reader reads top-down. The thesis appears in the first paragraph (or even the first sentence). Each subsequent section provides one of the supporting reasons, each with its own micro-pyramid. The reader can *stop reading at any depth* and still have a coherent understanding.
+
+This is the inverse of academic writing, which often saves the thesis for the conclusion ("after considering the evidence, we conclude that..."). Academic writing wants to *build up* to the thesis; business writing wants to *lead with* it. The reason: executive readers are time-constrained and may read only the first paragraph. If the thesis is at the bottom, they miss it.
+
+A useful rule for memos and executive presentations: **the first paragraph should be readable as a standalone summary**. If a reader read only the first paragraph and stopped, they should know (a) what you did, (b) what you found, (c) what you recommend.
+
+## The Amazon narrative memo
+
+A specific and influential variant: the Amazon-style narrative memo (Jeff Bezos, formalised within Amazon, leaked publicly through ex-Amazon writers around 2010 and especially via Brad Stone's *The Everything Store* 2013).
+
+The rules:
+
+1. *No bullet points*. Memos are written in full sentences and paragraphs.
+2. *Maximum 6 pages*. Length forces compression and clarity.
+3. *Read first, discuss after*. Meetings begin with 30 minutes of silent reading. No PowerPoint.
+4. *Structure*. A typical structure: vision, opportunity, FAQ, plan, P&L, risks.
+5. *The PR/FAQ format*. For new-product proposals: write the press release *first* (what the launch announcement would say), and a FAQ anticipating questions customers and stakeholders will ask.
+
+The mechanism: PR/FAQ forces the team to think *outside-in* (what does the customer experience and care about?) before *inside-out* (how do we build it?). It is a structured-writing form of customer development.
+
+The Amazon memo style is used by some Australian tech companies (notably Atlassian's "spec docs" tradition) and increasingly common in product-management writing more broadly. For INFO4444 project memos, the discipline of writing in full sentences and explicitly anticipating FAQ-style objections produces noticeably stronger work.
+
+## Five-slide executive presentation structure
+
+If you must present a project in 5 slides (the common board-update format), the structure that works:
+
+```
+   Slide 1  ─ The headline (what changed / what we want)
+              One sentence + one key number.
+
+   Slide 2  ─ Context (why this matters now)
+              The problem or opportunity, framed for the audience.
+
+   Slide 3  ─ What we did (mechanism + evidence)
+              Specific actions taken or proposed.
+
+   Slide 4  ─ Outcomes / results / projections
+              Numbers, demo screenshots, customer quotes.
+
+   Slide 5  ─ The ask (what we need next)
+              Decision required, resources requested, timeline.
+```
+
+Slide 1 is the same as the top of the Minto pyramid — the *one thing* the audience should take away. If they remember only one slide, this is the one.
+
+Slide 5 is the *call to action*. Many otherwise good presentations fail here by ending with "Questions?" instead of "Here is what we need from you". Even if the only ask is "approve this approach", make it explicit.
+
+## Failure modes in technical presentations
+
+Five specific failure modes that recur in student and early-career presentations:
+
+1. **The data dump.** "Here are all the metrics we collected." The audience needs the *one or two* metrics that matter. Pick them; cut the rest.
+
+2. **The architecture diagram on slide 2.** Architecture diagrams are useful when the audience needs to understand *how* something works — usually slide 3 or 4, not slide 2. Lead with outcome, not implementation.
+
+3. **The roadmap with no priorities.** "Next quarter we will do A, B, C, D, E." The audience cannot remember 5 things. Pick 1-2 priorities; the rest is detail.
+
+4. **The risk slide that downplays risks.** Risks framed as "we have mitigations for everything" reduce credibility. Better: name the top 2 risks honestly, then state the mitigation plan and the residual risk you cannot mitigate.
+
+5. **The Q&A monologue.** Long answers signal nervousness or lack of preparation. A clean answer is 60-90 seconds, ends with a check-in ("does that answer your question?"), and lets the next question arrive.
+
+## Writing a compelling project memo
+
+For the INFO4444 assignment specifically — but more broadly for any project communication — a *memo* (1-3 page document, written for stakeholders) is the single most useful artefact you can produce. The components:
+
+**1. The TL;DR (1-2 sentences).** What is the memo about, and what is the bottom line? Top of the document. Should be readable as a standalone tweet.
+
+**2. Context (1 paragraph).** Why does this matter now? What problem or opportunity prompted the work? What background does the reader need to interpret the rest?
+
+**3. What you did (1-2 paragraphs).** The technical or analytical work, described at the *outcome → mechanism* level. Save deep implementation detail for an appendix.
+
+**4. Results / findings (1-2 paragraphs, often with a small data block).** What did you learn or produce? Be specific; cite numbers; show one chart if useful.
+
+**5. Implications (1 paragraph).** What does this *mean* for the audience? Why should they care?
+
+**6. Recommendations (specific actions with owners).** What should be done next? Who should do it? On what timeline?
+
+**7. Appendix (optional).** Detailed methodology, full data, references, FAQs.
+
+A useful technique: *write the recommendations first*. If you cannot articulate what you want the reader to do, you do not yet know what the memo is for. Once the recommendations are clear, the rest of the memo argues toward them.
+
+## A note on AI-assisted writing
+
+The 2024 and beyond landscape: students and professionals routinely use LLMs to draft, edit, and polish writing. The skill that matters is *not* avoiding LLMs but *editing them well*. LLM-drafted text has consistent failure modes — vague generalities ("revolutionary technology", "in today's fast-paced world"), hedged commitments, weak verbs, structureless paragraphs, generic transitions. Identifying and removing these is now a core writing skill. The strongest student work in 2024-25 reads as if the author *used* an LLM to draft and then *edited aggressively* — eliminating filler, sharpening claims, adding specifics that only the human author could supply.
+
+For INFO4444 assignments specifically: assume your work will be read alongside dozens of others, many LLM-assisted. The way to stand out is *specificity* — concrete data, named cases, defensible claims, original analysis that an LLM cannot produce because the context is unique to your project.
+
+## A worked example: writing a 2-page memo about an INFO4444 project
+
+Imagine you have built a prototype of an Australian-government grant-discovery tool for early-stage IT startups (a plausible INFO4444 assignment scope). You need to write a 2-page memo to a hypothetical executive sponsor — a senior official at a state innovation agency — recommending whether to fund the next phase.
+
+*TL;DR (3 sentences).* The prototype matches Australian early-stage IT startups to relevant grant programmes (RDTI, ESVCLP, CRC-P, ESIC) with 78% relevance on a test set of 50 historical fundings. Founder interviews (n=12) found a clear willingness to use the tool and an estimated saving of 8-15 hours per grant identified. We recommend a 6-month build-out phase at $250K with a target of 200 active founder users and one government-agency integration partner.
+
+*Context (1 paragraph).* Australian early-stage tech startups spend significant founder time discovering and qualifying for grant programmes — there are over 40 federal, state, and quasi-public programmes with different eligibility rules. This is a tractable problem because the rules are public, structured, and infrequently changing; the *combinatorial* match between a startup's profile and the programmes is what's hard.
+
+*What we did (2 paragraphs).* Built an MVP using publicly available data (grants.gov.au, business.gov.au, state-government pages), a structured rule engine for eligibility, and an LLM-augmented narrative match for the *fit* judgement (whether a programme's strategic priorities align with the startup's pitch). Tested with 12 founder interviews and a back-test on 50 historical grants. Specific evidence: 78% top-3 relevance on back-test, 9.2/10 perceived usefulness in interviews, three founders signed letters of intent to be design partners.
+
+*Implications and recommendations (1 paragraph).* This addresses a real friction in the Australian innovation ecosystem (Week 10's "narrow industrial base, weak funding navigation" challenge). It is a *commercial* opportunity (subscription or per-grant success fee) and a *public-policy* opportunity (raising grant-utilisation rates by underserved founders, especially in regional Australia and underrepresented founder demographics). We recommend a 6-month build-out with three milestones: (1) Month 2 — partnership with one state agency for warm referrals; (2) Month 4 — 200 active monthly users; (3) Month 6 — clear commercial path (subscription, agency licence, or impact-investment vehicle).
+
+*Risks (1 paragraph).* Grant rule changes (mitigation: monthly sync with agency partners). LLM hallucination on edge cases (mitigation: human-review queue for low-confidence matches). Founder distrust of automated advice (mitigation: design partner programme builds social proof). Residual risk: government policy shift could devalue the tool — partially hedged by serving private-sector grants as well.
+
+This memo would be ~700 words across 1.5 pages, with the full data in an appendix. It hits every recommended structural element. It is *specific* — names, numbers, programmes, milestones. It is *actionable* — the recommendation has a dollar amount, a timeline, and concrete milestones. And it *anticipates objections* — the risk paragraph names the obvious concerns and gives mitigations.
+
+## What you should be able to do by exam time
+
+- Run a project retrospective using at least two of the techniques (Start-Stop-Continue, 4 Ls, Five Whys, Pre-mortem, AAR).
+- Translate a technical accomplishment into a 3-sentence business summary using outcome → mechanism → evidence.
+- Structure a 5-slide executive presentation of a complex project.
+- Structure a 2-page project memo with TL;DR, context, work, results, implications, recommendations.
+- Identify three failure modes in your own technical writing and the technique to fix each.
+- Apply the Minto pyramid principle to a paragraph of your own writing.
+
+Week 13 is the unit's final synthesis — a condensed cheat-sheet across all 12 weeks, comparison tables of the main frameworks, and exam-writing technique.

@@ -1,0 +1,307 @@
+{
+  "unit": "COMP3027",
+  "week": 10,
+  "topic": "NP-hardness (continued)",
+  "questions": [
+    {
+      "id": "q1",
+      "stem": "A decision problem X is in NP iff:",
+      "choices": [
+        "X is in P",
+        "There is a polynomial-time certifier C(I, t) such that I is a yes-instance iff there exists a poly-length t with C(I, t) = YES",
+        "X is solvable in subexponential time",
+        "X is decidable"
+      ],
+      "correctIndex": 1,
+      "explanation": "NP = problems with short, polynomial-time-checkable certificates of YES."
+    },
+    {
+      "id": "q2",
+      "stem": "Y is NP-complete iff:",
+      "choices": [
+        "Y is in NP",
+        "Y is NP-hard",
+        "Y is in NP AND every X in NP reduces to Y",
+        "Y is in P"
+      ],
+      "correctIndex": 2,
+      "explanation": "NP-complete = in NP and NP-hard (every NP problem polynomial-time reduces to it)."
+    },
+    {
+      "id": "q3",
+      "stem": "The Cook-Levin theorem proves which problem is NP-complete?",
+      "choices": [
+        "TSP",
+        "SAT / CIRCUIT-SAT",
+        "Vertex Cover",
+        "Independent Set"
+      ],
+      "correctIndex": 1,
+      "explanation": "Cook-Levin establishes that any NP problem's certifier can be encoded as a SAT/CIRCUIT-SAT instance, making it the first NP-complete problem."
+    },
+    {
+      "id": "q4",
+      "stem": "If any NP-complete problem is in P, what follows?",
+      "choices": [
+        "P = NP",
+        "NP = coNP",
+        "P is undecidable",
+        "Nothing"
+      ],
+      "correctIndex": 0,
+      "explanation": "Polynomial algorithm for an NP-complete problem composes with reductions to solve every NP problem in P, giving P = NP."
+    },
+    {
+      "id": "q5",
+      "stem": "Which is NOT a standard canonical NP-complete problem?",
+      "choices": [
+        "3-SAT",
+        "Hamiltonian Cycle",
+        "Bipartite Matching",
+        "Subset Sum"
+      ],
+      "correctIndex": 2,
+      "explanation": "Bipartite Matching is in P via max-flow. The others are NP-complete."
+    },
+    {
+      "id": "q6",
+      "stem": "What is the certificate for Vertex Cover (decision form)?",
+      "choices": [
+        "An edge subset of size k",
+        "A vertex subset S of size k; certifier checks every edge is incident to S",
+        "A path of length k",
+        "An adjacency matrix"
+      ],
+      "correctIndex": 1,
+      "explanation": "Certificate is the candidate cover; certifier verifies size and edge incidence in polynomial time."
+    },
+    {
+      "id": "q7",
+      "stem": "Independent Set <=_p Vertex Cover is which type of reduction?",
+      "choices": [
+        "Gadget",
+        "Special-to-general",
+        "Simple equivalence (S is IS iff V \\ S is VC)",
+        "Approximation"
+      ],
+      "correctIndex": 2,
+      "explanation": "Simple set-complement duality: (G, k) -> (G, n - k)."
+    },
+    {
+      "id": "q8",
+      "stem": "Hamiltonian Cycle <=_p TSP uses what construction?",
+      "choices": [
+        "G's vertices as cities; distance 1 for edges, 2 for non-edges; threshold k = n",
+        "Add a super-source",
+        "Triangulate the graph",
+        "Encode in 3-CNF"
+      ],
+      "correctIndex": 0,
+      "explanation": "Tour of length <= n must use only weight-1 edges, recovering a Hamiltonian cycle in G."
+    },
+    {
+      "id": "q9",
+      "stem": "To prove Y is NP-complete, the two-step recipe is:",
+      "choices": [
+        "Show Y in P; pick a known NP-complete X and reduce Y to X",
+        "Show Y in NP via a certifier; reduce a known NP-complete X to Y",
+        "Show Y is decidable; bound its time",
+        "Show Y has a greedy algorithm; reduce to flow"
+      ],
+      "correctIndex": 1,
+      "explanation": "Always: (1) Y in NP (certifier), (2) NP-hard (X <=_p Y for known NP-complete X)."
+    },
+    {
+      "id": "q10",
+      "stem": "Which problem is in P?",
+      "choices": [
+        "3-SAT",
+        "TSP",
+        "Bipartite Matching",
+        "Subset Sum"
+      ],
+      "correctIndex": 2,
+      "explanation": "Bipartite Matching is solvable by max-flow in O(mn) time. The other three are NP-complete."
+    },
+    {
+      "id": "q11",
+      "stem": "Why is NP defined asymmetrically (only yes-certificates)?",
+      "choices": [
+        "Convention",
+        "No-instances of natural problems often lack short certificates; coNP captures the dual notion",
+        "Symmetric definition is undecidable",
+        "It is decidable"
+      ],
+      "correctIndex": 1,
+      "explanation": "NP and coNP are distinct (probably); many problems have short yes-certificates but no obvious short no-certificate."
+    },
+    {
+      "id": "q12",
+      "stem": "VC <=_p Set Cover uses which encoding?",
+      "choices": [
+        "Universe = vertices, sets = edges",
+        "Universe = edges, sets = vertex incidence sets",
+        "Universe = path lengths",
+        "Universe = adjacency entries"
+      ],
+      "correctIndex": 1,
+      "explanation": "Each vertex induces the set of edges it covers; k-vertex cover iff k-set cover of E."
+    },
+    {
+      "id": "q13",
+      "stem": "If P != NP, then:",
+      "choices": [
+        "No NP-complete problem is in P",
+        "Every NP problem is in P",
+        "Every NP problem is undecidable",
+        "Polynomial reductions don't exist"
+      ],
+      "correctIndex": 0,
+      "explanation": "P != NP means NP-complete problems strictly outside P. No polynomial algorithm for any NP-complete."
+    },
+    {
+      "id": "q14",
+      "stem": "Which is the typical certificate length bound in NP?",
+      "choices": [
+        "O(1)",
+        "O(log |I|)",
+        "Polynomial in |I|",
+        "Exponential in |I|"
+      ],
+      "correctIndex": 2,
+      "explanation": "NP allows polynomial-length certificates; longer would not be polynomially checkable."
+    },
+    {
+      "id": "q15",
+      "stem": "If 3-SAT <=_p Subset Sum, then Subset Sum is:",
+      "choices": [
+        "In P",
+        "NP-hard (and if Subset Sum is also in NP, NP-complete)",
+        "Undecidable",
+        "Equivalent to greedy"
+      ],
+      "correctIndex": 1,
+      "explanation": "3-SAT being NP-complete implies any problem 3-SAT reduces to is NP-hard."
+    },
+    {
+      "id": "q16",
+      "stem": "P is a subset of which?",
+      "choices": [
+        "NP",
+        "NP-complete",
+        "NP-hard",
+        "Undecidable"
+      ],
+      "correctIndex": 0,
+      "explanation": "Every problem in P is in NP (certificate can be empty; algorithm itself is the verifier)."
+    },
+    {
+      "id": "q17",
+      "stem": "Why does the gadget reduction 3-SAT <=_p Hamiltonian Cycle use 'variable lanes'?",
+      "choices": [
+        "Aesthetics",
+        "Each lane can be traversed in one of two directions, encoding the variable's truth value, and clause nodes hang off lanes corresponding to satisfied literals",
+        "To make the graph planar",
+        "Random choice"
+      ],
+      "correctIndex": 1,
+      "explanation": "Direction = truth assignment; consistency across lanes plus correct clause traversal encodes satisfiability."
+    },
+    {
+      "id": "q18",
+      "stem": "Subset Sum's NP-hardness reduction from 3-SAT uses what trick to avoid carries?",
+      "choices": [
+        "Carry propagation",
+        "A base large enough that summed columns never overflow into the next digit",
+        "Floating point",
+        "Random shuffling"
+      ],
+      "correctIndex": 1,
+      "explanation": "Large-base construction guarantees independent column behaviour; each column encodes a variable or clause constraint."
+    },
+    {
+      "id": "q19",
+      "stem": "Which of these is NOT a typical way to make a reduction polynomial-time?",
+      "choices": [
+        "Use a constant number of gadgets per variable / clause",
+        "Use simple parameter mappings (k -> n - k)",
+        "Use 2^n enumeration in the construction",
+        "Use direct simple equivalences"
+      ],
+      "correctIndex": 2,
+      "explanation": "Exponential construction is not polynomial-time; reductions must finish in polynomial time on input size."
+    },
+    {
+      "id": "q20",
+      "stem": "If Y is NP-complete and X <=_p Y, then X is:",
+      "choices": [
+        "Not necessarily NP-hard",
+        "Always NP-hard",
+        "In P",
+        "NP-complete"
+      ],
+      "correctIndex": 0,
+      "explanation": "X being reducible to Y says nothing about X's hardness — perhaps X is in P. Reductions transfer hardness from X to Y, not Y to X."
+    },
+    {
+      "id": "q21",
+      "stem": "Which problem is the standard 'starting point' for NP-hardness proofs in this unit?",
+      "choices": [
+        "Bipartite Matching",
+        "3-SAT (or sometimes Vertex Cover / Independent Set after the initial chain)",
+        "Subset Sum",
+        "Sorting"
+      ],
+      "correctIndex": 1,
+      "explanation": "3-SAT is the universal starting point; once IS, VC are shown hard, they often serve as more convenient starting points."
+    },
+    {
+      "id": "q22",
+      "stem": "A common mistake in reduction proofs is to:",
+      "choices": [
+        "Provide a forward direction without a backward direction (or vice versa)",
+        "Use the wrong notation",
+        "Skip the algorithm name",
+        "Forget the date"
+      ],
+      "correctIndex": 0,
+      "explanation": "Both directions of the iff are necessary. Only-forward shows MAXFLOW >= OBJ but not the other way."
+    },
+    {
+      "id": "q23",
+      "stem": "TSP is NP-complete; what is its certifier?",
+      "choices": [
+        "An adjacency matrix",
+        "A sequence of cities forming a tour, certifier checks tour-length <= threshold and each city visited once",
+        "A set of edges",
+        "A spanning tree"
+      ],
+      "correctIndex": 1,
+      "explanation": "Tour is the certificate; verification (each city once, total weight within threshold) is linear."
+    },
+    {
+      "id": "q24",
+      "stem": "Which is a correct statement about the relationship between P, NP, and NP-complete?",
+      "choices": [
+        "P, NP, and NP-complete are disjoint",
+        "P is a subset of NP; NP-complete is a subset of NP; whether P = NP is open",
+        "NP-complete is a subset of P",
+        "P = NP-complete"
+      ],
+      "correctIndex": 1,
+      "explanation": "P ⊆ NP. NP-complete ⊆ NP. P = NP-complete iff P = NP, which is the open question."
+    },
+    {
+      "id": "q25",
+      "stem": "What does Cook-Levin's proof technique amount to, conceptually?",
+      "choices": [
+        "It encodes any polynomial-time certifier's computation as a polynomial-size Boolean circuit; satisfiability of the circuit corresponds to existence of a yes-certificate",
+        "It uses a flow network",
+        "It is a randomised reduction",
+        "It is an LP relaxation"
+      ],
+      "correctIndex": 0,
+      "explanation": "Cook-Levin reduces every NP problem to CIRCUIT-SAT by encoding the certifier's polynomial-time computation as a Boolean circuit on the input + certificate."
+    }
+  ]
+}
